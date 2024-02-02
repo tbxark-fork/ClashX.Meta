@@ -7,23 +7,6 @@ import Cocoa
 
 class MetaTask: NSObject {
     
-    struct MetaServer: Encodable {
-        var externalController: String
-        let secret: String
-        var log: String = ""
-        
-        func jsonString() -> String {
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = .prettyPrinted
-
-            guard let data = try? encoder.encode(self),
-                  let string = String(data: data, encoding: .utf8) else {
-                return ""
-            }
-            return string
-        }
-    }
-    
     struct MetaCurl: Decodable {
         let hello: String
     }
@@ -38,8 +21,9 @@ class MetaTask: NSObject {
     }
     
     @objc func start(_ confPath: String,
-               confFilePath: String,
-               result: @escaping stringReplyBlock) {
+					 confFilePath: String,
+					 confJSON: String,
+					 result: @escaping stringReplyBlock) {
         
         var resultReturned = false
         
@@ -73,7 +57,8 @@ class MetaTask: NSObject {
 				print("Test meta config success.")
 			}
 			
-			guard var serverResult = self.parseConfFile(confPath, confFilePath: confFilePath) else {
+			guard let confData = confJSON.data(using: .utf8), 
+					var serverResult = try? JSONDecoder().decode(MetaServer.self, from: confData) else {
 				returnResult("Can't decode config file.")
 				return
 			}

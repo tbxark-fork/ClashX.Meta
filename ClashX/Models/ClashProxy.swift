@@ -63,7 +63,7 @@ enum ClashProxyType: String, Codable, CaseIterable {
 
     static func isBuiltInProxy(_ proxy: ClashProxy) -> Bool {
         switch proxy.name {
-        case "DIRECT", "REJECT", "PASS": return true
+        case "DIRECT", "REJECT", "REJECT-DROP", "PASS", "COMPATIBLE": return true
         default: return false
         }
     }
@@ -108,6 +108,8 @@ class ClashProxy: Codable {
     let alive: Bool?
     weak var enclosingResp: ClashProxyResp?
     weak var enclosingProvider: ClashProvider?
+	
+	let hidden: Bool?
 
     enum SpeedtestAbleItem {
         case proxy(name: ClashProxyName)
@@ -138,7 +140,7 @@ class ClashProxy: Codable {
     lazy var isSpeedTestable: Bool = !speedtestAble.isEmpty
 
     private enum CodingKeys: String, CodingKey {
-        case type, all, history, now, name, alive
+        case type, all, history, now, name, alive, hidden
     }
 
     lazy var maxProxyNameLength: CGFloat = {

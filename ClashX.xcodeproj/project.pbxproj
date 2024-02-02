@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 53;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -32,6 +32,9 @@
 		01B2274B29B845F100FE35C9 /* country.mmdb.gz in Resources */ = {isa = PBXBuildFile; fileRef = 01B2274A29B845F100FE35C9 /* country.mmdb.gz */; };
 		01BC9ABE2928EB5A00F9B177 /* MetaDNS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BC9ABD2928E5C600F9B177 /* MetaDNS.swift */; };
 		01C1462A28962E4E00346AF3 /* com.metacubex.ClashX.ProxyConfigHelper.meta.gz in Resources */ = {isa = PBXBuildFile; fileRef = 01C1462928962E4E00346AF3 /* com.metacubex.ClashX.ProxyConfigHelper.meta.gz */; };
+		01CA6BC02B6A1B3100E386D6 /* MetaServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01CA6BBF2B6A1B3100E386D6 /* MetaServer.swift */; };
+		01CA6BC12B6A1B3100E386D6 /* MetaServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01CA6BBF2B6A1B3100E386D6 /* MetaServer.swift */; };
+		01CA6BC22B6A1B3100E386D6 /* MetaServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01CA6BBF2B6A1B3100E386D6 /* MetaServer.swift */; };
 		01D567E32AD158B600CDA0AE /* MetaPrefs.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 01D567E12AD158B500CDA0AE /* MetaPrefs.storyboard */; };
 		01D567E42AD158B600CDA0AE /* MetaPrefs.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 01D567E12AD158B500CDA0AE /* MetaPrefs.storyboard */; };
 		01D567E52AD158B600CDA0AE /* MetaPrefsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01D567E22AD158B500CDA0AE /* MetaPrefsViewController.swift */; };
@@ -314,6 +317,7 @@
 		01B2274A29B845F100FE35C9 /* country.mmdb.gz */ = {isa = PBXFileReference; lastKnownFileType = archive.gzip; path = country.mmdb.gz; sourceTree = "<group>"; };
 		01BC9ABD2928E5C600F9B177 /* MetaDNS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaDNS.swift; sourceTree = "<group>"; };
 		01C1462928962E4E00346AF3 /* com.metacubex.ClashX.ProxyConfigHelper.meta.gz */ = {isa = PBXFileReference; lastKnownFileType = archive.gzip; path = com.metacubex.ClashX.ProxyConfigHelper.meta.gz; sourceTree = "<group>"; };
+		01CA6BBF2B6A1B3100E386D6 /* MetaServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaServer.swift; sourceTree = "<group>"; };
 		01D567DF2AD1562700CDA0AE /* ClashX Meta SwiftUI-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ClashX Meta SwiftUI-Info.plist"; sourceTree = "<group>"; };
 		01D567E12AD158B500CDA0AE /* MetaPrefs.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = MetaPrefs.storyboard; sourceTree = "<group>"; };
 		01D567E22AD158B500CDA0AE /* MetaPrefsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MetaPrefsViewController.swift; sourceTree = "<group>"; };
@@ -778,6 +782,7 @@
 				498960722340F21C00AFB7EC /* com.metacubex.ClashX.ProxyConfigHelper.entitlements */,
 				019A239528657A7A00AE5698 /* main.swift */,
 				0162E74E2864B819007218A6 /* MetaTask.swift */,
+				01CA6BBF2B6A1B3100E386D6 /* MetaServer.swift */,
 				01BC9ABD2928E5C600F9B177 /* MetaDNS.swift */,
 				F935B2F12307C802009E4D33 /* Helper-Launchd.plist */,
 				F935B2EA2307B6BA009E4D33 /* Helper-Info.plist */,
@@ -994,6 +999,7 @@
 			files = (
 				01F335CD2AD10D0B0048AF77 /* UnsafePointer+bridge.swift in Sources */,
 				01F335CE2AD10D0B0048AF77 /* RemoteConfigViewController.swift in Sources */,
+				01CA6BC22B6A1B3100E386D6 /* MetaServer.swift in Sources */,
 				01F335CF2AD10D0B0048AF77 /* StatusItemTool.swift in Sources */,
 				01F335D02AD10D0B0048AF77 /* ClashResourceManager.swift in Sources */,
 				01F335D12AD10D0B0048AF77 /* ConfigFileManager.swift in Sources */,
@@ -1089,6 +1095,7 @@
 			files = (
 				49ABB749236B0F9E00535CD7 /* UnsafePointer+bridge.swift in Sources */,
 				499A485522ED707300F6C675 /* RemoteConfigViewController.swift in Sources */,
+				01CA6BC02B6A1B3100E386D6 /* MetaServer.swift in Sources */,
 				49D6A45229AEEC15006487EF /* StatusItemTool.swift in Sources */,
 				49CF3B5C20CE8068001EBF94 /* ClashResourceManager.swift in Sources */,
 				4952C3D02117027C004A4FA8 /* ConfigFileManager.swift in Sources */,
@@ -1187,6 +1194,7 @@
 				019A239628657A7A00AE5698 /* main.swift in Sources */,
 				491E6203258A424D00313AEF /* CommonUtils.m in Sources */,
 				01BC9ABE2928EB5A00F9B177 /* MetaDNS.swift in Sources */,
+				01CA6BC12B6A1B3100E386D6 /* MetaServer.swift in Sources */,
 				F935B2FA23083EE6009E4D33 /* ProxySettingTool.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

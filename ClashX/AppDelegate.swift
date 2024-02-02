@@ -777,33 +777,27 @@ extension AppDelegate {
         case pushConfigFailed(String)
     }
 
-    struct StartProxyResp: Codable {
-        let externalController: String
-        let secret: String
-        let log: String?
-    }
-
     func startProxy() {
         if ConfigManager.shared.isRunning { return }
 
         Logger.log("Trying start meta core")
-
+		
         prepareConfigFile().then {
             self.generateInitConfig()
-        }.then {
+		}.then {
             self.startMeta($0)
         }.get { res in
-            if let log = res.log {
+            if res.log != "" {
                 Logger.log("""
 \n########  Clash Meta Start Log  #########
-\(log)
+\(res.log)
 ########  END  #########
 """, level: .info)
             }
 
             let port = res.externalController.components(separatedBy: ":").last ?? "9090"
             ConfigManager.shared.apiPort = port
-            ConfigManager.shared.apiSecret = res.secret
+			ConfigManager.shared.apiSecret = res.secret
             ConfigManager.shared.isRunning = true
             self.proxyModeMenuItem.isEnabled = true
             self.dashboardMenuItem.isEnabled = true
@@ -893,16 +887,19 @@ extension AppDelegate {
         }
     }
 
-    func startMeta(_ config: ClashMetaConfig.Config) -> Promise<StartProxyResp> {
+    func startMeta(_ config: ClashMetaConfig.Config) -> Promise<MetaServer> {
         .init { resolver in
+			let confJSON = MetaServer(externalController: config.externalController, secret: config.secret ?? "").jsonString()
+			
             PrivilegedHelperManager.shared.helper {
 				Logger.log("helperNotFound, startMeta failed", level: .error)
                 resolver.reject(StartMetaError.helperNotFound)
             }?.startMeta(withConfPath: kConfigFolderPath,
-                         confFilePath: config.path) {
+                         confFilePath: config.path,
+						 confJSON: confJSON) {
                 if let string = $0 {
                     guard let jsonData = string.data(using: .utf8),
-                          let res = try? JSONDecoder().decode(StartProxyResp.self, from: jsonData) else {
+                          let res = try? JSONDecoder().decode(MetaServer.self, from: jsonData) else {
                         resolver.reject(StartMetaError.startMetaFailed(string))
                         return
                     }

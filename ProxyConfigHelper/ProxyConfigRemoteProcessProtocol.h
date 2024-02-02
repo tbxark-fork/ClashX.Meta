@@ -19,6 +19,7 @@ typedef void(^dictReplyBlock)(NSDictionary *);
 
 - (void)startMetaWithConfPath:(NSString *)confPath
                  ConfFilePath:(NSString *)confFilePath
+					 ConfJSON:(NSString *)confJSON
                        result:(stringReplyBlock)reply;
 
 - (void)verifyMetaWithConfPath:(NSString *)confPath

@@ -21,6 +21,9 @@ enum TerminalConfirmAction {
 		PrivilegedHelperManager.shared.helper()?.stopMeta()
 		PrivilegedHelperManager.shared.helper()?.updateTun(with: false)
 		
+		let path = Paths.tempPath() + "/cacheConfigs"
+		try? FileManager.default.removeItem(atPath: path)
+		
         if ConfigManager.shared.proxyPortAutoSet && !ConfigManager.shared.isProxySetByOtherVariable.value || NetworkChangeNotifier.isCurrentSystemSetToClash(looser: true) ||
             NetworkChangeNotifier.hasInterfaceProxySetToClash() {
             Logger.log("ClashX quit need clean proxy setting")

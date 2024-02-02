@@ -80,6 +80,10 @@ class MenuItemFactory {
             guard let menu = menu else {
                 continue
             }
+			
+			if let hidden = proxy.hidden, hidden {
+				continue
+			}
 
             switch hideState {
             case .mixed where [.urltest, .fallback, .loadBalance, .relay].contains(proxy.type):

@@ -145,10 +145,9 @@ ProxyConfigRemoteProcessProtocol
     });
 }
 
-
-- (void)startMetaWithConfPath:(NSString *)confPath ConfFilePath:(NSString *)confFilePath result:(stringReplyBlock)reply {
+- (void)startMetaWithConfPath:(NSString *)confPath ConfFilePath:(NSString *)confFilePath ConfJSON:(NSString *)confJSON result:(stringReplyBlock)reply {
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self.metaTask start:confPath confFilePath:confFilePath result:reply];
+		[self.metaTask start:confPath confFilePath:confFilePath confJSON:confJSON result:reply];
     });
 }
 
