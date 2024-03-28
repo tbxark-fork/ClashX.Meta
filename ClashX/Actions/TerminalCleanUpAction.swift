@@ -19,7 +19,7 @@ enum TerminalConfirmAction {
         var shouldWait = false
 
 		PrivilegedHelperManager.shared.helper()?.stopMeta()
-		PrivilegedHelperManager.shared.helper()?.updateTun(with: false)
+		PrivilegedHelperManager.shared.helper()?.updateTun(state: false)
 		
 		let path = Paths.tempPath() + "/cacheConfigs"
 		try? FileManager.default.removeItem(atPath: path)

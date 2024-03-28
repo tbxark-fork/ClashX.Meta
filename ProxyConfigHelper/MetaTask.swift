@@ -16,14 +16,11 @@ class MetaTask: NSObject {
     var timer: DispatchSourceTimer?
     let timerQueue = DispatchQueue(label: Bundle.main.bundleIdentifier! + ".timer")
     
-    @objc func setLaunchPath(_ path: String) {
-        proc.executableURL = .init(fileURLWithPath: path)
-    }
-    
-    @objc func start(_ confPath: String,
+	@objc func start(_ path: String,
+					 confPath: String,
 					 confFilePath: String,
 					 confJSON: String,
-					 result: @escaping stringReplyBlock) {
+					 result: @escaping (String?) -> Void) {
         
         var resultReturned = false
         
@@ -34,6 +31,8 @@ class MetaTask: NSObject {
             resultReturned = true
 			result(re)
         }
+		
+		proc.executableURL = .init(fileURLWithPath: path)
         
         var args = [
             "-d",
@@ -50,13 +49,6 @@ class MetaTask: NSObject {
         killOldProc()
         
 		do {
-			if let info = self.test(confPath, confFilePath: confFilePath) {
-				returnResult(info)
-				return
-			} else {
-				print("Test meta config success.")
-			}
-			
 			guard let confData = confJSON.data(using: .utf8), 
 					var serverResult = try? JSONDecoder().decode(MetaServer.self, from: confData) else {
 				returnResult("Can't decode config file.")
@@ -205,58 +197,7 @@ class MetaTask: NSObject {
         }
     }
     
-    @objc func test(_ confPath: String, confFilePath: String) -> String? {
-        do {
-            let proc = Process()
-            proc.executableURL = self.proc.executableURL
-            var args = [
-                "-t",
-                "-d",
-                confPath
-            ]
-            if confFilePath != "" {
-                args.append(contentsOf: [
-                    "-f",
-                    confFilePath
-                ])
-            }
-            let pipe = Pipe()
-            proc.standardOutput = pipe
-            
-            proc.arguments = args
-            try proc.run()
-            proc.waitUntilExit()
-            
-            guard proc.terminationStatus == 0 else {
-                return "Test failed, status \(proc.terminationStatus)"
-            }
-            
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            guard let string = String(data: data, encoding: String.Encoding.utf8) else {
-                return "Test failed, no found output."
-            }
-            
-            let results = string.split(separator: "\n").map(String.init).map(formatMsg(_:))
-            
-            guard let re = results.last else {
-                return "Test failed, no found output."
-            }
-            
-            if re.hasPrefix("configuration file"),
-               re.hasSuffix("test is successful") {
-                return nil
-            } else if re.hasPrefix("configuration file"),
-                      re.hasSuffix("test failed") {
-                return results.count > 1
-                ? results[results.count - 2]
-                : "Test failed, unknown result."
-            } else {
-                return re
-            }
-        } catch let error {
-            return "\(error)"
-        }
-    }
+
     
     func killOldProc() {
         let proc = Process()
@@ -266,7 +207,7 @@ class MetaTask: NSObject {
         proc.waitUntilExit()
     }
     
-    @objc func getUsedPorts(_ result: @escaping stringReplyBlock) {
+    @objc func getUsedPorts(_ result: @escaping (String?) -> Void) {
         let proc = Process()
         let pipe = Pipe()
         proc.standardOutput = pipe

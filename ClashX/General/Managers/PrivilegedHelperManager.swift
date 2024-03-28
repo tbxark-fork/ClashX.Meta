@@ -13,7 +13,6 @@ import ServiceManagement
 
 class PrivilegedHelperManager {
     let isHelperCheckFinished = BehaviorRelay<Bool>(value: false)
-	let isHelperReady = BehaviorRelay<Bool>(value: false)
 	
 	
     private var cancelInstallCheck = false
@@ -190,7 +189,7 @@ class PrivilegedHelperManager {
         helper()?.getVersion { [weak timer] installedHelperVersion in
             timer?.invalidate()
             timer = nil
-            Logger.log("helper version \(installedHelperVersion ?? "") require version \(helperVersion)", level: .debug)
+            Logger.log("helper version \(installedHelperVersion) require version \(helperVersion)", level: .debug)
             let versionMatch = installedHelperVersion == helperVersion
             let interval = Date().timeIntervalSince(time)
             Logger.log("check helper using time: \(interval)")

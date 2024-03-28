@@ -13,8 +13,6 @@ class RemoteConfigManager {
     var configs: [RemoteConfigModel] = []
     var refreshActivity: NSBackgroundActivityScheduler?
 
-    let verifyConfigTask = MetaTask()
-
     static let shared = RemoteConfigManager()
 
     private init() {
@@ -229,7 +227,8 @@ class RemoteConfigManager {
         guard let confPath = createCacheConfig(string: string) else {
             return "Create verify config file failed"
         }
-        return RemoteConfigManager.shared.verifyConfigTask.test(kConfigFolderPath, confFilePath: confPath)
+		
+        return (NSApplication.shared.delegate as? AppDelegate)?.clashProcess.verify(kConfigFolderPath, confFilePath: confPath)
     }
 
     static func showAdd() {

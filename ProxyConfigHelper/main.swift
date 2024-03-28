@@ -6,6 +6,7 @@
 import Foundation
 
 ProcessInfo.processInfo.disableSuddenTermination()
-ProxyConfigHelper().run()
+let helper = ProxyConfigHelper()
+helper.run()
 
 print("ProxyConfigHelper exit")

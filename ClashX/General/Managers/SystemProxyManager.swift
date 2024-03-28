@@ -52,16 +52,15 @@ class SystemProxyManager: NSObject {
             return
         }
         Logger.log("enableProxy", level: .debug)
-        helper?.enableProxy(withPort: Int32(port),
-                            socksPort: Int32(socksPort),
-                            pac: nil,
-                            filterInterface: Settings.filterInterface,
-                            ignoreList: Settings.proxyIgnoreList,
-                            error: { error in
-                                if let error = error {
-                                    Logger.log("enableProxy \(error)", level: .error)
-                                }
-                            })
+		helper?.enableProxy(port: port,
+							socksPort: socksPort,
+							pac: nil,
+							filterInterface: Settings.filterInterface,
+							ignoreList: Settings.proxyIgnoreList) { error in
+			if let error = error {
+				Logger.log("enableProxy \(error)", level: .error)
+			}
+		}
     }
 
     func disableProxy(forceDisable: Bool = false, complete: (() -> Void)? = nil) {
@@ -74,7 +73,7 @@ class SystemProxyManager: NSObject {
         Logger.log("disableProxy", level: .debug)
 
         if Settings.disableRestoreProxy || forceDisable {
-            helper?.disableProxy(withFilterInterface: Settings.filterInterface) { error in
+			helper?.disableProxy(filterInterface: Settings.filterInterface) { error in
                 if let error = error {
                     Logger.log("disableProxy \(error)", level: .error)
                 }
@@ -83,11 +82,11 @@ class SystemProxyManager: NSObject {
             return
         }
 
-        helper?.restoreProxy(withCurrentPort: Int32(port), socksPort: Int32(socksPort), info: savedProxyInfo, filterInterface: Settings.filterInterface, error: { error in
-            if let error = error {
-                Logger.log("restoreProxy \(error)", level: .error)
-            }
-            complete?()
-        })
+		helper?.restoreProxy(currentPort: port, socksPort: socksPort, info: savedProxyInfo, filterInterface: Settings.filterInterface) { error in
+			if let error = error {
+				Logger.log("restoreProxy \(error)", level: .error)
+			}
+			complete?()
+		}
     }
 }

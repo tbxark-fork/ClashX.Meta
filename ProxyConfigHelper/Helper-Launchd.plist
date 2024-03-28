@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>AssociatedBundleIdentifiers</key>
-	<string>com.west2online.ClashX</string>
+	<string>com.metacubex.ClashX</string>
 	<key>Label</key>
 	<string>com.metacubex.ClashX.ProxyConfigHelper</string>
 	<key>MachServices</key>
