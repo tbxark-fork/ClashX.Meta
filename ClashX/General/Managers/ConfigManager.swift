@@ -74,6 +74,24 @@ class ConfigManager {
             UserDefaults.standard.set(newValue, forKey: "proxyPortAutoSet")
         }
     }
+	
+	var restoreSystemProxy: Bool {
+		get {
+			return UserDefaults.standard.bool(forKey: "restoreSystemProxy")
+		}
+		set {
+			UserDefaults.standard.set(newValue, forKey: "restoreSystemProxy")
+		}
+	}
+	
+	var restoreTunProxy: Bool {
+		get {
+			return UserDefaults.standard.bool(forKey: "restoreTunProxy")
+		}
+		set {
+			UserDefaults.standard.set(newValue, forKey: "restoreTunProxy")
+		}
+	}
 
     let proxyPortAutoSetObservable = UserDefaults.standard.rx.observe(Bool.self, "proxyPortAutoSet").map { $0 ?? false }
 

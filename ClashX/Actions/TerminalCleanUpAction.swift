@@ -17,6 +17,8 @@ enum TerminalConfirmAction {
         }
         let group = DispatchGroup()
         var shouldWait = false
+		
+		ConfigManager.shared.restoreTunProxy = ConfigManager.shared.isTunModeVariable.value
 
 		PrivilegedHelperManager.shared.helper()?.stopMeta()
 		PrivilegedHelperManager.shared.helper()?.updateTun(state: false)
@@ -27,13 +29,16 @@ enum TerminalConfirmAction {
         if ConfigManager.shared.proxyPortAutoSet && !ConfigManager.shared.isProxySetByOtherVariable.value || NetworkChangeNotifier.isCurrentSystemSetToClash(looser: true) ||
             NetworkChangeNotifier.hasInterfaceProxySetToClash() {
             Logger.log("ClashX quit need clean proxy setting")
+			ConfigManager.shared.restoreSystemProxy = true
             shouldWait = true
             group.enter()
 
             SystemProxyManager.shared.disableProxy(forceDisable: ConfigManager.shared.isProxySetByOtherVariable.value) {
                 group.leave()
             }
-        }
+		} else {
+			ConfigManager.shared.restoreSystemProxy = false
+		}
 
         if !shouldWait {
             Logger.log("ClashX quit without clean waiting")

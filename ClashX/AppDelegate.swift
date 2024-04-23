@@ -205,7 +205,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 	
     func setupData() {
-        SSIDSuspendTool.shared.setup()
         ConfigManager.shared
             .showNetSpeedIndicatorObservable.skip(1)
             .bind {
@@ -307,21 +306,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 			self.tunModeMenuItem.target = self
 			startProxyCore()
 		}
-
-		
-        if !PrivilegedHelperManager.shared.isHelperCheckFinished.value &&
-            ConfigManager.shared.proxyPortAutoSet {
-            PrivilegedHelperManager.shared.isHelperCheckFinished
-                .filter { $0 }
-                .take(1)
-                .take(while: { _ in ConfigManager.shared.proxyPortAutoSet })
-                .observe(on: MainScheduler.instance)
-                .bind(onNext: { _ in
-                    SystemProxyManager.shared.enableProxy()
-                }).disposed(by: disposeBag)
-        } else if ConfigManager.shared.proxyPortAutoSet {
-            SystemProxyManager.shared.enableProxy()
-        }
 
         LaunchAtLogin.shared
             .isEnableVirable
@@ -588,7 +572,20 @@ extension AppDelegate: ClashProcessDelegate {
 	}
 	
 	func clashConfigUpdated() {
-		syncConfigWithTun(true)
+		if ConfigManager.shared.restoreSystemProxy {
+			SystemProxyManager.shared.enableProxy()
+		}
+		
+		if ConfigManager.shared.restoreTunProxy {
+			ApiRequest.updateTun(enable: true) {
+				PrivilegedHelperManager.shared.helper()?.updateTun(state: true)
+			}
+		} else {
+			syncConfigWithTun(true)
+		}
+		
+		SSIDSuspendTool.shared.setup()
+		
 		resetStreamApi()
 		runAfterConfigReload?()
 		runAfterConfigReload = nil
