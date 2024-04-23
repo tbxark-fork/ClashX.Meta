@@ -192,7 +192,8 @@ class ClashProcess: NSObject {
 					resolver.reject(StartMetaError.configMissing)
 					return
 				}
-				guard FileManager.default.fileExists(atPath: path) else {
+				
+				if FileManager.default.fileExists(atPath: path) {
 					resolver.fulfill_()
 					return
 				}
@@ -450,10 +451,10 @@ class ClashProcess: NSObject {
 			}
 			
 			if re.hasPrefix("configuration file"),
-			   re.hasSuffix("verify is successful") {
+			   re.hasSuffix("test is successful") {
 				return nil
 			} else if re.hasPrefix("configuration file"),
-					  re.hasSuffix("verify failed") {
+					  re.hasSuffix("test failed") {
 				return results.count > 1
 				? results[results.count - 2]
 				: "Test failed, unknown result."

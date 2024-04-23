@@ -1,4 +1,5 @@
 {
+  "originHash" : "04a3b3bc2bf53686240dbd5a590ed7d847103b4a63a3a4cb1892d2b9b92e3a52",
   "pins" : [
     {
       "identity" : "alamofire",
@@ -15,7 +16,7 @@
       "location" : "https://github.com/mrFq1/ClashX-Dashboard",
       "state" : {
         "branch" : "dev",
-        "revision" : "272999024e836c5b006b0f3869fa4a1f5d27286b"
+        "revision" : "dd8a8f8f23838aa8d0ecc38734e915280604ed89"
       }
     },
     {
@@ -32,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/dagronf/DSFSparkline.git",
       "state" : {
-        "revision" : "cfcf80b9e214500cbc12b795b7c9943151b8bd4f",
-        "version" : "4.6.4"
+        "revision" : "479b5e1d1332703f407ae42b580d203ca6c77a3d",
+        "version" : "6.0.2"
       }
     },
     {
@@ -131,8 +132,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/siteline/swiftui-introspect",
       "state" : {
-        "revision" : "121c146fe591b1320238d054ae35c81ffa45f45a",
-        "version" : "0.12.0"
+        "revision" : "0cd2a5a5895306bc21d54a2254302d24a9a571e4",
+        "version" : "1.1.3"
       }
     },
     {
@@ -154,5 +155,5 @@
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }
