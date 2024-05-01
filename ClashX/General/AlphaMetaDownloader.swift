@@ -80,8 +80,12 @@ class AlphaMetaDownloader: NSObject {
 		Promise { resolver in
 			let assetName = assetName()
 			AF.request("https://api.github.com/repos/MetaCubeX/mihomo/releases/tags/Prerelease-Alpha").responseDecodable(of: ReleasesResp.self) {
-				guard let assets = $0.value?.assets,
-					  let assetName,
+				guard let assets = $0.value?.assets else {
+					resolver.reject(errors.downloadFailed)
+					return
+				}
+				
+				guard let assetName,
 					  let asset = assets.first(where: {
 						  $0.name.contains(assetName) &&
 						  !$0.name.contains("cgo") &&
