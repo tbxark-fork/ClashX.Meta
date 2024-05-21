@@ -54,9 +54,9 @@ class AlphaMetaDownloader: NSObject {
 	static func assetName() -> String? {
 		switch GetMachineHardwareName() {
 		case "x86_64":
-			return "darwin-amd64"
+			return "amd64"
 		case "arm64":
-			return "darwin-arm64"
+			return "arm64"
 		default:
 			return nil
 		}
@@ -87,11 +87,16 @@ class AlphaMetaDownloader: NSObject {
 				
 				guard let assetName,
 					  let asset = assets.first(where: {
-						  $0.name.contains(assetName) &&
-						  !$0.name.contains("cgo") &&
-						  !$0.name.contains("go120") &&
-						  $0.state == "uploaded" &&
-						  $0.contentType == "application/gzip"
+						  guard $0.state == "uploaded", $0.contentType == "application/gzip" else { return false }
+						  
+						  let names = $0.name.split(separator: "-").map(String.init)
+						  guard names.count > 4,
+								names[0] == "mihomo",
+								names[1] == "darwin",
+								names[2] == assetName,
+								names[3] == "alpha" else { return false }
+								
+						  return true
 					  }) else {
 					resolver.reject(errors.decodeReleaseInfoFailed)
 					return
