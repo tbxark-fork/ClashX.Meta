@@ -3,6 +3,17 @@
     <channel>
         <title>ClashX Meta</title>
         <item>
+            <title>v1.4.1</title>
+            <pubDate>Sun, 22 Sep 2024 13:21:48 +0000</pubDate>
+            <sparkle:version>541</sparkle:version>
+            <sparkle:shortVersionString>v1.4.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://raw.githubusercontent.com/MetaCubeX/clashX.meta/refs/heads/sparkle/ClashX%20Meta%20v1.4.1.zip" length="37420559" type="application/octet-stream" sparkle:edSignature="IIPFt6mvd2c6DkIM/KUZ1S2fb6Nr8Y/xpWZ+bcdTRGBylzRZssag39ZRGUGq1RsoyJbE1jEmAofthtaaDkXEBQ=="/>
+            <sparkle:deltas>
+                <enclosure url="https://raw.githubusercontent.com/MetaCubeX/clashX.meta/refs/heads/sparkle/ClashX%20Meta541-539.delta" sparkle:deltaFrom="539" length="176810" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="864560" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,en" sparkle:edSignature="H87qiFUgSZAT/0gAccfb9vMtjB5M+mx3JIMkSomQc/q5K+DeUI5Qx/q3fhjLjgq7RsD78XrZh5fpL+C61r4lCg=="/>
+            </sparkle:deltas>
+        </item>
+        <item>
             <title>v1.4.0</title>
             <pubDate>Sun, 22 Sep 2024 11:27:59 +0000</pubDate>
             <sparkle:version>539</sparkle:version>
