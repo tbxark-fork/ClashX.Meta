@@ -7,9 +7,6 @@
 
 import Cocoa
 import RxSwift
-#if SwiftUI_Version
-import ClashX_Dashboard
-#endif
 
 
 class DashboardManager: NSObject {
@@ -19,8 +16,6 @@ class DashboardManager: NSObject {
 	override init() {
 	}
 	
-	
-#if SwiftUI_Version
 	var useSwiftUI: Bool {
 		get {
 			return ConfigManager.useSwiftUIDashboard
@@ -37,9 +32,6 @@ class DashboardManager: NSObject {
 		}
 	}
 	var dashboardWindowController: DashboardWindowController?
-#else
-	let useSwiftUI = false
-#endif
 	
 	private var disposables = [Disposable]()
 	
@@ -47,7 +39,6 @@ class DashboardManager: NSObject {
 	var clashWebWindowController: ClashWebViewWindowController?
 
 	func show(_ sender: NSMenuItem?) {
-#if SwiftUI_Version
 		initNotifications()
 		
 		if useSwiftUI {
@@ -57,9 +48,6 @@ class DashboardManager: NSObject {
 			dashboardWindowController = nil
 			showWebWindow(sender)
 		}
-#else
-		showWebWindow(sender)
-#endif
 	}
 	
 	func showWebWindow(_ sender: NSMenuItem?) {
@@ -85,7 +73,6 @@ class DashboardManager: NSObject {
 	}
 }
 
-#if SwiftUI_Version
 extension DashboardManager {
 	func showSwiftUIWindow(_ sender: NSMenuItem?) {
 		if dashboardWindowController == nil {
@@ -118,4 +105,3 @@ extension DashboardManager {
 	}
 	
 }
-#endif

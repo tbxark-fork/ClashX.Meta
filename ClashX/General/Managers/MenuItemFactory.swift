@@ -387,16 +387,15 @@ extension MenuItemFactory {
         return lengths.max() ?? 0
     }
 
-    static func providerUpdateTitle(_ updatedAt: String?) -> String? {
+    static func providerUpdateTitle(_ updatedAt: Date?) -> String? {
         let dateCF = DateComponentsFormatter()
         dateCF.allowedUnits = [.day, .hour, .minute]
         dateCF.maximumUnitCount = 1
         dateCF.unitsStyle = .abbreviated
         dateCF.zeroFormattingBehavior = .dropAll
 
-        guard let dateStr = updatedAt,
-              let date = DateFormatter.provider.date(from: dateStr),
-              !date.timeIntervalSinceNow.isNaN,
+        guard let date = updatedAt,
+			  !date.timeIntervalSinceNow.isNaN,
               !date.timeIntervalSinceNow.isInfinite,
               let re = dateCF.string(from: abs(date.timeIntervalSinceNow)) else { return nil }
 

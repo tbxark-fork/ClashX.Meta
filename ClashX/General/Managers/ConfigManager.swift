@@ -39,6 +39,7 @@ class ConfigManager {
 
         set {
             isRunningVariable.accept(newValue)
+			NotificationCenter.default.post(.init(name: .init("ClashRunningStateChanged")))
         }
     }
 
@@ -99,6 +100,14 @@ class ConfigManager {
     var proxyShouldPaused = BehaviorRelay<Bool>(value: false)
 
     var isTunModeVariable = BehaviorRelay<Bool>(value: false)
+	
+	static let defaultTunDNS = "8.8.8.8"
+	
+	static var metaTunDNS: String = UserDefaults.standard.object(forKey: "metaTunDNS") as? String ?? defaultTunDNS {
+		didSet {
+			UserDefaults.standard.set(metaTunDNS, forKey: "metaTunDNS")
+		}
+	}
 
     var showNetSpeedIndicator: Bool {
         get {

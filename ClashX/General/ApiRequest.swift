@@ -12,11 +12,18 @@ import Starscream
 import SwiftyJSON
 
 protocol ApiRequestStreamDelegate: AnyObject {
-    func didUpdateTraffic(up: Int, down: Int)
-    func didGetLog(log: String, level: String)
+	func didUpdateTraffic(up: Int, down: Int)
+	func didGetLog(log: String, level: String)
+	func didUpdateMemory(memory: Int64)
+	func streamStatusChanged()
 }
 
 typealias ErrorString = String
+
+struct ClashVersion: Decodable {
+	let version: String
+	let meta: Bool?
+}
 
 class ApiRequest {
     static let shared = ApiRequest()
@@ -75,15 +82,35 @@ class ApiRequest {
 
     weak var delegate: ApiRequestStreamDelegate?
 
-    private var trafficWebSocket: WebSocket?
-    private var loggingWebSocket: WebSocket?
+	private var trafficWebSocket: WebSocket?
+	private var loggingWebSocket: WebSocket?
+	private var memoryWebSocket: WebSocket?
 
-    private var trafficWebSocketRetryDelay: TimeInterval = 1
-    private var loggingWebSocketRetryDelay: TimeInterval = 1
-    private var trafficWebSocketRetryTimer: Timer?
-    private var loggingWebSocketRetryTimer: Timer?
+	private var trafficWebSocketRetryDelay: TimeInterval = 1
+	private var loggingWebSocketRetryDelay: TimeInterval = 1
+	private var memoryWebSocketRetryDelay: TimeInterval = 1
+	
+	private var trafficWebSocketRetryTimer: Timer?
+	private var loggingWebSocketRetryTimer: Timer?
+	private var memoryWebSocketRetryTimer: Timer?
 
-    private var alamoFireManager: Session
+	private var alamoFireManager: Session
+
+	static func requestVersion(completeHandler: @escaping ((ClashVersion?) -> Void)) {
+		shared.alamoFireManager
+			.request(ConfigManager.apiUrl + "/version",
+					 method: .get,
+					 headers: authHeader())
+			.responseDecodable(of: ClashVersion.self) {
+				resp in
+				switch resp.result {
+				case let .success(ver):
+					completeHandler(ver)
+				case let .failure(err):
+					completeHandler(nil)
+				}
+			}
+	}
 
     static func requestConfig(completeHandler: @escaping ((ClashConfig) -> Void)) {
         req("/configs").responseDecodable(of: ClashConfig.self) {
@@ -317,10 +344,31 @@ extension ApiRequest {
     static func closeConnection(_ id: String) {
         req("/connections/\(id)", method: .delete).response { _ in }
     }
+	
+	static func getConnections(completeHandler: @escaping (DBConnectionSnapShot) -> Void) {
+		
+		let decoder = JSONDecoder()
+		decoder.dateDecodingStrategy = .formatted(DateFormatter.js)
+		
+		req("/connections").responseDecodable(of: DBConnectionSnapShot.self, decoder: decoder) { resp in
+			switch resp.result {
+			case let .success(snapshot):
+				completeHandler(snapshot)
+			case .failure:
+				return
+//                assertionFailure()
+//                completeHandler(DBConnectionSnapShot())
+			}
+		}
+	}
 
-    static func closeAllConnection() {
-        req("/connections", method: .delete).response { _ in }
-    }
+	static func closeConnection(_ conn: ClashConnectionSnapShot.Connection) {
+		req("/connections/".appending(conn.id), method: .delete).response { _ in }
+	}
+
+	static func closeAllConnection() {
+		req("/connections", method: .delete).response { _ in }
+	}
 }
 
 // MARK: - Meta
@@ -512,10 +560,11 @@ extension ApiRequest {
 // MARK: - Stream Apis
 
 extension ApiRequest {
-    func resetStreamApis() {
-        resetLogStreamApi()
-        resetTrafficStreamApi()
-    }
+	func resetStreamApis() {
+		resetLogStreamApi()
+		resetTrafficStreamApi()
+		resetMemoryStreamApi()
+	}
 
     func resetLogStreamApi() {
         loggingWebSocketRetryTimer?.invalidate()
@@ -530,6 +579,13 @@ extension ApiRequest {
         trafficWebSocketRetryDelay = 1
         requestTrafficInfo()
     }
+	
+	func resetMemoryStreamApi() {
+		memoryWebSocketRetryTimer?.invalidate()
+		memoryWebSocketRetryTimer = nil
+		memoryWebSocketRetryDelay = 1
+		requestMemoryInfo()
+	}
 
     private func requestTrafficInfo() {
         trafficWebSocketRetryTimer?.invalidate()
@@ -561,60 +617,111 @@ extension ApiRequest {
         socket.connect()
         loggingWebSocket = socket
     }
+	
+	private func requestMemoryInfo() {
+		memoryWebSocketRetryTimer?.invalidate()
+		memoryWebSocketRetryTimer = nil
+		memoryWebSocket?.disconnect(forceTimeout: 1)
+		
+		let socket = WebSocket(url: URL(string: ConfigManager.apiUrl.appending("/memory"))!)
+		for header in ApiRequest.authHeader() {
+			socket.request.setValue(header.value, forHTTPHeaderField: header.name)
+		}
+		socket.delegate = self
+		socket.connect()
+		memoryWebSocket = socket
+	}
 }
 
 extension ApiRequest: WebSocketDelegate {
-    func websocketDidConnect(socket: WebSocketClient) {
-        guard let webSocket = socket as? WebSocket else { return }
-        if webSocket == trafficWebSocket {
-            trafficWebSocketRetryDelay = 1
-            Logger.log("trafficWebSocket did Connect", level: .debug)
-        } else {
-            loggingWebSocketRetryDelay = 1
-            Logger.log("loggingWebSocket did Connect", level: .debug)
-        }
-    }
+	func websocketDidConnect(socket: WebSocketClient) {
+		guard let webSocket = socket as? WebSocket else { return }
+		switch webSocket {
+		case trafficWebSocket:
+			trafficWebSocketRetryDelay = 1
+			Logger.log("trafficWebSocket did Connect", level: .debug)
+			
+			ConfigManager.shared.isRunning = true
+			delegate?.streamStatusChanged()
+		case loggingWebSocket:
+			loggingWebSocketRetryDelay = 1
+			Logger.log("loggingWebSocket did Connect", level: .debug)
+		case memoryWebSocket:
+			memoryWebSocketRetryDelay = 1
+			Logger.log("memoryWebSocket did Connect", level: .debug)
+		default:
+			return
+		}
+	}
 
-    func websocketDidDisconnect(socket: WebSocketClient, error: Error?) {
-        guard let err = error else {
-            return
-        }
+	func websocketDidDisconnect(socket: WebSocketClient, error: Error?) {
+		
+		if (socket as? WebSocket) == trafficWebSocket {
+			ConfigManager.shared.isRunning = false
+			delegate?.streamStatusChanged()
+		}
+		
+		guard let err = error else {
+			return
+		}
 
-        Logger.log(err.localizedDescription, level: .error)
+		Logger.log(err.localizedDescription, level: .error)
 
-        guard let webSocket = socket as? WebSocket else { return }
+		guard let webSocket = socket as? WebSocket else { return }
 
-        if webSocket == trafficWebSocket {
-            Logger.log("trafficWebSocket did disconnect", level: .debug)
-            trafficWebSocketRetryTimer?.invalidate()
-            trafficWebSocketRetryTimer =
-                Timer.scheduledTimer(withTimeInterval: trafficWebSocketRetryDelay, repeats: false, block: {
-                    [weak self] _ in
-                    if self?.trafficWebSocket?.isConnected == true { return }
-                    self?.requestTrafficInfo()
-                })
-            trafficWebSocketRetryDelay *= 2
-        } else {
-            Logger.log("loggingWebSocket did disconnect", level: .debug)
-            loggingWebSocketRetryTimer =
-                Timer.scheduledTimer(withTimeInterval: loggingWebSocketRetryDelay, repeats: false, block: {
-                    [weak self] _ in
-                    if self?.loggingWebSocket?.isConnected == true { return }
-                    self?.requestLog()
-                })
-            loggingWebSocketRetryDelay *= 2
-        }
-    }
+		switch webSocket {
+		case trafficWebSocket:
+			Logger.log("trafficWebSocket did disconnect", level: .debug)
+			
+			trafficWebSocketRetryTimer?.invalidate()
+			trafficWebSocketRetryTimer =
+				Timer.scheduledTimer(withTimeInterval: trafficWebSocketRetryDelay, repeats: false, block: {
+					[weak self] _ in
+					if self?.trafficWebSocket?.isConnected == true { return }
+					self?.requestTrafficInfo()
+				})
+			trafficWebSocketRetryDelay *= 2
+		case loggingWebSocket:
+			Logger.log("loggingWebSocket did disconnect", level: .debug)
+			loggingWebSocketRetryTimer =
+				Timer.scheduledTimer(withTimeInterval: loggingWebSocketRetryDelay, repeats: false, block: {
+					[weak self] _ in
+					if self?.loggingWebSocket?.isConnected == true { return }
+					self?.requestLog()
+				})
+			loggingWebSocketRetryDelay *= 2
+		case memoryWebSocket:
+			Logger.log("memoryWebSocket did disconnect", level: .debug)
+			
+			memoryWebSocketRetryTimer =
+				Timer.scheduledTimer(withTimeInterval: memoryWebSocketRetryDelay, repeats: false, block: {
+					[weak self] _ in
+					if self?.memoryWebSocket?.isConnected == true { return }
+					self?.requestMemoryInfo()
+				})
+			
+			memoryWebSocketRetryDelay *= 2
+		default:
+			return
+		}
+	}
 
-    func websocketDidReceiveMessage(socket: WebSocketClient, text: String) {
-        guard let webSocket = socket as? WebSocket else { return }
-        let json = JSON(parseJSON: text)
-        if webSocket == trafficWebSocket {
-            delegate?.didUpdateTraffic(up: json["up"].intValue, down: json["down"].intValue)
-        } else {
-            delegate?.didGetLog(log: json["payload"].stringValue, level: json["type"].string ?? "info")
-        }
-    }
+	func websocketDidReceiveMessage(socket: WebSocketClient, text: String) {
+		guard let webSocket = socket as? WebSocket else { return }
+		let json = JSON(parseJSON: text)
+		
+		
+		switch webSocket {
+		case trafficWebSocket:
+			delegate?.didUpdateTraffic(up: json["up"].intValue, down: json["down"].intValue)
+		case loggingWebSocket:
+			delegate?.didGetLog(log: json["payload"].stringValue, level: json["type"].string ?? "info")
+		case memoryWebSocket:
+			delegate?.didUpdateMemory(memory: json["inuse"].int64Value)
+		default:
+			return
+		}
+	}
 
-    func websocketDidReceiveData(socket: WebSocketClient, data: Data) {}
+	func websocketDidReceiveData(socket: WebSocketClient, data: Data) {}
 }

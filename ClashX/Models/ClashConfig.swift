@@ -12,9 +12,6 @@ enum ClashProxyMode: String, Codable {
     case rule
     case global
     case direct
-    #if PRO_VERSION
-        case script
-    #endif
 }
 
 extension ClashProxyMode {
@@ -23,20 +20,13 @@ extension ClashProxyMode {
         case .rule: return NSLocalizedString("Rule", comment: "")
         case .global: return NSLocalizedString("Global", comment: "")
         case .direct: return NSLocalizedString("Direct", comment: "")
-        #if PRO_VERSION
-            case .script: return NSLocalizedString("Script", comment: "")
-        #endif
         }
     }
 }
 
 enum ClashLogLevel: String, Codable {
     case info
-    #if PRO_VERSION
-        case warning = "warn"
-    #else
-        case warning
-    #endif
+	case warning
     case error
     case debug
     case silent
@@ -61,56 +51,60 @@ enum ClashLogLevel: String, Codable {
 }
 
 class ClashConfig: Codable {
-    private var port: Int
-    private var socksPort: Int
-    var allowLan: Bool
-    var mixedPort: Int
-    var mode: ClashProxyMode
-    var logLevel: ClashLogLevel
-
-    var sniffing: Bool
-    var tun: Tun
-
-    struct Tun: Codable {
-        let enable: Bool
-        let device: String
-        let stack: String
-//        let dns-hijack: [String]
-//        let auto-route: Bool
-//        let auto-detect-interface: Bool
-    }
-
-    var usedHttpPort: Int {
-        if mixedPort > 0 {
-            return mixedPort
-        }
-        return port
-    }
-
-    var usedSocksPort: Int {
-        if mixedPort > 0 {
-            return mixedPort
-        }
-        return socksPort
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case port, socksPort = "socks-port", mixedPort = "mixed-port", allowLan = "allow-lan", mode, logLevel = "log-level", sniffing, tun
-    }
-
-    static func fromData(_ data: Data) -> ClashConfig? {
-        let decoder = JSONDecoder()
-        do {
-            return try decoder.decode(ClashConfig.self, from: data)
-        } catch let err {
-            Logger.log((err as NSError).description, level: .error)
-            return nil
-        }
-    }
-
-    func copy() -> ClashConfig? {
-        guard let data = try? JSONEncoder().encode(self) else { return nil }
-        let copy = try? JSONDecoder().decode(ClashConfig.self, from: data)
-        return copy
-    }
+	var port: Int
+	var socksPort: Int
+	var redirPort: Int
+	var allowLan: Bool
+	var mixedPort: Int
+	var mode: ClashProxyMode
+	var logLevel: ClashLogLevel
+	
+	var sniffing: Bool
+	var ipv6: Bool
+	
+	var tun: Tun
+	var interfaceName: String
+	
+	struct Tun: Codable {
+		let enable: Bool
+		let device: String
+		let stack: String
+		//        let dns-hijack: [String]
+		//        let auto-route: Bool
+		//        let auto-detect-interface: Bool
+	}
+	
+	var usedHttpPort: Int {
+		if mixedPort > 0 {
+			return mixedPort
+		}
+		return port
+	}
+	
+	var usedSocksPort: Int {
+		if mixedPort > 0 {
+			return mixedPort
+		}
+		return socksPort
+	}
+	
+	private enum CodingKeys: String, CodingKey {
+		case port, socksPort = "socks-port", redirPort = "redir-port", mixedPort = "mixed-port", allowLan = "allow-lan", mode, logLevel = "log-level", sniffing, tun, interfaceName = "interface-name", ipv6
+	}
+	
+	static func fromData(_ data: Data) -> ClashConfig? {
+		let decoder = JSONDecoder()
+		do {
+			return try decoder.decode(ClashConfig.self, from: data)
+		} catch let err {
+			Logger.log((err as NSError).description, level: .error)
+			return nil
+		}
+	}
+	
+	func copy() -> ClashConfig? {
+		guard let data = try? JSONEncoder().encode(self) else { return nil }
+		let copy = try? JSONDecoder().decode(ClashConfig.self, from: data)
+		return copy
+	}
 }

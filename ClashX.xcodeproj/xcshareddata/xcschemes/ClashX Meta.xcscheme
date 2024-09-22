@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "49CF3B1C20CD7463001EBF94"
+               BlueprintIdentifier = "01F335B32AD10D0B0048AF77"
                BuildableName = "ClashX Meta.app"
                BlueprintName = "ClashX Meta"
                ReferencedContainer = "container:ClashX.xcodeproj">
@@ -44,7 +44,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "49CF3B1C20CD7463001EBF94"
+            BlueprintIdentifier = "01F335B32AD10D0B0048AF77"
             BuildableName = "ClashX Meta.app"
             BlueprintName = "ClashX Meta"
             ReferencedContainer = "container:ClashX.xcodeproj">
@@ -61,7 +61,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "49CF3B1C20CD7463001EBF94"
+            BlueprintIdentifier = "01F335B32AD10D0B0048AF77"
             BuildableName = "ClashX Meta.app"
             BlueprintName = "ClashX Meta"
             ReferencedContainer = "container:ClashX.xcodeproj">

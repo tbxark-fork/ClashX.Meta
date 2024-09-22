@@ -13,7 +13,7 @@ protocol ProxyConfigRemoteProcessProtocol {
 	
 	func startMeta(path: String, confPath: String, confFilePath: String, confJSON: String, reply: @escaping (String?) -> Void)
 	func stopMeta()
-	func updateTun(state: Bool)
+	func updateTun(state: Bool, dns: String)
 	func getUsedPorts(reply: @escaping (String?) -> Void)
 	
 	

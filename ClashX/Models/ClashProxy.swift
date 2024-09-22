@@ -87,13 +87,16 @@ class ClashProxySpeedHistory: Codable {
         }()
     }
 
-    lazy var delayDisplay: String = {
-        let d = meanDelay ?? delay
-        switch d {
-        case 0: return NSLocalizedString("fail", comment: "")
-        default: return "\(d) ms"
-        }
-    }()
+	lazy var delayInt: Int = {
+		meanDelay ?? delay
+	}()
+
+	lazy var delayDisplay: String = {
+		switch delayInt {
+		case 0: return NSLocalizedString("fail", comment: "")
+		default: return "\(delayInt) ms"
+		}
+	}()
 
     lazy var dateDisplay: String = HisDateFormaterInstance.shared.formater.string(from: time)
 
@@ -101,6 +104,7 @@ class ClashProxySpeedHistory: Codable {
 }
 
 class ClashProxy: Codable {
+	let id: String?
     let name: ClashProxyName
     let type: ClashProxyType
     let all: [ClashProxyName]?
@@ -111,6 +115,9 @@ class ClashProxy: Codable {
     weak var enclosingProvider: ClashProvider?
 	
 	let hidden: Bool?
+	let udp: Bool
+	let xudp: Bool
+	let tfo: Bool
 
     enum SpeedtestAbleItem {
         case proxy(name: ClashProxyName)
@@ -127,13 +134,17 @@ class ClashProxy: Codable {
         guard let resp = enclosingResp, let allProxys = all else { return [] }
         var proxys = [SpeedtestAbleItem]()
         for proxy in allProxys {
-            if let p = resp.proxiesMap[proxy] {
-                if let provider = p.enclosingProvider {
-                    proxys.append(.provider(name: p.name, provider: provider.name))
-                } else {
-                    proxys.append(.group(name: p.name))
-                }
-            }
+			if let p = resp.proxiesMap[proxy] {
+				if !ClashProxyType.isProxyGroup(p) {
+					if let provider = p.enclosingProvider {
+						proxys.append(.provider(name: p.name, provider: provider.name))
+					} else {
+						proxys.append(.proxy(name: p.name))
+					}
+				} else {
+					proxys.append(.group(name: p.name))
+				}
+			}
         }
         return proxys
     }()
@@ -141,7 +152,7 @@ class ClashProxy: Codable {
     lazy var isSpeedTestable: Bool = !speedtestAble.isEmpty
 
     private enum CodingKeys: String, CodingKey {
-        case type, all, history, now, name, alive, hidden
+        case type, all, history, now, name, udp, xudp, tfo, id, alive, hidden
     }
 
     lazy var maxProxyNameLength: CGFloat = {

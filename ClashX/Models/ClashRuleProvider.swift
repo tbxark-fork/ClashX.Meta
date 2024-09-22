@@ -22,10 +22,10 @@ class ClashRuleProviderResp: Codable {
     }
 }
 
-class ClashRuleProvider: Codable {
-    let name: ClashProviderName
-    let ruleCount: Int
-    let behavior: String
-    let type: String
-    let updatedAt: String?
+class ClashRuleProvider: NSObject, Codable {
+	@objc let name: ClashProviderName
+	let ruleCount: Int
+	@objc let behavior: String
+	@objc let type: String
+	let updatedAt: Date?
 }

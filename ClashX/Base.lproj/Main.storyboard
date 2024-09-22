@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="22155" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="23094" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22155"/>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23094"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -296,15 +297,15 @@
                                                 <scrollView borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" translatesAutoresizingMaskIntoConstraints="NO" id="plI-7S-yCW">
                                                     <rect key="frame" x="20" y="10" width="392" height="20"/>
                                                     <clipView key="contentView" drawsBackground="NO" id="HHy-NP-pH6">
-                                                        <rect key="frame" x="0.0" y="0.0" width="392" height="20"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="377" height="20"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                         <subviews>
                                                             <textView importsGraphics="NO" richText="NO" verticallyResizable="YES" spellingCorrection="YES" smartInsertDelete="YES" id="sjz-uN-XpL">
-                                                                <rect key="frame" x="0.0" y="0.0" width="392" height="20"/>
+                                                                <rect key="frame" x="0.0" y="0.0" width="377" height="20"/>
                                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                 <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                                                <size key="minSize" width="392" height="20"/>
+                                                                <size key="minSize" width="377" height="20"/>
                                                                 <size key="maxSize" width="450" height="10000000"/>
                                                                 <color key="insertionPointColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                                             </textView>
@@ -318,7 +319,7 @@
                                                         <autoresizingMask key="autoresizingMask"/>
                                                     </scroller>
                                                     <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="OaY-Eu-ksx">
-                                                        <rect key="frame" x="376" y="0.0" width="16" height="20"/>
+                                                        <rect key="frame" x="377" y="0.0" width="15" height="20"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                     </scroller>
                                                 </scrollView>
@@ -425,15 +426,15 @@
                                                 <scrollView borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" translatesAutoresizingMaskIntoConstraints="NO" id="vfh-gi-qYe">
                                                     <rect key="frame" x="20" y="40" width="392" height="100"/>
                                                     <clipView key="contentView" drawsBackground="NO" id="bzV-Hc-3eJ">
-                                                        <rect key="frame" x="0.0" y="0.0" width="392" height="100"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="377" height="100"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                         <subviews>
                                                             <textView importsGraphics="NO" richText="NO" verticallyResizable="YES" spellingCorrection="YES" smartInsertDelete="YES" id="JDw-FW-A2o">
-                                                                <rect key="frame" x="0.0" y="0.0" width="392" height="100"/>
+                                                                <rect key="frame" x="0.0" y="0.0" width="377" height="100"/>
                                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                 <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                                                <size key="minSize" width="392" height="100"/>
+                                                                <size key="minSize" width="377" height="100"/>
                                                                 <size key="maxSize" width="450" height="10000000"/>
                                                                 <color key="insertionPointColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                                             </textView>
@@ -447,7 +448,7 @@
                                                         <autoresizingMask key="autoresizingMask"/>
                                                     </scroller>
                                                     <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="dbQ-aI-3eA">
-                                                        <rect key="frame" x="376" y="0.0" width="16" height="100"/>
+                                                        <rect key="frame" x="377" y="0.0" width="15" height="100"/>
                                                         <autoresizingMask key="autoresizingMask"/>
                                                     </scroller>
                                                 </scrollView>
@@ -710,7 +711,6 @@
                         <outlet property="allowFromLanMenuItem" destination="Vz8-7n-vx6" id="Fzz-EG-huC"/>
                         <outlet property="apiPortMenuItem" destination="hwG-qf-DeZ" id="d6K-i7-yCo"/>
                         <outlet property="autoStartMenuItem" destination="B1J-XB-BiZ" id="xaS-h5-qd0"/>
-                        <outlet property="checkForUpdateMenuItem" destination="p0T-J8-Emx" id="9BN-2j-QNB"/>
                         <outlet property="configSeparatorLine" destination="WzG-og-OyZ" id="hhn-AP-zKJ"/>
                         <outlet property="copyExportCommandExternalMenuItem" destination="7wl-vK-5JO" id="1Lu-Tu-FJy"/>
                         <outlet property="copyExportCommandMenuItem" destination="Jmb-PK-rMW" id="tiF-vV-Sqh"/>
@@ -938,7 +938,7 @@
                                     <menuItem title="Check Update" id="p0T-J8-Emx">
                                         <modifierMask key="keyEquivalentModifierMask"/>
                                         <connections>
-                                            <action selector="checkForUpdate:" target="Voe-Tx-rLC" id="y8T-Su-dgd"/>
+                                            <action selector="checkForUpdates:" target="fth-rt-saN" id="lpG-w8-ucv"/>
                                         </connections>
                                     </menuItem>
                                     <menuItem title="Log level" id="3Da-fL-Mzr">
@@ -1028,7 +1028,7 @@
                     </items>
                 </menu>
                 <customObject id="YLy-65-1bz" customClass="NSFontManager"/>
-                <customObject id="fth-rt-saN"/>
+                <customObject id="fth-rt-saN" customClass="SPUStandardUpdaterController"/>
                 <customObject id="Ady-hI-5gd" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
                 <userDefaultsController representsSharedInstance="YES" id="dwS-am-r7H"/>
             </objects>
@@ -1951,7 +1951,7 @@
                                                             <rect key="frame" x="103" y="-4" width="39" height="25"/>
                                                             <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" enabled="NO" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="qZF-t6-s4q">
                                                                 <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                                                                <font key="font" metaFont="menu"/>
+                                                                <font key="font" metaFont="message"/>
                                                                 <menu key="menu" id="XPC-Mb-vvl"/>
                                                             </popUpButtonCell>
                                                         </popUpButton>

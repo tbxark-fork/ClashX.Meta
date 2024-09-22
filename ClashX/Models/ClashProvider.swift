@@ -44,16 +44,16 @@ class ClashProvider: Codable {
     let proxies: [ClashProxy]
     let type: ProviderType
     let vehicleType: ProviderVehicleType
-    let updatedAt: String?
+	let updatedAt: Date?
 
     let subscriptionInfo: ClashProviderSubInfo?
 }
 
 class ClashProviderSubInfo: Codable {
-    let upload: Int
-    let download: Int
-    let total: Int
-    let expire: Int
+	let upload: Int64
+	let download: Int64
+	let total: Int64
+	let expire: Int
 
     private enum CodingKeys: String, CodingKey {
         case upload = "Upload",

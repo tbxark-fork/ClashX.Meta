@@ -1,5 +1,5 @@
 {
-  "originHash" : "04a3b3bc2bf53686240dbd5a590ed7d847103b4a63a3a4cb1892d2b9b92e3a52",
+  "originHash" : "8ca2b383ef3a419b80259396c281989a0b5151620017e615fd9f74e2a0dabf52",
   "pins" : [
     {
       "identity" : "alamofire",
@@ -8,15 +8,6 @@
       "state" : {
         "revision" : "f455c2975872ccd2d9c81594c658af65716e9b9a",
         "version" : "5.9.1"
-      }
-    },
-    {
-      "identity" : "clashx-dashboard",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/mrFq1/ClashX-Dashboard",
-      "state" : {
-        "branch" : "dev",
-        "revision" : "19da905b9261e7c47c5e36d697c466fc2fb76158"
       }
     },
     {
@@ -98,6 +89,15 @@
       "state" : {
         "revision" : "b06a8c8596e4c3e8e7788e08e720e3248563ce6a",
         "version" : "6.7.1"
+      }
+    },
+    {
+      "identity" : "sparkle",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sparkle-project/Sparkle",
+      "state" : {
+        "revision" : "0ef1ee0220239b3776f433314515fd849025673f",
+        "version" : "2.6.4"
       }
     },
     {

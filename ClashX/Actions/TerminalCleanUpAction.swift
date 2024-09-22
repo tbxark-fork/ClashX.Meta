@@ -21,7 +21,7 @@ enum TerminalConfirmAction {
 		ConfigManager.shared.restoreTunProxy = ConfigManager.shared.isTunModeVariable.value
 
 		PrivilegedHelperManager.shared.helper()?.stopMeta()
-		PrivilegedHelperManager.shared.helper()?.updateTun(state: false)
+		PrivilegedHelperManager.shared.helper()?.updateTun(state: false, dns: ConfigManager.metaTunDNS)
 		
 		let path = Paths.tempPath() + "/cacheConfigs"
 		try? FileManager.default.removeItem(atPath: path)
