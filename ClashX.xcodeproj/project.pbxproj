@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		0106179F2AF38EFA005C7877 /* Command.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49FEC6682AD9369C00BAD9F5 /* Command.swift */; };
 		0162E74F2864B819007218A6 /* MetaTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0162E74E2864B819007218A6 /* MetaTask.swift */; };
+		0197255A2CA15D6400C14E49 /* UserNotificationCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 019725592CA15D6400C14E49 /* UserNotificationCenter.swift */; };
+		0197255C2CA15FC600C14E49 /* NSWorkspace+openFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0197255B2CA15FC600C14E49 /* NSWorkspace+openFile.swift */; };
 		019A239628657A7A00AE5698 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 019A239528657A7A00AE5698 /* main.swift */; };
 		01BC9ABE2928EB5A00F9B177 /* MetaDNS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BC9ABD2928E5C600F9B177 /* MetaDNS.swift */; };
 		01BCDAAC2C9ECB3A0028FA94 /* DSFSparkline in Frameworks */ = {isa = PBXBuildFile; productRef = 01BCDAAB2C9ECB3A0028FA94 /* DSFSparkline */; };
@@ -122,7 +124,6 @@
 		01F336082AD10D0B0048AF77 /* ProxyGroupMenuItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49D176AA23575BB20093DD7B /* ProxyGroupMenuItemView.swift */; };
 		01F336092AD10D0B0048AF77 /* PrivilegedHelperManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B4575C244F4A2A00463C39 /* PrivilegedHelperManager.swift */; };
 		01F3360A2AD10D0B0048AF77 /* PrivilegedHelperManager+Legacy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B4575E244FD4D100463C39 /* PrivilegedHelperManager+Legacy.swift */; };
-		01F3360B2AD10D0B0048AF77 /* NSUserNotificationCenter+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4966E9E22118153A00A391FB /* NSUserNotificationCenter+Extension.swift */; };
 		01F3360C2AD10D0B0048AF77 /* NSAlert+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9E754D1239CC28D00CEE7CC /* NSAlert+Extension.swift */; };
 		01F3360D2AD10D0B0048AF77 /* ClashWebViewContoller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 499976C721359F0400E7BF83 /* ClashWebViewContoller.swift */; };
 		01F3360E2AD10D0B0048AF77 /* ProxyGroupSpeedTestMenuItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49D176A8235614340093DD7B /* ProxyGroupSpeedTestMenuItem.swift */; };
@@ -219,6 +220,8 @@
 		016BEAAF29D80102001586C5 /* AlphaMetaDownloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlphaMetaDownloader.swift; sourceTree = "<group>"; };
 		018F88F8286DD0CB004DD0F7 /* DualTitleMenuItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DualTitleMenuItem.swift; sourceTree = "<group>"; };
 		01943258287D19BC008CC51A /* ClashRuleProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClashRuleProvider.swift; sourceTree = "<group>"; };
+		019725592CA15D6400C14E49 /* UserNotificationCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserNotificationCenter.swift; sourceTree = "<group>"; };
+		0197255B2CA15FC600C14E49 /* NSWorkspace+openFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSWorkspace+openFile.swift"; sourceTree = "<group>"; };
 		019A239528657A7A00AE5698 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		01B009AC2854533200B93618 /* geoip.dat.gz */ = {isa = PBXFileReference; lastKnownFileType = archive.gzip; path = geoip.dat.gz; sourceTree = "<group>"; };
 		01B009AD2854533300B93618 /* geosite.dat.gz */ = {isa = PBXFileReference; lastKnownFileType = archive.gzip; path = geosite.dat.gz; sourceTree = "<group>"; };
@@ -299,7 +302,6 @@
 		495A44D220D267D000888A0A /* LaunchAtLogin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLogin.swift; sourceTree = "<group>"; };
 		495BFB8721919B9800C8779D /* RemoteConfigManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteConfigManager.swift; sourceTree = "<group>"; };
 		496322212AA5D89E00854231 /* UpdateExternalResourceAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateExternalResourceAction.swift; sourceTree = "<group>"; };
-		4966E9E22118153A00A391FB /* NSUserNotificationCenter+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSUserNotificationCenter+Extension.swift"; sourceTree = "<group>"; };
 		496BDEDF21196F1E00C5207F /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		496C16462A3418C80052064A /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Main.strings"; sourceTree = "<group>"; };
 		496C16472A3418C80052064A /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
@@ -572,7 +574,6 @@
 			isa = PBXGroup;
 			children = (
 				499A486422EEA3FC00F6C675 /* Array+Safe.swift */,
-				4966E9E22118153A00A391FB /* NSUserNotificationCenter+Extension.swift */,
 				499A485B22ED793C00F6C675 /* NSView+Nib.swift */,
 				499A485D22ED9B7C00F6C675 /* NSTableView+Reload.swift */,
 				4982F51E2344A216008804B0 /* Cgo+Convert.swift */,
@@ -582,6 +583,8 @@
 				F9E8F34523A12B89002DE5E8 /* String+Encode.swift */,
 				F939724D23A4DB0600FE5A3F /* DateFormatter+.swift */,
 				01E33AB129B5BF4200FD1006 /* NSColor+Extension.swift */,
+				019725592CA15D6400C14E49 /* UserNotificationCenter.swift */,
+				0197255B2CA15FC600C14E49 /* NSWorkspace+openFile.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -929,7 +932,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 1030;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 1600;
 				ORGANIZATIONNAME = west2online;
 				TargetAttributes = {
 					F9A7C0682306E874007163C7 = {
@@ -1043,6 +1046,7 @@
 				01F335EF2AD10D0B0048AF77 /* RemoteConfigUpdateIntervalSettingView.swift in Sources */,
 				01F335F02AD10D0B0048AF77 /* AppDelegate+..swift in Sources */,
 				01F335F12AD10D0B0048AF77 /* NSView+Nib.swift in Sources */,
+				0197255C2CA15FC600C14E49 /* NSWorkspace+openFile.swift in Sources */,
 				01F335F22AD10D0B0048AF77 /* ProxyDelayHistoryMenu.swift in Sources */,
 				01F335F32AD10D0B0048AF77 /* NSColor+Extension.swift in Sources */,
 				01F335F42AD10D0B0048AF77 /* ClashConfig.swift in Sources */,
@@ -1059,6 +1063,7 @@
 				01F335FF2AD10D0B0048AF77 /* Array+Safe.swift in Sources */,
 				01F336002AD10D0B0048AF77 /* SavedProxyModel.swift in Sources */,
 				01F336012AD10D0B0048AF77 /* NSTextField+Vibrancy.swift in Sources */,
+				0197255A2CA15D6400C14E49 /* UserNotificationCenter.swift in Sources */,
 				01F336022AD10D0B0048AF77 /* SSIDSuspendTool.swift in Sources */,
 				01FBC6312B9C2B0800810BFF /* ClashProcess.swift in Sources */,
 				01F336032AD10D0B0048AF77 /* ProxyGroupMenu.swift in Sources */,
@@ -1069,7 +1074,6 @@
 				01F336082AD10D0B0048AF77 /* ProxyGroupMenuItemView.swift in Sources */,
 				01F336092AD10D0B0048AF77 /* PrivilegedHelperManager.swift in Sources */,
 				01F3360A2AD10D0B0048AF77 /* PrivilegedHelperManager+Legacy.swift in Sources */,
-				01F3360B2AD10D0B0048AF77 /* NSUserNotificationCenter+Extension.swift in Sources */,
 				01F3360C2AD10D0B0048AF77 /* NSAlert+Extension.swift in Sources */,
 				01F3360D2AD10D0B0048AF77 /* ClashWebViewContoller.swift in Sources */,
 				01F3360E2AD10D0B0048AF77 /* ProxyGroupSpeedTestMenuItem.swift in Sources */,
@@ -1281,6 +1285,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -1344,6 +1349,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;

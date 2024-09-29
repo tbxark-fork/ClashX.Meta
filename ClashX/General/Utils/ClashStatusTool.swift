@@ -22,7 +22,7 @@ class ClashStatusTool {
             DispatchQueue.main.async {
                 let ret = alert.runModal()
                 if ret == .alertSecondButtonReturn {
-                    NSWorkspace.shared.openFile(Paths.localConfigPath(for: "config"))
+                    NSWorkspace.shared.openFilePath(Paths.localConfigPath(for: "config"))
                 }
                 NSApp.terminate(nil)
             }

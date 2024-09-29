@@ -29,10 +29,8 @@ class ConfigFileManager {
             }
             for event in events {
                 if event.flags.contains(.ItemModified) || event.flags.contains(.ItemRenamed) {
-                    NSUserNotificationCenter.default
-                        .postConfigFileChangeDetectionNotice()
-                    NotificationCenter.default
-                        .post(Notification(name: .configFileChange))
+					UserNotificationCenter.shared.postConfigFileChangeDetectionNotice()
+					NotificationCenter.default.post(Notification(name: .configFileChange))
                     break
                 }
             }

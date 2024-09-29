@@ -30,9 +30,7 @@ class SystemProxyManager: NSObject {
         Logger.log("saveProxy", level: .debug)
         helper?.getCurrentProxySetting { [weak self] info in
             Logger.log("saveProxy done", level: .debug)
-            if let info = info as? [String: Any] {
-                self?.savedProxyInfo = info
-            }
+			self?.savedProxyInfo = info
         }
     }
 

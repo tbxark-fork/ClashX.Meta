@@ -35,7 +35,6 @@ class AboutViewController: NSViewController {
 
         let version = AppVersionUtil.currentVersion
         let build = AppVersionUtil.currentBuild
-        let isBeta = AppVersionUtil.isBeta ? " Beta" : ""
 
         versionLabel.stringValue = "Version: \(version) (\(build))"
         coreVersionLabel.stringValue = "Meta Core: \(clashCoreVersion)"

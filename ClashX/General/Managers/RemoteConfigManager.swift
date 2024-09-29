@@ -112,8 +112,7 @@ class RemoteConfigManager {
                     if let error = error {
                         // Fail
                         if showNotification {
-                            NSUserNotificationCenter.default
-                                .post(title: NSLocalizedString("Remote Config Update Fail", comment: ""),
+							UserNotificationCenter.shared.post(title: NSLocalizedString("Remote Config Update Fail", comment: ""),
                                       info: "\(config.name): \(error)")
                         }
 
@@ -121,8 +120,7 @@ class RemoteConfigManager {
                         // Success
                         if showNotification {
                             let info = "\(config.name): \(NSLocalizedString("Succeed!", comment: ""))"
-                            NSUserNotificationCenter.default
-                                .post(title: NSLocalizedString("Remote Config Update", comment: ""), info: info)
+							UserNotificationCenter.shared.post(title: NSLocalizedString("Remote Config Update", comment: ""), info: info)
                         }
                         AppDelegate.shared.updateConfig(showNotification: false)
                     }

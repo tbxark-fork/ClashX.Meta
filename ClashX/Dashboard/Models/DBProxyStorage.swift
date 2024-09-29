@@ -99,7 +99,7 @@ class DBProxy: ObservableObject {
 	}
 	
 	static func delayColor(_ delay: Int) -> Color {
-		let httpsTest = true
+		let httpsTest = ConfigManager.shared.benchMarkUrl.hasPrefix("https://")
 		
 		switch delay {
 		case 0:

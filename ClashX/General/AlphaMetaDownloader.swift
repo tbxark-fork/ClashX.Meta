@@ -7,7 +7,6 @@
 
 import Cocoa
 import Alamofire
-import PromiseKit
 
 class AlphaMetaDownloader: NSObject {
 
@@ -76,92 +75,77 @@ class AlphaMetaDownloader: NSObject {
 		return identifier
 	}
 
-	static func alphaAsset() -> Promise<ReleasesResp.Asset> {
-		Promise { resolver in
-			let assetName = assetName()
-			AF.request("https://api.github.com/repos/MetaCubeX/mihomo/releases/tags/Prerelease-Alpha").responseDecodable(of: ReleasesResp.self) {
-				guard let assets = $0.value?.assets else {
-					resolver.reject(errors.downloadFailed)
-					return
-				}
-				
-				guard let assetName,
-					  let asset = assets.first(where: {
-						  guard $0.state == "uploaded", $0.contentType == "application/gzip" else { return false }
-						  
-						  let names = $0.name.split(separator: "-").map(String.init)
-						  guard names.count > 4,
-								names[0] == "mihomo",
-								names[1] == "darwin",
-								names[2] == assetName,
-								names[3] == "alpha" else { return false }
-								
-						  return true
-					  }) else {
-					resolver.reject(errors.decodeReleaseInfoFailed)
-					return
-				}
-				resolver.fulfill(asset)
-			}
+	static func alphaAsset() async throws -> ReleasesResp.Asset {
+		let resp = try? await AF.request("https://api.github.com/repos/MetaCubeX/mihomo/releases/tags/Prerelease-Alpha").serializingDecodable(ReleasesResp.self).value
+		
+		guard let resp else {
+			throw errors.downloadFailed
+		}
+		
+		let assets = resp.assets
+		
+		guard let assetName = assetName(),
+			  let asset = assets.first(where: {
+				  guard $0.state == "uploaded", $0.contentType == "application/gzip" else { return false }
+				  
+				  let names = $0.name.split(separator: "-").map(String.init)
+				  guard names.count > 4,
+						names[0] == "mihomo",
+						names[1] == "darwin",
+						names[2] == assetName,
+						names[3] == "alpha" else { return false }
+						
+				  return true
+			  }) else {
+			throw errors.decodeReleaseInfoFailed
+		}
+		
+		return asset
+	}
+
+	static func checkVersion(_ asset: ReleasesResp.Asset) throws -> ReleasesResp.Asset {
+		guard let path = Paths.alphaCorePath()?.path else {
+			throw errors.unknownError
+		}
+		if let v = AppDelegate.shared.clashProcess.verifyCoreFile(path),
+		   asset.name.contains(v.version) {
+			throw errors.notFoundUpdate
+		}
+		return asset
+	}
+
+	static func downloadCore(_ asset: ReleasesResp.Asset) async throws -> Data {
+		let fm = FileManager.default
+		let data = try? await AF.download(asset.downloadUrl).serializingData().value
+
+		if let data {
+			return data
+		} else {
+			throw errors.downloadFailed
 		}
 	}
 
-	static func checkVersion(_ asset: ReleasesResp.Asset) -> Promise<ReleasesResp.Asset> {
-		Promise { resolver in
-			guard let path = Paths.alphaCorePath()?.path,
-				  let ad = NSApplication.shared.delegate as? AppDelegate else {
-				resolver.reject(errors.unknownError)
-				return
-			}
-			if let v = ad.clashProcess.verifyCoreFile(path),
-			   asset.name.contains(v.version) {
-				resolver.reject(errors.notFoundUpdate)
-			}
-			resolver.fulfill(asset)
+	static func replaceCore(_ gzData: Data) throws -> String {
+		let fm = FileManager.default
+
+		guard let helperURL = Paths.alphaCorePath() else {
+			throw errors.unknownError
 		}
-	}
 
-	static func downloadCore(_ asset: ReleasesResp.Asset) -> Promise<Data> {
-		Promise { resolver in
-			let fm = FileManager.default
-			AF.download(asset.downloadUrl).response {
-				guard let gzPath = $0.fileURL?.path,
-					  let contentData = fm.contents(atPath: gzPath)
-				else {
-					resolver.reject(errors.downloadFailed)
-					return
-				}
-				resolver.fulfill(contentData)
-			}
+		try fm.createDirectory(at: helperURL.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+
+		let cachePath = Paths.tempPath().appending("/\(UUID().uuidString).newcore")
+		try gzData.gunzipped().write(to: .init(fileURLWithPath: cachePath))
+		
+		Logger.log("save alpha core in \(cachePath)")
+
+		guard let version = AppDelegate.shared.clashProcess.verifyCoreFile(cachePath)?.version else {
+			throw errors.testFailed
 		}
-	}
 
-	static func replaceCore(_ gzData: Data) -> Promise<String> {
-		Promise { resolver in
-			let fm = FileManager.default
+		try? fm.removeItem(at: helperURL)
+		try fm.moveItem(atPath: cachePath, toPath: helperURL.path)
 
-			guard let helperURL = Paths.alphaCorePath(),
-				  let ad = NSApplication.shared.delegate as? AppDelegate else {
-				resolver.reject(errors.unknownError)
-				return
-			}
-
-			try fm.createDirectory(at: helperURL.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
-
-			let cachePath = Paths.tempPath().appending("/\(UUID().uuidString).newcore")
-			try gzData.gunzipped().write(to: .init(fileURLWithPath: cachePath))
-			
-			Logger.log("save alpha core in \(cachePath)")
-
-			guard let version = ad.clashProcess.verifyCoreFile(cachePath)?.version else {
-				resolver.reject(errors.testFailed)
-				return
-			}
-
-			try? fm.removeItem(at: helperURL)
-			try fm.moveItem(atPath: cachePath, toPath: helperURL.path)
-
-			resolver.fulfill(version)
-		}
+		return version
 	}
 }

@@ -49,6 +49,6 @@ enum UpdateExternalResourceAction {
         if !fails.isEmpty {
             info.append(String(format: NSLocalizedString("fails: %@", comment: ""), fails.joined(separator: " ")))
         }
-        NSUserNotificationCenter.default.post(title: NSLocalizedString("Update external resource complete", comment: ""), info: info)
+		UserNotificationCenter.shared.post(title: NSLocalizedString("Update external resource complete", comment: ""), info: info)
     }
 }

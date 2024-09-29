@@ -107,6 +107,7 @@ class ApiRequest {
 				case let .success(ver):
 					completeHandler(ver)
 				case let .failure(err):
+					Logger.log("Request Version failed, \(err)", level: .error)
 					completeHandler(nil)
 				}
 			}
@@ -120,7 +121,7 @@ class ApiRequest {
                 completeHandler(config)
             case let .failure(err):
                 Logger.log(err.localizedDescription)
-                NSUserNotificationCenter.default.post(title: "Error", info: err.localizedDescription)
+				UserNotificationCenter.shared.post(title: "Error", info: err.localizedDescription)
             }
         }
     }
@@ -153,14 +154,13 @@ class ApiRequest {
 
     static func requestConfigUpdate(configPath: String, callback: @escaping ((ErrorString?) -> Void)) {
         let placeHolderErrorDesp = "Error occoured, Please try to fix it by restarting ClashX. "
-
-        req("/configs", method: .put, parameters: ["Path": configPath], encoding: JSONEncoding.default).responseJSON { res in
+		req("/configs", method: .put, parameters: ["Path": configPath], encoding: JSONEncoding.default).responseData { res in
             if res.response?.statusCode == 204 {
                 ConfigManager.shared.isRunning = true
                 callback(nil)
             } else {
-                let errorJson = try? res.result.get()
-                let err = JSON(errorJson ?? "")["message"].string ?? placeHolderErrorDesp
+				let errorData = try? res.result.get()
+                let err = JSON(errorData ?? Data())["message"].string ?? placeHolderErrorDesp
                 Logger.log(err)
                 callback(err)
             }
@@ -305,9 +305,6 @@ class ApiRequest {
     static func getRules(completeHandler: @escaping ([ClashRule]) -> Void) {
         req("/rules").responseData { res in
             guard let data = try? res.result.get() else { return }
-
-            ClashRuleProviderResp.init()
-
             let rule = ClashRuleResponse.fromData(data)
             completeHandler(rule.rules ?? [])
         }

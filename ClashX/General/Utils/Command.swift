@@ -26,7 +26,7 @@ struct Command {
 
         task.waitUntilExit()
         let outdata = outpipe.fileHandleForReading.readDataToEndOfFile()
-        if var string = String(data: outdata, encoding: .utf8) {
+        if let string = String(data: outdata, encoding: .utf8) {
             output = string.trimmingCharacters(in: .newlines)
         }
         return output

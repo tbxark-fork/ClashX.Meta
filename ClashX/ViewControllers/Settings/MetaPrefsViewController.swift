@@ -86,23 +86,31 @@ class MetaPrefsViewController: NSViewController {
 		sender.isEnabled = false
 		updateProgressIndicator.isHidden = false
 		updateProgressIndicator.startAnimation(nil)
-		AlphaMetaDownloader.alphaAsset().then {
-			AlphaMetaDownloader.checkVersion($0)
-		}.then {
-			AlphaMetaDownloader.downloadCore($0)
-		}.then {
-			AlphaMetaDownloader.replaceCore($0)
-		}.done {
-			self.updateAlphaVersion($0)
-			let msg = NSLocalizedString("Version: ", comment: "") + $0
-			NSUserNotificationCenter.default.post(title: "Clash Meta Core", info: msg)
-		}.ensure {
-			sender.isEnabled = true
-			self.updateProgressIndicator.isHidden = true
-			self.updateProgressIndicator.stopAnimation(nil)
-		}.catch {
-			let error = $0 as? AlphaMetaDownloader.errors
-			NSUserNotificationCenter.default.post(title: "Clash Meta Core", info: error?.des() ?? "")
+		
+		let dl = AlphaMetaDownloader.self
+		
+		Task {
+			do {
+				let asset = try await dl.alphaAsset()
+				let ver = try dl.checkVersion(asset)
+				let data = try await dl.downloadCore(ver)
+				let newVer = try dl.replaceCore(data)
+				
+				await MainActor.run {
+					self.updateAlphaVersion(newVer)
+					let msg = NSLocalizedString("Version: ", comment: "") + newVer
+					UserNotificationCenter.shared.post(title: "Clash Meta Core", info: msg)
+				}
+			} catch {
+				let error = error as? AlphaMetaDownloader.errors
+				UserNotificationCenter.shared.post(title: "Clash Meta Core", info: error?.des() ?? "")
+			}
+			
+			await MainActor.run {
+				sender.isEnabled = true
+				self.updateProgressIndicator.isHidden = true
+				self.updateProgressIndicator.stopAnimation(nil)
+			}
 		}
 	}
 	

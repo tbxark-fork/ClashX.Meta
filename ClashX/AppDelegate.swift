@@ -368,7 +368,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .bind { _ in
                 let rawProxy = NetworkChangeNotifier.getRawProxySetting()
                 Logger.log("proxy changed to no clashX setting: \(rawProxy)", level: .warning)
-                NSUserNotificationCenter.default.postProxyChangeByOtherAppNotice()
+				UserNotificationCenter.shared.postProxyChangeByOtherAppNotice()
             }.disposed(by: disposeBag)
 
         NotificationCenter
@@ -474,9 +474,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 self.runAfterConfigReload?()
                 self.runAfterConfigReload = nil
                 if showNotification {
-                    NSUserNotificationCenter.default
-                        .post(title: NSLocalizedString("Reload Config Succeed", comment: ""),
-                              info: NSLocalizedString("Success", comment: ""))
+					UserNotificationCenter.shared.post(
+						title: NSLocalizedString("Reload Config Succeed", comment: ""),
+						info: NSLocalizedString("Success", comment: ""))
                 }
 
                 if let newConfigName = configName {
@@ -596,7 +596,7 @@ extension AppDelegate: ClashProcessDelegate {
 		ConfigManager.shared.isRunning = false
 		proxyModeMenuItem.isEnabled = false
 		
-		let unc = NSUserNotificationCenter.default
+		let unc = UserNotificationCenter.shared
 		switch error {
 		case StartMetaError.configMissing:
 			unc.postConfigErrorNotice(msg: "Can't find config.")
@@ -702,10 +702,10 @@ extension AppDelegate {
 
     @IBAction func actionSpeedTest(_ sender: Any) {
         if isSpeedTesting {
-            NSUserNotificationCenter.default.postSpeedTestingNotice()
+			UserNotificationCenter.shared.postSpeedTestingNotice()
             return
         }
-        NSUserNotificationCenter.default.postSpeedTestBeginNotice()
+		UserNotificationCenter.shared.postSpeedTestBeginNotice()
 
         isSpeedTesting = true
 
@@ -726,7 +726,7 @@ extension AppDelegate {
                 }
             }
             group.notify(queue: DispatchQueue.main) {
-                NSUserNotificationCenter.default.postSpeedTestFinishNotice()
+				UserNotificationCenter.shared.postSpeedTestFinishNotice()
                 self?.isSpeedTesting = false
             }
         }
@@ -769,7 +769,7 @@ extension AppDelegate: ApiRequestStreamDelegate {
 
 extension AppDelegate {
     @IBAction func actionShowLog(_ sender: Any?) {
-        NSWorkspace.shared.openFile(Logger.shared.logFilePath())
+        NSWorkspace.shared.openFilePath(Logger.shared.logFilePath())
     }
 }
 
@@ -785,7 +785,7 @@ extension AppDelegate {
                 }
             }
         } else {
-            NSWorkspace.shared.openFile(kConfigFolderPath)
+            NSWorkspace.shared.openFilePath(kConfigFolderPath)
         }
     }
 
@@ -842,7 +842,7 @@ extension AppDelegate {
 				   rule.payload == ClashMetaConfig.initRulePayload {
 					Logger.log("Update GEO Finished.")
 					self?.updateConfig(showNotification: false) { _ in
-						NSUserNotificationCenter.default.post(title: "Update GEO Databases Finished.", info: "")
+						UserNotificationCenter.shared.post(title: "Update GEO Databases Finished.", info: "")
 					}
 					
 					timer.invalidate()
@@ -854,7 +854,7 @@ extension AppDelegate {
 		}
 		
         ApiRequest.updateGEO { _ in
-            NSUserNotificationCenter.default.post(title: NSLocalizedString("Updating GEO Databases...", comment: ""), info: NSLocalizedString("Good luck to you  🙃", comment: ""))
+			UserNotificationCenter.shared.post(title: NSLocalizedString("Updating GEO Databases...", comment: ""), info: NSLocalizedString("Good luck to you  🙃", comment: ""))
 			
 			self.updateGeoTimer?.fire()
         }
@@ -862,7 +862,7 @@ extension AppDelegate {
 
     @IBAction func flushFakeipCache(_ sender: NSMenuItem) {
         ApiRequest.flushFakeipCache {
-            NSUserNotificationCenter.default.post(title: NSLocalizedString("Flush fake-ip cache", comment: ""), info: $0 ? "Success" : "Failed")
+			UserNotificationCenter.shared.post(title: NSLocalizedString("Flush fake-ip cache", comment: ""), info: $0 ? "Success" : "Failed")
         }
     }
 
@@ -916,7 +916,7 @@ extension AppDelegate {
                     UserDefaults.standard.removePersistentDomain(forName: domain)
                     UserDefaults.standard.synchronize()
                 }
-                NSUserNotificationCenter.default.post(title: "Fail on launch protect", info: "You origin Config has been renamed", notiOnly: false)
+				UserNotificationCenter.shared.post(title: "Fail on launch protect", info: "You origin Config has been renamed", notiOnly: false)
             }
             DispatchQueue.global().asyncAfter(deadline: DispatchTime.now() + Double(Int64(5 * Double(NSEC_PER_SEC))) / Double(NSEC_PER_SEC)) {
                 x.set(0, forKey: "launch_fail_times")

@@ -25,11 +25,11 @@ class DebugSettingViewController: NSViewController {
     }
 
     @IBAction func actionOpenLogFolder(_ sender: Any) {
-        NSWorkspace.shared.openFile(Logger.shared.logFolder())
+        NSWorkspace.shared.openFilePath(Logger.shared.logFolder())
     }
 
     @IBAction func actionOpenLocalConfig(_ sender: Any) {
-        NSWorkspace.shared.openFile(kConfigFolderPath)
+        NSWorkspace.shared.openFilePath(kConfigFolderPath)
     }
 
     @IBAction func actionOpenIcloudConfig(_ sender: Any) {

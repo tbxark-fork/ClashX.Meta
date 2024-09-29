@@ -409,7 +409,7 @@ extension MenuItemFactory {
         ApiRequest.updateAllProviders(for: type) {
             Logger.log("\(s) \($0) failed")
             let info = $0 == 0 ? "Success" : "\($0) failed"
-            NSUserNotificationCenter.default.post(title: s, info: info)
+			UserNotificationCenter.shared.post(title: s, info: info)
             recreateProxyMenuItems()
         }
     }
@@ -423,7 +423,7 @@ extension MenuItemFactory {
         ApiRequest.updateProvider(for: type, name: name) {
             let info = $0 ? "Success" : "Failed"
             Logger.log("\(log) info")
-            NSUserNotificationCenter.default.post(title: log, info: info)
+			UserNotificationCenter.shared.post(title: log, info: info)
             recreateProxyMenuItems()
         }
     }

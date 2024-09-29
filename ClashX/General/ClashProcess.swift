@@ -292,8 +292,7 @@ class ClashProcess: NSObject {
 		
 		UserDefaults.standard.set(true, forKey: udString)
 		
-		NSUserNotificationCenter.default
-			.postNotificationAlert(title: "Update Tips", info: info)
+		UserNotificationCenter.shared.postNotificationAlert(title: "Update Tips", info: info)
 	}
 	
 // MARK: launch path
