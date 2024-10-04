@@ -81,6 +81,7 @@ class ApiRequest {
     }
 
     weak var delegate: ApiRequestStreamDelegate?
+	weak var dashboardDelegate: ApiRequestStreamDelegate?
 
 	private var trafficWebSocket: WebSocket?
 	private var loggingWebSocket: WebSocket?
@@ -640,6 +641,7 @@ extension ApiRequest: WebSocketDelegate {
 			
 			ConfigManager.shared.isRunning = true
 			delegate?.streamStatusChanged()
+			dashboardDelegate?.streamStatusChanged()
 		case loggingWebSocket:
 			loggingWebSocketRetryDelay = 1
 			Logger.log("loggingWebSocket did Connect", level: .debug)
@@ -656,6 +658,7 @@ extension ApiRequest: WebSocketDelegate {
 		if (socket as? WebSocket) == trafficWebSocket {
 			ConfigManager.shared.isRunning = false
 			delegate?.streamStatusChanged()
+			dashboardDelegate?.streamStatusChanged()
 		}
 		
 		guard let err = error else {
@@ -711,10 +714,13 @@ extension ApiRequest: WebSocketDelegate {
 		switch webSocket {
 		case trafficWebSocket:
 			delegate?.didUpdateTraffic(up: json["up"].intValue, down: json["down"].intValue)
+			dashboardDelegate?.didUpdateTraffic(up: json["up"].intValue, down: json["down"].intValue)
 		case loggingWebSocket:
 			delegate?.didGetLog(log: json["payload"].stringValue, level: json["type"].string ?? "info")
+			dashboardDelegate?.didGetLog(log: json["payload"].stringValue, level: json["type"].string ?? "info")
 		case memoryWebSocket:
 			delegate?.didUpdateMemory(memory: json["inuse"].int64Value)
+			dashboardDelegate?.didUpdateMemory(memory: json["inuse"].int64Value)
 		default:
 			return
 		}

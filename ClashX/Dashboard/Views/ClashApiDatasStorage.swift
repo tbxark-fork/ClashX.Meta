@@ -16,8 +16,10 @@ class ClashApiDatasStorage: NSObject, ObservableObject {
 	@Published var connsStorage = ClashConnsStorage()
 	
 	func resetStreamApi() {
-		ApiRequest.shared.delegate = self
-		ApiRequest.shared.resetStreamApis()
+		ApiRequest.shared.dashboardDelegate = self
+		if ApiRequest.shared.delegate == nil {
+			ApiRequest.shared.resetStreamApis()
+		}
 	}
 }
 
