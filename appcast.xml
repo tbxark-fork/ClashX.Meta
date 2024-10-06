@@ -3,6 +3,20 @@
     <channel>
         <title>ClashX Meta</title>
         <item>
+            <title>v1.4.4</title>
+            <pubDate>Sun, 06 Oct 2024 12:06:51 +0000</pubDate>
+            <sparkle:version>554</sparkle:version>
+            <sparkle:shortVersionString>v1.4.4</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://raw.githubusercontent.com/MetaCubeX/clashX.meta/refs/heads/sparkle/ClashX%20Meta%20v1.4.4.zip" length="37532112" type="application/octet-stream" sparkle:edSignature="IWJZoBnjNQiKcsFmZOYE2LoJcBaCG70ZZ7FKfBegut8OgKijPUPF7UtntkRo9+02HotYIph1UeuVr3H/p3H2Bg=="/>
+            <sparkle:deltas>
+                <enclosure url="https://raw.githubusercontent.com/MetaCubeX/clashX.meta/refs/heads/sparkle/ClashX%20Meta554-551.delta" sparkle:deltaFrom="551" length="1701006" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="864560" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,en" sparkle:edSignature="4DP4MXCGDNwNq8hfsqYb3Z9aYk6KIlwaag0HEfxqkOqZKzSi2T69h/FP2Ikh84Z63RNKAC+Q4jup7VtgEWHXBw=="/>
+                <enclosure url="https://raw.githubusercontent.com/MetaCubeX/clashX.meta/refs/heads/sparkle/ClashX%20Meta554-549.delta" sparkle:deltaFrom="549" length="8037934" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="864560" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,en" sparkle:edSignature="+0chtX78Y/vEpixBvTpxrv/8WD+1L6wOptg7cmd/q2Q5cupIoiHGGLDfDR4P3fxG5TQ4pul1CjCQeRAoeQVjBg=="/>
+                <enclosure url="https://raw.githubusercontent.com/MetaCubeX/clashX.meta/refs/heads/sparkle/ClashX%20Meta554-541.delta" sparkle:deltaFrom="541" length="28115314" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="864560" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,en" sparkle:edSignature="xS0ZUYW1MBZq6nJo1cwkiIRyxT4QRZvcVCdhH8rGeUJ0m9rThVIyl3BCqGPn0wQ4DDBh0/gIPyaOYTWoWT3+BA=="/>
+                <enclosure url="https://raw.githubusercontent.com/MetaCubeX/clashX.meta/refs/heads/sparkle/ClashX%20Meta554-539.delta" sparkle:deltaFrom="539" length="28133978" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="864560" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,en" sparkle:edSignature="1V7V4p3H3cpQvik33y5kLEFbHQvo1x6xDCPrpIOCoXUsgrFTPTfynIWjoVY5hhbHd/7utmqM9k6Qvreq32YnAg=="/>
+            </sparkle:deltas>
+        </item>
+        <item>
             <title>v1.4.3</title>
             <pubDate>Fri, 04 Oct 2024 11:00:12 +0000</pubDate>
             <sparkle:version>551</sparkle:version>
@@ -25,17 +39,6 @@
             <sparkle:deltas>
                 <enclosure url="https://raw.githubusercontent.com/MetaCubeX/clashX.meta/refs/heads/sparkle/ClashX%20Meta549-541.delta" sparkle:deltaFrom="541" length="28309058" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="864560" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,en" sparkle:edSignature="T4jNgrm++TWghHTD+irDTMvyksFDbo2u7psOzXDxpeD8iESeF8UtRhKxNhweJej4kWtIPGuseK+eKsF16AglCw=="/>
                 <enclosure url="https://raw.githubusercontent.com/MetaCubeX/clashX.meta/refs/heads/sparkle/ClashX%20Meta549-539.delta" sparkle:deltaFrom="539" length="28290826" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="864560" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,en" sparkle:edSignature="TYPx00it2suDBT68gc3k/NWLrqob2a/8vEf7RCewk/HIB95TjV8jHVbSLzOK6tPvkK1wADm4+1Dnv27eP2IkBQ=="/>
-            </sparkle:deltas>
-        </item>
-        <item>
-            <title>v1.4.1</title>
-            <pubDate>Sun, 22 Sep 2024 13:21:48 +0000</pubDate>
-            <sparkle:version>541</sparkle:version>
-            <sparkle:shortVersionString>v1.4.1</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://raw.githubusercontent.com/MetaCubeX/clashX.meta/refs/heads/sparkle/ClashX%20Meta%20v1.4.1.zip" length="37420559" type="application/octet-stream" sparkle:edSignature="IIPFt6mvd2c6DkIM/KUZ1S2fb6Nr8Y/xpWZ+bcdTRGBylzRZssag39ZRGUGq1RsoyJbE1jEmAofthtaaDkXEBQ=="/>
-            <sparkle:deltas>
-                <enclosure url="https://raw.githubusercontent.com/MetaCubeX/clashX.meta/refs/heads/sparkle/ClashX%20Meta541-539.delta" sparkle:deltaFrom="539" length="176810" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="864560" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,en" sparkle:edSignature="H87qiFUgSZAT/0gAccfb9vMtjB5M+mx3JIMkSomQc/q5K+DeUI5Qx/q3fhjLjgq7RsD78XrZh5fpL+C61r4lCg=="/>
             </sparkle:deltas>
         </item>
     </channel>
