@@ -72,6 +72,13 @@ class DashboardViewContoller: NSViewController {
 		.info,
 		.debug
 	]
+    
+    enum LogFilter: String, CaseIterable {
+        case all = "All"
+        case rule = "Rule"
+        case dns = "DNS"
+        case others = "Others"
+    }
 	
 	private var sidebarItemObserver: NSObjectProtocol?
 	private var searchStringObserver: NSObjectProtocol?
@@ -109,6 +116,7 @@ class DashboardViewContoller: NSViewController {
 				items.append(.stopConnsItem)
 				items.append(.searchItem)
 			case .logs:
+                items.append(.logFilterItem)
 				items.append(.logLevelItem)
 				items.append(.searchItem)
 			}
@@ -187,6 +195,7 @@ extension NSToolbarItem.Identifier {
 	static let hideNamesItem = NSToolbarItem.Identifier("HideNamesItem")
 	static let stopConnsItem = NSToolbarItem.Identifier("StopConnsItem")
 	static let logLevelItem = NSToolbarItem.Identifier("LogLevelItem")
+    static let logFilterItem = NSToolbarItem.Identifier("logFilterItem")
 	static let searchItem = NSToolbarItem.Identifier("SearchItem")
 }
 
@@ -224,6 +233,14 @@ extension DashboardViewContoller: NSSearchFieldDelegate {
 		NotificationCenter.default.post(name: .logLevelChanged, object: nil, userInfo: ["level": level])
 	}
 	
+    
+    @objc func setLogFilter(_ sender: NSToolbarItemGroup) {
+        guard sender.selectedIndex < LogFilter.allCases.count, sender.selectedIndex >= 0 else { return }
+        let filter = LogFilter.allCases[sender.selectedIndex]
+        
+        NotificationCenter.default.post(name: .logFilterChanged, object: nil, userInfo: ["filter": filter])
+    }
+    
 }
 
 extension DashboardViewContoller: NSToolbarDelegate, NSToolbarItemValidation {
@@ -254,7 +271,23 @@ extension DashboardViewContoller: NSToolbarDelegate, NSToolbarItemValidation {
 			group.controlRepresentation = .collapsed
 			group.selectedIndex = levels.firstIndex(of: ConfigManager.selectLoggingApiLevel) ?? 0
 			
+            group.label = "Log Level"
+            
 			return group
+        case .logFilterItem:
+            let titles = LogFilter.allCases.map {
+                $0.rawValue
+            }
+            
+            let group = NSToolbarItemGroup(itemIdentifier: .logFilterItem, titles: titles, selectionMode: .selectOne, labels: titles, target: nil, action: #selector(setLogFilter(_:)))
+            
+            group.selectionMode = .selectOne
+            group.controlRepresentation = .collapsed
+            group.selectedIndex = 0
+            
+            group.label = "Log Filter"
+            
+            return group
 		case .hideNamesItem:
 			let item = NSToolbarItem(itemIdentifier: .hideNamesItem)
 			item.target = self
@@ -262,6 +295,9 @@ extension DashboardViewContoller: NSToolbarDelegate, NSToolbarItemValidation {
 			item.isBordered = true
 			item.tag = 0
 			item.image = NSImage(systemSymbolName: "wand.and.stars", accessibilityDescription: nil)
+            
+            item.label = "Hide Names"
+            
 			return item
 		case .stopConnsItem:
 			let item = NSToolbarItem(itemIdentifier: .stopConnsItem)
@@ -269,6 +305,9 @@ extension DashboardViewContoller: NSToolbarDelegate, NSToolbarItemValidation {
 			item.action = #selector(stopConns(_:))
 			item.isBordered = true
 			item.image = NSImage(systemSymbolName: "stop.circle.fill", accessibilityDescription: nil)
+            
+            item.label = "Stop All"
+            
 			return item
 		default:
 			break
@@ -284,6 +323,7 @@ extension DashboardViewContoller: NSToolbarDelegate, NSToolbarItemValidation {
 			.stopConnsItem,
 			.hideNamesItem,
 			.logLevelItem,
+            .logFilterItem,
 			.searchItem
 		]
 	}
@@ -294,6 +334,7 @@ extension DashboardViewContoller: NSToolbarDelegate, NSToolbarItemValidation {
 			.stopConnsItem,
 			.hideNamesItem,
 			.logLevelItem,
+            .logFilterItem,
 			.searchItem
 		]
 	}

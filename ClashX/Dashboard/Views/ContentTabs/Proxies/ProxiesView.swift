@@ -33,6 +33,7 @@ struct ProxiesView: View {
 			.listStyle(.plain)
 			EmptyView()
 		}
+        .background(Color("SwiftUI Colors/WindowBackgroundColor"))
 		.onReceive(NotificationCenter.default.publisher(for: .toolbarSearchString)) {
 			guard let string = $0.userInfo?["String"] as? String else { return }
 			searchString.string = string

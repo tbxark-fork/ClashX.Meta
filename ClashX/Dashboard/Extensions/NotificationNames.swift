@@ -14,4 +14,5 @@ extension NSNotification.Name {
 	static let stopConns = NSNotification.Name("StopConns")
 	static let hideNames = NSNotification.Name("HideNames")
 	static let logLevelChanged = NSNotification.Name("LogLevelChanged")
+    static let logFilterChanged = NSNotification.Name("LogFilterChanged")
 }

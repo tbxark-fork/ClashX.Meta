@@ -36,7 +36,7 @@ struct ProxyProviderInfoView: View {
 	var header: some View {
 		HStack() {
 			Text(hideProxyNames.hide
-				 ? String(provider.id.prefix(8))
+				 ? String(provider.id.hiddenID)
 					: provider.name)
 				.font(.system(size: 17))
 			Text(provider.vehicleType.rawValue)

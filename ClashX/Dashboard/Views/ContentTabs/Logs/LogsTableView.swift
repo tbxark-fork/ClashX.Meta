@@ -17,6 +17,7 @@ struct LogsTableView<Item: Hashable>: NSViewRepresentable {
 	
 	var data: [Item]
 	var filterString: String
+    var logFilter: DashboardViewContoller.LogFilter
 	
 	class NonRespondingScrollView: NSScrollView {
 		override var acceptsFirstResponder: Bool { false }
@@ -84,6 +85,29 @@ struct LogsTableView<Item: Hashable>: NSViewRepresentable {
 			"log",
 		]
 		
+        switch logFilter {
+        case .all:
+            break
+        case .rule:
+            re = re.filter {
+                $0.log.starts(with: "[Rule")
+                || $0.log.starts(with: "[TCP")
+                || $0.log.starts(with: "[UDP")
+            }
+        case .dns:
+            re = re.filter {
+                $0.log.starts(with: "[DNS")
+            }
+        case .others:
+            re = re.filter {
+                !$0.log.starts(with: "[DNS")
+                && !$0.log.starts(with: "[Rule")
+                && !$0.log.starts(with: "[TCP")
+                && !$0.log.starts(with: "[UDP")
+            }
+        }
+        
+        
 		re = re.filtered(filterString, for: filterKeys)
 		
 		return re

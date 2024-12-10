@@ -24,7 +24,7 @@ struct ProxyGroupRowView: View {
 		VStack(spacing: 2) {
 			HStack(alignment: .center) {
 				Text(hideProxyNames.hide
-					 ? String(proxyGroup.id.prefix(8))
+                     ? String(proxyGroup.id.hiddenID)
 					 : proxyGroup.name)
 					.font(.system(size: 15))
 				Spacer()
@@ -40,7 +40,7 @@ struct ProxyGroupRowView: View {
 				Spacer()
 				if let proxy = proxyGroup.currentProxy {
 					Text(hideProxyNames.hide
-						 ? String(proxy.id.prefix(8))
+						 ? String(proxy.id.hiddenID)
 						 : proxy.name)
 				}
 			}
@@ -50,4 +50,3 @@ struct ProxyGroupRowView: View {
 		.padding(EdgeInsets(top: 3, leading: 4, bottom: 3, trailing: 4))
 	}
 }
-

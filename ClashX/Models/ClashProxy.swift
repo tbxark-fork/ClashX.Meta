@@ -31,6 +31,7 @@ enum ClashProxyType: String, Codable, CaseIterable {
     case tuic = "Tuic"
 	case hysteria2 = "Hysteria2"
 	case ssh = "SSH"
+    case mieru = "mieru"
 	
     case pass = "Pass"
 

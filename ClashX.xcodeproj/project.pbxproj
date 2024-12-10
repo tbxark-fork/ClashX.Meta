@@ -443,8 +443,8 @@
 		01BCDAC72C9ECD010028FA94 /* Config */ = {
 			isa = PBXGroup;
 			children = (
-				01BCDAC52C9ECD010028FA94 /* ConfigItemView.swift */,
 				01BCDAC62C9ECD010028FA94 /* ConfigView.swift */,
+				01BCDAC52C9ECD010028FA94 /* ConfigItemView.swift */,
 			);
 			path = Config;
 			sourceTree = "<group>";
@@ -452,9 +452,9 @@
 		01BCDACB2C9ECD010028FA94 /* Connections */ = {
 			isa = PBXGroup;
 			children = (
-				01BCDAC82C9ECD010028FA94 /* Connections.swift */,
-				01BCDAC92C9ECD010028FA94 /* ConnectionsTableView.swift */,
 				01BCDACA2C9ECD010028FA94 /* ConnectionsView.swift */,
+				01BCDAC92C9ECD010028FA94 /* ConnectionsTableView.swift */,
+				01BCDAC82C9ECD010028FA94 /* Connections.swift */,
 			);
 			path = Connections;
 			sourceTree = "<group>";
@@ -462,8 +462,8 @@
 		01BCDACE2C9ECD010028FA94 /* Logs */ = {
 			isa = PBXGroup;
 			children = (
-				01BCDACC2C9ECD010028FA94 /* LogsTableView.swift */,
 				01BCDACD2C9ECD010028FA94 /* LogsView.swift */,
+				01BCDACC2C9ECD010028FA94 /* LogsTableView.swift */,
 			);
 			path = Logs;
 			sourceTree = "<group>";
@@ -471,8 +471,8 @@
 		01BCDAD22C9ECD010028FA94 /* Overview */ = {
 			isa = PBXGroup;
 			children = (
-				01BCDACF2C9ECD010028FA94 /* OverviewTopItemView.swift */,
 				01BCDAD02C9ECD010028FA94 /* OverviewView.swift */,
+				01BCDACF2C9ECD010028FA94 /* OverviewTopItemView.swift */,
 				01BCDAD12C9ECD010028FA94 /* TrafficGraphView.swift */,
 			);
 			path = Overview;
@@ -481,8 +481,8 @@
 		01BCDADA2C9ECD010028FA94 /* Providers */ = {
 			isa = PBXGroup;
 			children = (
-				01BCDAD42C9ECD010028FA94 /* ProviderRowView.swift */,
 				01BCDAD52C9ECD010028FA94 /* ProvidersView.swift */,
+				01BCDAD42C9ECD010028FA94 /* ProviderRowView.swift */,
 				01BCDAD62C9ECD010028FA94 /* ProxyProviderInfoView.swift */,
 				01BCDAD72C9ECD010028FA94 /* ProxyProvidersRowView.swift */,
 				01BCDAD82C9ECD010028FA94 /* RuleProvidersRowView.swift */,
@@ -506,8 +506,8 @@
 		01BCDAE22C9ECD010028FA94 /* Rules */ = {
 			isa = PBXGroup;
 			children = (
-				01BCDAE02C9ECD010028FA94 /* RuleItemView.swift */,
 				01BCDAE12C9ECD010028FA94 /* RulesView.swift */,
+				01BCDAE02C9ECD010028FA94 /* RuleItemView.swift */,
 			);
 			path = Rules;
 			sourceTree = "<group>";
@@ -515,13 +515,13 @@
 		01BCDAE32C9ECD010028FA94 /* ContentTabs */ = {
 			isa = PBXGroup;
 			children = (
-				01BCDAC72C9ECD010028FA94 /* Config */,
-				01BCDACB2C9ECD010028FA94 /* Connections */,
-				01BCDACE2C9ECD010028FA94 /* Logs */,
 				01BCDAD22C9ECD010028FA94 /* Overview */,
-				01BCDADA2C9ECD010028FA94 /* Providers */,
 				01BCDADF2C9ECD010028FA94 /* Proxies */,
+				01BCDADA2C9ECD010028FA94 /* Providers */,
 				01BCDAE22C9ECD010028FA94 /* Rules */,
+				01BCDACB2C9ECD010028FA94 /* Connections */,
+				01BCDAC72C9ECD010028FA94 /* Config */,
+				01BCDACE2C9ECD010028FA94 /* Logs */,
 				01BCDAD32C9ECD010028FA94 /* ProviderProxiesView.swift */,
 			);
 			path = ContentTabs;

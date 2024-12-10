@@ -15,7 +15,7 @@ struct RuleProviderView: View {
 		VStack(alignment: .leading) {
 			HStack {
 				Text(provider.name)
-					.font(.title)
+					.font(.title2)
 					.fontWeight(.medium)
 				Text(provider.type)
 				Text(provider.behavior)

@@ -15,11 +15,11 @@ struct ProvidersView: View {
 	@StateObject private var hideProxyNames = HideProxyNames()
 	
     var body: some View {
-        
 		NavigationView {
 			listView
 			EmptyView()
 		}
+        .background(Color("SwiftUI Colors/WindowBackgroundColor"))
 		.onReceive(NotificationCenter.default.publisher(for: .toolbarSearchString)) {
 			guard let string = $0.userInfo?["String"] as? String else { return }
 			searchString.string = string

@@ -73,7 +73,7 @@ struct ProxyGroupView: View {
 	var proxyInfoView: some View {
 		HStack() {
 			Text(hideProxyNames.hide
-				 ? String(proxyGroup.id.prefix(8))
+				 ? String(proxyGroup.id.hiddenID)
 					: proxyGroup.name)
 				.font(.system(size: 17))
 			Text(proxyGroup.type.rawValue)

@@ -22,7 +22,7 @@ struct ConfigItemView<Content: View>: View {
 			HStack(content: content)
 		}
 		.padding(EdgeInsets(top: 10, leading: 13, bottom: 10, trailing: 13))
-		.background(Color(compatible: .textBackgroundColor))
+        .background(Color("SwiftUI Colors/ContentBackgroundColor"))
 		.cornerRadius(10)
 	}
 }

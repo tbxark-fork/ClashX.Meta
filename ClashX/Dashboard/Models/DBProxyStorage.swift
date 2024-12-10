@@ -103,7 +103,7 @@ class DBProxy: ObservableObject {
 		
 		switch delay {
 		case 0:
-			return .gray
+            return .red
 		case ..<200 where !httpsTest:
 			return .green
 		case ..<800 where httpsTest:
@@ -118,3 +118,19 @@ class DBProxy: ObservableObject {
 	}
 }
 
+
+extension String {
+    var hiddenID: String {
+        guard UUID(uuidString: self) != nil else { return "" }
+        let components = split(separator: "-").map(String.init)
+        guard components.count == 5 else { return "" }
+        
+        let re = components[0].prefix(2)
+        + components[1].prefix(1)
+        + components[2].prefix(1)
+        + components[3].prefix(1)
+        + components[4].suffix(3)
+        
+        return String(re)
+    }
+}

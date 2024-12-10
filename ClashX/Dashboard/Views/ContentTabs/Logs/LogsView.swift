@@ -11,11 +11,17 @@ struct LogsView: View {
 	@EnvironmentObject var logStorage: ClashLogStorage
 	
 	@State var searchString: String = ""
+    @State var logFilter = DashboardViewContoller.LogFilter.all
+    
 	@State var logLevel = ConfigManager.selectLoggingApiLevel
 	
     var body: some View {
 		Group {
-			LogsTableView(data: logStorage.logs.reversed(), filterString: searchString)
+			LogsTableView(
+                data: logStorage.logs.reversed(),
+                filterString: searchString,
+                logFilter: logFilter
+            )
 		}
 		.onAppear {
 			guard let s = ToolbarStore.shared.searchStrings["logs"] else { return }
@@ -33,6 +39,10 @@ struct LogsView: View {
 			guard let level = $0.userInfo?["level"] as? ClashLogLevel else { return }
 			logLevelChanged(level)
 		}
+        .onReceive(NotificationCenter.default.publisher(for: .logFilterChanged)) {
+            guard let level = $0.userInfo?["filter"] as? DashboardViewContoller.LogFilter else { return }
+            logFilterChanged(level)
+        }
     }
 	
 	func logLevelChanged(_ level: ClashLogLevel) {
@@ -40,6 +50,10 @@ struct LogsView: View {
 		ConfigManager.selectLoggingApiLevel = level
 		ApiRequest.shared.resetLogStreamApi()
 	}
+    
+    func logFilterChanged(_ filter: DashboardViewContoller.LogFilter) {
+        logFilter = filter
+    }
 }
 
 struct LogsView_Previews: PreviewProvider {

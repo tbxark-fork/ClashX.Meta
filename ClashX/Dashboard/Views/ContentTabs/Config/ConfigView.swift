@@ -46,6 +46,7 @@ struct ConfigView: View {
 			content2
 				.padding()
 		}
+        .background(Color("SwiftUI Colors/WindowBackgroundColor"))
 		.disabled(!configInited)
 		.onAppear {
 			configInited = false

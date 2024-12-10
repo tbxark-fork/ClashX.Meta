@@ -72,6 +72,7 @@ struct OverviewView: View {
 				self.version = $0?.version ?? ""
 			}
 		}
+        .background(Color("SwiftUI Colors/WindowBackgroundColor"))
     }
 	
 	func updateColumnCount(_ width: Double) {

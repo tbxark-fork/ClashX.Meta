@@ -23,7 +23,7 @@ struct ProviderRowView: View {
 		VStack(spacing: 2) {
 			HStack(alignment: .center) {
 				Text(hideProxyNames.hide
-					 ? String(proxyProvider.id.prefix(8))
+					 ? String(proxyProvider.id.hiddenID)
 					 : proxyProvider.name)
 					.font(.system(size: 15))
 				Spacer()

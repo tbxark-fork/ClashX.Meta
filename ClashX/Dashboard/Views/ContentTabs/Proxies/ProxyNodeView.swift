@@ -29,7 +29,7 @@ struct ProxyNodeView: View {
 		VStack {
 			HStack(alignment: .center) {
 				Text(hideProxyNames.hide
-					 ? String(proxy.id.prefix(8))
+					 ? String(proxy.id.hiddenID)
 					 : proxy.name)
 					.truncationMode(.tail)
 					.lineLimit(1)
@@ -62,7 +62,7 @@ struct ProxyNodeView: View {
 			guard selectable else { return }
 			mouseOver = $0
 		}
-		.frame(height: 36)
+		.frame(height: 34)
 		.padding(12)
 		.overlay(
 			RoundedRectangle(cornerRadius: 6)
@@ -78,7 +78,7 @@ struct ProxyNodeView: View {
 				.padding(1)
 		)
 		
-		.background(now == proxy.name ? Color.accentColor.opacity(0.7) : Color(compatible: .textBackgroundColor))
+		.background(now == proxy.name ? Color.accentColor.opacity(0.7) : Color("SwiftUI Colors/ContentBackgroundColor"))
 	}
 }
 
