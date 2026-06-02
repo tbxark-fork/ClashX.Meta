@@ -21,7 +21,9 @@ class DebugSettingViewController: NSViewController {
     }
 
     @IBAction func actionUnInstallProxyHelper(_ sender: Any) {
-        PrivilegedHelperManager.shared.removeInstallHelper()
+        Task {
+            await PrivilegedHelperManager.shared.removeInstallHelper()
+        }
     }
 
     @IBAction func actionOpenLogFolder(_ sender: Any) {
@@ -34,11 +36,9 @@ class DebugSettingViewController: NSViewController {
 
     @IBAction func actionOpenIcloudConfig(_ sender: Any) {
         if ICloudManager.shared.icloudAvailable {
-            ICloudManager.shared.getUrl {
-                url in
-                if let url = url {
-                    NSWorkspace.shared.open(url)
-                }
+            Task { @MainActor in
+                guard let url = await ICloudManager.shared.getUrl() else { return }
+                NSWorkspace.shared.open(url)
             }
         } else {
             NSAlert.alert(with: NSLocalizedString("iCloud not available", comment: ""))

@@ -9,11 +9,28 @@ import Cocoa
 import os.log
 
 class ProxyConfigHelper: NSObject, NSXPCListenerDelegate {
+	private typealias RequestHandler = @Sendable (ProxyConfigHelperRequestEnvelope) async throws -> Data
+
+	private struct MessageHandlerStore {
+		var handlers: [String: RequestHandler] = [:]
+
+		mutating func register<Message: ProxyConfigHelperXPCMessage>(
+			_: Message.Type,
+			handler: @Sendable @escaping (Message) async throws -> Message.Response
+		) {
+			handlers[Message.kind] = { envelope in
+				let message = try ProxyConfigHelperXPCCodec.decodeMessage(Message.self, from: envelope)
+				let response = try await handler(message)
+				return try ProxyConfigHelperXPCCodec.encodeResponse(response, for: Message.self)
+			}
+		}
+	}
 	
 	private var listener: NSXPCListener
 	private var connections = [NSXPCConnection]()
 	private var shouldQuitCheckInterval = 2.0
 	private var shouldQuit = false
+	private lazy var requestHandlers = makeRequestHandlers()
 	
 	private let metaTask = MetaTask()
 	private let metaDNS = MetaDNS()
@@ -73,81 +90,161 @@ class ProxyConfigHelper: NSObject, NSXPCListenerDelegate {
 }
 
 extension ProxyConfigHelper: ProxyConfigRemoteProcessProtocol {
-	func getVersion(reply: @escaping (String) -> Void) {
-		let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
-		reply(version)
+	func sendRequest(_ request: Data, reply: @escaping (Data?, NSString?) -> Void) {
+		Task {
+			do {
+				let response = try await handleRequest(request)
+				reply(response, nil)
+			} catch {
+				let message = error.localizedDescription
+				os_log("ProxyConfigHelper request failed: %{public}@", type: .error, message)
+				reply(nil, message as NSString)
+			}
+		}
+	}
+}
+
+private extension ProxyConfigHelper {
+	private func makeRequestHandlers() -> [String: RequestHandler] {
+		var store = MessageHandlerStore()
+
+		store.register(ProxyConfigHelperMessages.GetVersion.self) { [unowned self] _ in
+            await helperVersion()
+		}
+
+		store.register(ProxyConfigHelperMessages.GetUsedPorts.self) { [unowned self] _ in
+			await getUsedPorts()
+		}
+
+		store.register(ProxyConfigHelperMessages.StartMeta.self) { [unowned self] message in
+			await startMeta(message)
+		}
+
+		store.register(ProxyConfigHelperMessages.StopMeta.self) { [unowned self] _ in
+			await stopMeta()
+			return ProxyConfigHelperExplicitSuccess()
+		}
+
+		store.register(ProxyConfigHelperMessages.TerminateExistingMeta.self) { [unowned self] _ in
+			return await terminateExistingMeta()
+		}
+
+		store.register(ProxyConfigHelperMessages.UpdateTun.self) { [unowned self] message in
+			await updateTun(message)
+			return ProxyConfigHelperExplicitSuccess()
+		}
+
+		store.register(ProxyConfigHelperMessages.FlushDnsCache.self) { [unowned self] _ in
+			await flushDnsCache()
+			return ProxyConfigHelperExplicitSuccess()
+		}
+
+		store.register(ProxyConfigHelperMessages.EnableProxy.self) { [unowned self] message in
+			await enableProxy(message)
+		}
+
+		store.register(ProxyConfigHelperMessages.DisableProxy.self) { [unowned self] message in
+			await disableProxy(message)
+		}
+
+		store.register(ProxyConfigHelperMessages.RestoreProxy.self) { [unowned self] message in
+			try await restoreProxy(message)
+		}
+
+		store.register(ProxyConfigHelperMessages.GetCurrentProxySetting.self) { [unowned self] _ in
+			try await currentProxySetting()
+		}
+
+		return store.handlers
 	}
 
-	
-	func enableProxy(port: Int, socksPort: Int, pac: String?, filterInterface: Bool, ignoreList: [String], reply: @escaping (String?) -> Void) {
-		DispatchQueue.main.async {
-			let tool = ProxySettingTool()
-			tool.enableProxyWithport(Int32(port), socksPort: Int32(socksPort), pacUrl: pac ?? "", filterInterface: filterInterface, ignoreList: ignoreList)
-			reply(nil)
+	func handleRequest(_ data: Data) async throws -> Data {
+		let envelope = try ProxyConfigHelperXPCCodec.decodeRequestEnvelope(from: data)
+		guard let handler = requestHandlers[envelope.kind] else {
+			throw ProxyConfigHelperXPCError.unexpectedMessage(envelope.kind)
 		}
+		return try await handler(envelope)
 	}
-	
-	func disableProxy(filterInterface: Bool, reply: @escaping (String?) -> Void) {
-		DispatchQueue.main.async {
-			let tool = ProxySettingTool()
-			tool.disableProxyWithfilterInterface(filterInterface)
-			reply(nil)
-		}
+
+    @MainActor
+	func helperVersion() -> String {
+		Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
 	}
-	
-	func restoreProxy(currentPort: Int, socksPort: Int, info: [String : Any], filterInterface: Bool, reply: @escaping (String?) -> Void) {
-		DispatchQueue.main.async {
-			let tool = ProxySettingTool()
-			tool.restoreProxySetting(info, currentPort: Int32(currentPort), currentSocksPort: Int32(socksPort), filterInterface: filterInterface)
-			reply(nil)
-		}
+
+	@MainActor
+	func enableProxy(_ message: ProxyConfigHelperMessages.EnableProxy) -> String? {
+		let tool = ProxySettingTool()
+		tool.enableProxyWithport(Int32(message.port),
+		                         socksPort: Int32(message.socksPort),
+		                         pacUrl: message.pac ?? "",
+		                         filterInterface: message.filterInterface,
+		                         ignoreList: message.ignoreList)
+		return nil
 	}
-	
-	func getCurrentProxySetting(reply: @escaping ([String : Any]) -> Void) {
-		DispatchQueue.main.async {
-			let info = ProxySettingTool.currentProxySettings()
-			reply(info as? [String: Any] ?? [:])
-		}
+
+	@MainActor
+	func disableProxy(_ message: ProxyConfigHelperMessages.DisableProxy) -> String? {
+		let tool = ProxySettingTool()
+		tool.disableProxyWithfilterInterface(message.filterInterface)
+		return nil
 	}
-	
-	func startMeta(path: String, 
-				   confPath: String,
-				   confFilePath: String,
-				   confJSON: String,
-				   reply: @escaping (String?) -> Void) {
-		DispatchQueue.main.async {
-			self.metaTask.start(path, confPath: confPath, confFilePath: confFilePath, confJSON: confJSON, result: reply)
-		}
+
+	@MainActor
+	func restoreProxy(_ message: ProxyConfigHelperMessages.RestoreProxy) throws -> String? {
+		let info = try message.info.dictionary()
+		let tool = ProxySettingTool()
+		tool.restoreProxySetting(info,
+		                        currentPort: Int32(message.currentPort),
+		                        currentSocksPort: Int32(message.socksPort),
+		                        filterInterface: message.filterInterface)
+		return nil
 	}
-	
-	func stopMeta() {
-		DispatchQueue.main.async {
-			self.metaTask.stop()
-		}
+
+	@MainActor
+	func currentProxySetting() throws -> ProxyConfigHelperPropertyList {
+		let info = ProxySettingTool.currentProxySettings() as? [String: Any] ?? [:]
+		return try ProxyConfigHelperPropertyList(info)
 	}
-	
-	func getUsedPorts(reply: @escaping (String?) -> Void) {
-		DispatchQueue.main.async {
-			self.metaTask.getUsedPorts(reply)
-		}
-	}
-	
-	func updateTun(state: Bool, dns: String) {
-		DispatchQueue.main.async {
-			self.metaDNS.setCustomDNS(dns)
-			if state {
-				self.metaDNS.hijackDNS()
-			} else {
-				self.metaDNS.revertDNS()
-			}
-			self.metaDNS.flushDnsCache()
-		}
-	}
-    
-    func flushDnsCache() {
-        DispatchQueue.main.async {
-            self.metaDNS.flushDnsCache()
+
+	@MainActor
+    func startMeta(_ message: ProxyConfigHelperMessages.StartMeta) async -> String? {
+        if await terminateExistingMeta() {
+            try? await Task.sleep(seconds: 1)
         }
-    }
-    
+		return await metaTask.start(message.path,
+		                     confPath: message.confPath,
+		                     confFilePath: message.confFilePath,
+		                     confJSON: message.confJSON)
+	}
+
+	@MainActor
+	func stopMeta() async {
+		await metaTask.stop()
+	}
+
+	@MainActor
+	func terminateExistingMeta() async -> Bool {
+		return await metaTask.terminateExistingMeta()
+	}
+
+	@MainActor
+	func getUsedPorts() async -> String? {
+		await metaTask.getUsedPorts()
+	}
+
+	@MainActor
+	func updateTun(_ message: ProxyConfigHelperMessages.UpdateTun) async {
+		metaDNS.setCustomDNS(message.dns)
+		if message.state {
+			metaDNS.hijackDNS()
+		} else {
+			metaDNS.revertDNS()
+		}
+		await metaDNS.flushDnsCache()
+	}
+
+	@MainActor
+	func flushDnsCache() async {
+		await metaDNS.flushDnsCache()
+	}
 }

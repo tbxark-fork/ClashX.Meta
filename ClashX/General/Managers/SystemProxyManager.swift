@@ -21,70 +21,145 @@ class SystemProxyManager: NSObject {
         }
     }
 
-    private var helper: ProxyConfigRemoteProcessProtocol? {
-        PrivilegedHelperManager.shared.helper()
-    }
-
-    func saveProxy() {
+    func saveProxy() async {
         guard !Settings.disableRestoreProxy else { return }
         Logger.log("saveProxy", level: .debug)
-        helper?.getCurrentProxySetting { [weak self] info in
+        do {
+            let payload = try await PrivilegedHelperManager.shared.request(ProxyConfigHelperMessages.GetCurrentProxySetting())
             Logger.log("saveProxy done", level: .debug)
-			self?.savedProxyInfo = info
+            savedProxyInfo = try payload.dictionary()
+        } catch {
+            Logger.log("saveProxy failed: \(error)", level: .error)
         }
     }
 
-    func enableProxy() {
+    func enableProxy() async {
         let port = ConfigManager.shared.currentConfig?.usedHttpPort ?? 0
         let socketPort = ConfigManager.shared.currentConfig?.usedSocksPort ?? 0
-        enableProxy(port: port, socksPort: socketPort)
+        await enableProxy(port: port, socksPort: socketPort)
     }
 
-    func enableProxy(port: Int, socksPort: Int) {
+    func enableProxy(port: Int, socksPort: Int) async {
         guard port > 0 && socksPort > 0 else {
             Logger.log("enableProxy fail: \(port) \(socksPort)", level: .error)
             return
         }
-        if SSIDSuspendTool.shared.shouldSuspend() {
+        if await SSIDSuspendTool.shared.shouldSuspend() {
             Logger.log("not enableProxy due to ssid in disabled list", level: .info)
             return
         }
         Logger.log("enableProxy", level: .debug)
-		helper?.enableProxy(port: port,
-							socksPort: socksPort,
-							pac: nil,
-							filterInterface: Settings.filterInterface,
-							ignoreList: Settings.proxyIgnoreList) { error in
-			if let error = error {
-				Logger.log("enableProxy \(error)", level: .error)
-			}
-		}
+        do {
+            let message = ProxyConfigHelperMessages.EnableProxy(port: port,
+                                                                socksPort: socksPort,
+                                                                pac: nil,
+                                                                filterInterface: Settings.filterInterface,
+                                                                ignoreList: Settings.proxyIgnoreList)
+            if let error = try await PrivilegedHelperManager.shared.request(message) {
+                Logger.log("enableProxy \(error)", level: .error)
+            }
+        } catch {
+            Logger.log("enableProxy failed: \(error)", level: .error)
+        }
     }
 
-    func disableProxy(forceDisable: Bool = false, complete: (() -> Void)? = nil) {
+    func disableProxy(forceDisable: Bool = false) async {
         let port = ConfigManager.shared.currentConfig?.usedHttpPort ?? 0
         let socketPort = ConfigManager.shared.currentConfig?.usedSocksPort ?? 0
-        SystemProxyManager.shared.disableProxy(port: port, socksPort: socketPort, forceDisable: forceDisable, complete: complete)
+        await disableProxy(port: port, socksPort: socketPort, forceDisable: forceDisable)
+    }
+    
+    func toggleTunMode(enabled: Bool, persistent: Bool = true) async {
+        if enabled && persistent {
+            if await SSIDSuspendTool.shared.shouldSuspend() {
+                Logger.log("not enableTunProxy due to ssid in disabled list", level: .info)
+                return
+            }
+        }
+        await ConfigReloadManager.shared.setTunMode(enabled: enabled)
+        if persistent {
+            ConfigManager.shared.proxyState.isTunModeEnabled = enabled
+        }
     }
 
-    func disableProxy(port: Int, socksPort: Int, forceDisable: Bool = false, complete: (() -> Void)? = nil) {
+    func disableProxy(port: Int, socksPort: Int, forceDisable: Bool = false) async {
         Logger.log("disableProxy", level: .debug)
 
         if Settings.disableRestoreProxy || forceDisable {
-			helper?.disableProxy(filterInterface: Settings.filterInterface) { error in
-                if let error = error {
+            do {
+                let message = ProxyConfigHelperMessages.DisableProxy(filterInterface: Settings.filterInterface)
+                if let error = try await PrivilegedHelperManager.shared.request(message) {
                     Logger.log("disableProxy \(error)", level: .error)
                 }
-                complete?()
+            } catch {
+                Logger.log("disableProxy failed: \(error)", level: .error)
             }
             return
         }
 
-		helper?.restoreProxy(currentPort: port, socksPort: socksPort, info: savedProxyInfo, filterInterface: Settings.filterInterface) { error in
-			if let error = error {
-				Logger.log("restoreProxy \(error)", level: .error)
-			}
-			complete?()
-		}
+        let savedProxyInfo = self.savedProxyInfo
+        do {
+            let info = try ProxyConfigHelperPropertyList(savedProxyInfo)
+            let message = ProxyConfigHelperMessages.RestoreProxy(currentPort: port,
+                                                                socksPort: socksPort,
+                                                                info: info,
+                                                                filterInterface: Settings.filterInterface)
+            if let error = try await PrivilegedHelperManager.shared.request(message) {
+                Logger.log("restoreProxy \(error)", level: .error)
+            }
+        } catch {
+            Logger.log("restoreProxy failed: \(error)", level: .error)
+        }
+    }
+
+    func toggleSystemProxyEnabled() async {
+        var shouldSaveProxy = true
+
+        if ConfigManager.shared.proxyState.isSystemProxyEnabled && ConfigManager.shared.proxyState.isProxyPaused {
+            ConfigManager.shared.proxyState.isSystemProxyEnabled = false
+        } else if ConfigManager.shared.proxyState.isSystemProxySetByOther {
+            ConfigManager.shared.proxyState.isSystemProxySetByOther = false
+            ConfigManager.shared.proxyState.isSystemProxyEnabled = true
+            shouldSaveProxy = false
+            await disableProxy(port: 0, socksPort: 0, forceDisable: true)
+        } else {
+            ConfigManager.shared.proxyState.isSystemProxyEnabled.toggle()
+        }
+
+        if ConfigManager.shared.proxyState.isSystemProxyEnabled {
+            if shouldSaveProxy {
+                await saveProxy()
+            }
+            await enableProxy()
+        } else {
+            await disableProxy()
+        }
+    }
+
+    func updateProxyPortsIfNeeded(oldConfig: ClashConfig?, newConfig: ClashConfig) async {
+        guard oldConfig?.usedHttpPort != newConfig.usedHttpPort ||
+                oldConfig?.usedSocksPort != newConfig.usedSocksPort else { return }
+
+        Logger.log("port config updated,new: \(newConfig.usedHttpPort),\(newConfig.usedSocksPort)")
+
+        guard ConfigManager.shared.proxyState.isSystemProxyEnabled else { return }
+        await enableProxy(port: newConfig.usedHttpPort, socksPort: newConfig.usedSocksPort)
+    }
+
+    func resetProxySettingOnWakeupFromSleep() async {
+        guard !ConfigManager.shared.proxyState.isSystemProxySetByOther,
+              ConfigManager.shared.proxyState.isSystemProxyEnabled else { return }
+        guard NetworkChangeNotifier.getPrimaryInterface() != nil else { return }
+
+        if !NetworkChangeNotifier.isCurrentSystemSetToClash() {
+            let rawProxy = NetworkChangeNotifier.getRawProxySetting()
+            Logger.log("Resting proxy setting, current:\(rawProxy)", level: .warning)
+            await disableProxy()
+            await enableProxy()
+        }
+
+        await MainActor.run {
+            ConfigReloadManager.shared.resetStreamApiIfRemoteControlEnabled()
+        }
     }
 }

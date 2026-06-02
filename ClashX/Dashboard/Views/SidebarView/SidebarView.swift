@@ -10,10 +10,9 @@ struct SidebarView: View {
 	
 	@StateObject var clashApiDatasStorage = ClashApiDatasStorage()
 	
-	private let connsQueue = DispatchQueue(label: "thread-safe-connsQueue", attributes: .concurrent)
-	private let timer = Timer.publish(every: 1, on: .main, in: .default).autoconnect()
-	
-	@State private var sidebarSelectionName: SidebarItem?
+	@State private var sidebarSelectionName: SidebarItem? = .overview
+	@State private var updateConnectionsTask: Task<Void, Never>?
+	@State private var pollingTask: Task<Void, Never>?
 	
     var body: some View {
 		Group {
@@ -28,31 +27,50 @@ struct SidebarView: View {
 			}
 			
 			clashApiDatasStorage.resetStreamApi()
-			connsQueue.sync {
-				clashApiDatasStorage.connsStorage.conns
-					.removeAll()
-			}
+			clashApiDatasStorage.connsStorage.conns.removeAll()
 			
 			updateConnections()
+			startPollingConnections()
 		}
 		.onChange(of: sidebarSelectionName) { newValue in
 			sidebarItemChanged(newValue)
 		}
-		.onReceive(timer, perform: { _ in
-			updateConnections()
-		})
+		.onDisappear {
+			pollingTask?.cancel()
+			pollingTask = nil
+			updateConnectionsTask?.cancel()
+			updateConnectionsTask = nil
+		}
 
+	}
+
+	func startPollingConnections() {
+		pollingTask?.cancel()
+		pollingTask = Task {
+			while !Task.isCancelled {
+				try? await Task.sleep(seconds: 1)
+				guard !Task.isCancelled else { return }
+				updateConnections()
+			}
+		}
 	}
 	
 	func updateConnections() {
-		ApiRequest.getConnections { snap in
-			connsQueue.sync {
-				clashApiDatasStorage.overviewData.upTotal = snap.uploadTotal
-				clashApiDatasStorage.overviewData.downTotal = snap.downloadTotal
-				clashApiDatasStorage.overviewData.activeConns = "\(snap.connections.count)"
-				clashApiDatasStorage.connsStorage.conns = snap.connections
-			}
+		let previousTask = updateConnectionsTask
+		updateConnectionsTask = Task {
+			await previousTask?.value
+			guard !Task.isCancelled,
+				  let snap = await ApiRequest.getConnectionsSnapshot(),
+				  !Task.isCancelled else { return }
+			applyConnectionsSnapshot(snap)
 		}
+	}
+
+	func applyConnectionsSnapshot(_ snap: DBConnectionSnapShot) {
+		clashApiDatasStorage.overviewData.upTotal = snap.uploadTotal
+		clashApiDatasStorage.overviewData.downTotal = snap.downloadTotal
+		clashApiDatasStorage.overviewData.activeConns = "\(snap.connections.count)"
+		clashApiDatasStorage.connsStorage.conns = snap.connections
 	}
 	
 	func sidebarItemChanged(_ item: SidebarItem?) {

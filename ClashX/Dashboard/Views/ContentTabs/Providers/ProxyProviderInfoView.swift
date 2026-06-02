@@ -27,7 +27,9 @@ struct ProxyProviderInfoView: View {
 					title2: "",
 					iconName: "arrow.clockwise",
 					inProgress: $isUpdating) {
-						update()
+						Task {
+							await update()
+						}
 					}
 			}
 		}
@@ -39,10 +41,10 @@ struct ProxyProviderInfoView: View {
 				 ? String(provider.id.hiddenID)
 					: provider.name)
 				.font(.system(size: 17))
-			Text(provider.vehicleType.rawValue)
+			Text(verbatim: provider.vehicleType.rawValue)
 				.font(.system(size: 13))
 				.foregroundColor(.secondary)
-			Text("\(provider.proxies.count)")
+			Text(String(format: NSLocalizedString("%lld", comment: ""), provider.proxies.count))
 				.font(.system(size: 11))
 				.padding(EdgeInsets(top: 2, leading: 4, bottom: 2, trailing: 4))
 				.background(Color.gray.opacity(0.5))
@@ -60,25 +62,24 @@ struct ProxyProviderInfoView: View {
 				Spacer()
 			}
 			HStack {
-				Text("Updated \(provider.updatedAt)")
+				Text(String(format: NSLocalizedString("Updated %@", comment: ""), provider.updatedAt))
 				Spacer()
 			}
 		}
 		.font(.system(size: 12))
 		.foregroundColor(.secondary)
 	}
-	
-	func update() {
+
+	@MainActor
+	func update() async {
 		isUpdating = true
 		let name = provider.name
-		ApiRequest.updateProvider(for: .proxy, name: name) { _ in
-			ApiRequest.requestProxyProviderList() { resp in
-				if let p = resp.allProviders[provider.name] {
-					provider.updateInfo(DBProxyProvider(provider: p))
-				}
-				isUpdating = false
-			}
+		_ = await ApiRequest.updateProvider(for: .proxy, name: name)
+		let resp = await ApiRequest.requestProxyProviderList()
+		if let p = resp.allProviders[provider.name] {
+			provider.updateInfo(DBProxyProvider(provider: p))
 		}
+		isUpdating = false
 	}
 }
 

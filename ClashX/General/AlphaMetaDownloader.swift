@@ -6,34 +6,47 @@
 //
 
 import Cocoa
-import Alamofire
 import CryptoKit
+import AsyncHTTPClient
+import SwiftyJSON
 
 class AlphaMetaDownloader: NSObject {
 
-	enum errors: Error {
-		case decodeReleaseInfoFailed
-		case notFoundUpdate
-		case downloadFailed
+	enum AlphaMetaError: Error, LocalizedError {
+		case fetchReleaseInfoFailed
+		case apiRateLimit
+		case alphaCoreAssetNotFound
+		case alreadyUpToDate
+		case downloadCoreFailed
+		case checksumsNotFound
+		case downloadChecksumFailed
+		case parseChecksumFailed
+		case checksumFailed
+		case verifyDownloadedCoreFailed
 		case unknownError
-		case testFailed
-        case checksumFailed
-        case downloadChecksumFailed
 
-		func des() -> String {
+		var errorDescription: String? {
 			switch self {
-			case .decodeReleaseInfoFailed:
-				return "Decode alpha release info failed"
-			case .notFoundUpdate:
-				return "Not found update"
-			case .downloadFailed:
-				return "Download failed"
-			case .testFailed:
-				return "Test downloaded file failed"
-            case .checksumFailed:
-                return "Checksum failed"
-            case .downloadChecksumFailed:
-                return "Download checksum failed"
+			case .fetchReleaseInfoFailed:
+				return "Fetch alpha release info failed"
+			case .apiRateLimit:
+				return "API rate limit"
+			case .alphaCoreAssetNotFound:
+				return "Alpha core asset not found"
+			case .alreadyUpToDate:
+				return "Already up to date"
+			case .downloadCoreFailed:
+				return "Download core failed"
+			case .checksumsNotFound:
+				return "Not found checksums.txt"
+			case .downloadChecksumFailed:
+				return "Download checksum failed"
+			case .parseChecksumFailed:
+				return "Parse checksum failed"
+			case .checksumFailed:
+				return "Checksum failed"
+			case .verifyDownloadedCoreFailed:
+				return "Verify downloaded core failed"
 			case .unknownError:
 				return "Unknown error"
 			}
@@ -83,80 +96,103 @@ class AlphaMetaDownloader: NSObject {
 	}
 
 	static func alphaAssets() async throws -> [ReleasesResp.Asset] {
-		let resp = try? await AF.request("https://api.github.com/repos/MetaCubeX/mihomo/releases/tags/Prerelease-Alpha").serializingDecodable(ReleasesResp.self).value
-		
-		guard let resp else {
-			throw errors.downloadFailed
+        let url = "https://api.github.com/repos/MetaCubeX/mihomo/releases/tags/Prerelease-Alpha"
+		let urlRequest = URLRequest(url: .init(string: url)!,
+		                            cachePolicy: .reloadIgnoringCacheData)
+		do {
+			let (data, _) = try await URLSession.shared.data(for: urlRequest)
+			if let msg = try? JSON(data: data)["message"].string {
+				if msg.starts(with: "API rate limit") {
+					throw AlphaMetaError.apiRateLimit
+				}
+			}
+			return try JSONDecoder().decode(ReleasesResp.self, from: data).assets
+		} catch {
+			if case AlphaMetaError.apiRateLimit = error {
+				throw error
+			}
+			throw AlphaMetaError.fetchReleaseInfoFailed
 		}
-		
-		return resp.assets
 	}
     
-    static func alphaCoreAsset(_ assets: [ReleasesResp.Asset]) async throws -> ReleasesResp.Asset {
-        guard let assetName = assetName(),
-              let asset = assets.first(where: {
+	static func alphaCoreAsset(_ assets: [ReleasesResp.Asset]) async throws -> ReleasesResp.Asset {
+		guard let assetName = assetName(),
+		      let asset = assets.first(where: {
                   guard $0.state == "uploaded", $0.contentType == "application/gzip" else { return false }
                   
                   let names = $0.name.split(separator: "-").map(String.init)
                   guard names.count > 4,
                         names[0] == "mihomo",
-                        names[1] == "darwin",
-                        names[2] == assetName,
-                        names[3] == "alpha" else { return false }
-                        
-                  return true
-              }) else {
-            throw errors.decodeReleaseInfoFailed
-        }
+		              names[1] == "darwin",
+		              names[2] == assetName,
+		              names[3] == "alpha" else { return false }
+				
+			return true
+		      }) else {
+			throw AlphaMetaError.alphaCoreAssetNotFound
+		}
         
         return asset
     }
     
     static func checksumString(_ assets: [ReleasesResp.Asset], asset: ReleasesResp.Asset) async throws -> String {
-        guard let checksumsAsset = assets.first(where: {
-            $0.name == "checksums.txt"
-        }),
-              let resp = try? await AF.request(checksumsAsset.downloadUrl).serializingString().value,
-              let str = resp.split(separator: "\n").first(where: { $0.contains(asset.name) })?.split(separator: " ").first,
-              str.count == 64
-        else {
-            throw errors.downloadChecksumFailed
-        }
         
-        return String(str)
-    }
+		guard let checksumsAsset = assets.first(where: { $0.name == "checksums.txt" }),
+		      let url = URL(string: checksumsAsset.downloadUrl) else {
+			throw AlphaMetaError.checksumsNotFound
+		}
+        
+        do {
+            let urlRequest = URLRequest(url: url, cachePolicy: .reloadIgnoringCacheData)
+            let (data, _) = try await URLSession.shared.data(for: urlRequest)
+            let str = String(data: data, encoding: .utf8)?
+                .split(separator: "\n")
+                .first(where: { $0.contains(asset.name) })?
+                .split(separator: " ").first
+            
+			if let str {
+				return String(str)
+			} else {
+				Logger.log("Decode checksums.txt failed", level: .debug)
+				throw AlphaMetaError.parseChecksumFailed
+			}
+		} catch {
+            if case AlphaMetaError.parseChecksumFailed = error {
+                throw error
+            }
+			throw AlphaMetaError.downloadChecksumFailed
+		}
+	}
     
 	static func checkVersion(_ asset: ReleasesResp.Asset) throws -> ReleasesResp.Asset {
 		guard let path = Paths.alphaCorePath()?.path else {
-			throw errors.unknownError
+			throw AlphaMetaError.unknownError
 		}
-		if let v = AppDelegate.shared.clashProcess.verifyCoreFile(path),
+		if let v = ClashProcess.verifyCoreFile(path),
 		   asset.name.contains(v.version) {
-			throw errors.notFoundUpdate
+			throw AlphaMetaError.alreadyUpToDate
 		}
 		return asset
 	}
 
 	static func downloadCore(_ asset: ReleasesResp.Asset) async throws -> Data {
-		let fm = FileManager.default
-		let data = try? await AF.download(asset.downloadUrl).serializingData().value
-
-		if let data {
-			return data
-		} else {
-			throw errors.downloadFailed
+		do {
+            let resp = try await HTTPClient.shared.execute(.init(url: asset.downloadUrl), timeout: .minutes(1))
+            return try await resp.body.collectData()
+        } catch {
+			throw AlphaMetaError.downloadCoreFailed
 		}
 	}
 
-    static func replaceCore(_ gzData: Data, checksum: String) throws -> String {
+	    static func replaceCore(_ gzData: Data, checksum: String) throws -> String {
 		let fm = FileManager.default
         
         guard SHA256.hash(data: gzData).compactMap({ String(format: "%02x", $0) }).joined() == checksum else {
-            throw errors.checksumFailed
-        }
+			throw AlphaMetaError.checksumFailed
+		}
 
 		guard let helperURL = Paths.alphaCorePath() else {
-			throw errors.unknownError
+			throw AlphaMetaError.unknownError
 		}
 
 		try fm.createDirectory(at: helperURL.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
@@ -166,8 +202,8 @@ class AlphaMetaDownloader: NSObject {
 		
 		Logger.log("save alpha core in \(cachePath)")
 
-		guard let version = AppDelegate.shared.clashProcess.verifyCoreFile(cachePath)?.version else {
-			throw errors.testFailed
+		guard let version = ClashProcess.verifyCoreFile(cachePath)?.version else {
+			throw AlphaMetaError.verifyDownloadedCoreFailed
 		}
 
 		try? fm.removeItem(at: helperURL)

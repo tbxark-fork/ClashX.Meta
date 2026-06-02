@@ -32,29 +32,29 @@ struct RulesView: View {
 			guard let string = $0.userInfo?["String"] as? String else { return }
 			searchString = string
 		}
-		.onAppear {
-			ruleItems.removeAll()
-			
-			ApiRequest.requestRuleProviderList { resp in
-				let ruleProviders = resp.allProviders.values.sorted {
-						$0.name < $1.name
-					}
-					.map(DBRuleProvider.init)
-				
-				ApiRequest.getRules {
-					let items = $0
-					items.enumerated().forEach {
-						guard let payload = $0.element.payload,
-							  let pd = ruleProviders.first(where: { $0.name == payload }) else { return }
-						
-						items[$0.offset].size = pd.ruleCount
-					}
-					
-					ruleItems = items
-				}
-			}
+		.task {
+			await loadRules()
 		}
     }
+
+	func loadRules() async {
+		async let providerResponse = ApiRequest.requestRuleProviderList()
+		async let rulesResponse = ApiRequest.getRules()
+
+		let providerRuleCounts = await providerResponse.allProviders.values.reduce(into: [ClashProviderName: Int]()) {
+			$0[$1.name] = $1.ruleCount
+		}
+		var items = await rulesResponse
+
+		items.indices.forEach { index in
+			guard let payload = items[index].payload,
+				  let ruleCount = providerRuleCounts[payload] else { return }
+			items[index].size = ruleCount
+		}
+
+		guard !Task.isCancelled else { return }
+        ruleItems = items
+	}
 }
 
 //struct RulesView_Previews: PreviewProvider {

@@ -19,7 +19,6 @@ class RemoteConfigViewController: NSViewController {
     let disposeBag = DisposeBag()
 
     deinit {
-        print("RemoteConfigViewController deinit")
     }
 
     override func viewDidLoad() {
@@ -135,27 +134,32 @@ extension RemoteConfigViewController {
     func requestUpdate(config: RemoteConfigModel) {
         guard !config.updating else { return }
         config.updating = true
-        RemoteConfigManager.updateConfig(config: config) {
-            [weak self, weak config] errorString in
-            guard let self = self, let config = config else { return }
-            config.updating = false
-            if let errorString = errorString {
-                let alert = NSAlert()
-                alert.messageText = errorString
-                alert.alertStyle = .warning
-                alert.runModal()
-            } else {
-                config.updateTime = Date()
-                RemoteConfigManager.shared.saveConfigs()
-
-                if config == self.latestAddedConfig {
-                    AppDelegate.shared.updateConfig(configName: config.name)
-                } else if config.name == ConfigManager.selectConfigName {
-                    AppDelegate.shared.updateConfig()
-                }
-            }
-            self.tableView.reloadDataKeepingSelection()
+        Task { [weak self, weak config] in
+            guard let self, let config else { return }
+            let errorString = await RemoteConfigManager.updateConfig(config: config)
+            await handleRequestUpdateCompletion(for: config, errorString: errorString)
         }
+    }
+
+    @MainActor
+    private func handleRequestUpdateCompletion(for config: RemoteConfigModel, errorString: String?) async {
+        config.updating = false
+        if let errorString = errorString {
+            let alert = NSAlert()
+            alert.messageText = errorString
+            alert.alertStyle = .warning
+            alert.runModal()
+        } else {
+            config.updateTime = Date()
+            RemoteConfigManager.shared.saveConfigs()
+
+            if config == latestAddedConfig {
+                await ConfigReloadManager.shared.updateConfig(configName: config.name)
+            } else if config.name == ConfigManager.selectConfigName {
+                await ConfigReloadManager.shared.updateConfig()
+            }
+        }
+        tableView.reloadDataKeepingSelection()
     }
 }
 

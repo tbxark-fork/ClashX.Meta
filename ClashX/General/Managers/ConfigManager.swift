@@ -13,35 +13,81 @@ import RxSwift
 
 class ConfigManager {
     static let shared = ConfigManager()
-    private let disposeBag = DisposeBag()
+
+    // MARK: - Basic Settings
+
     var apiPort = "8080"
     var allowExternalControl = false
     var apiSecret: String = ""
     var overrideApiURL: URL?
     var overrideSecret: String?
 
+    // MARK: - State
+
+    enum KernelState: Equatable {
+        case stopped
+        case checkingLaunchPath
+        case checkingHelper
+        case preparingConfig
+        case starting
+        case reloadingConfig
+        case disconnected
+        case running
+        case failedToStart
+
+        var isOperational: Bool {
+            self == .running || self == .reloadingConfig || self == .disconnected
+        }
+    }
+
+    struct ProxyState: Equatable {
+        var isSystemProxyEnabled = UserDefaults.standard.bool(forKey: "proxyPortAutoSet")
+        var isTunModeEnabled = UserDefaults.standard.bool(forKey: "restoreTunProxy")
+        var isSystemProxySetByOther = false
+        var isProxyPaused = false
+        var isTunModeActive = false
+    }
+
+    let kernelStateRelay = BehaviorRelay<KernelState>(value: .stopped)
+    let proxyStateRelay = BehaviorRelay<ProxyState>(value: ProxyState())
+
     var currentConfig: ClashConfig? {
         get {
-            return currentConfigVariable.value
+            return currentConfigRelay.value
         }
 
         set {
-            currentConfigVariable.accept(newValue)
+            currentConfigRelay.accept(newValue)
+            var state = proxyStateRelay.value
+            state.isTunModeActive = newValue?.tun.enable ?? false
+            proxyStateRelay.accept(state)
         }
     }
 
-    var currentConfigVariable = BehaviorRelay<ClashConfig?>(value: nil)
+    var currentConfigRelay = BehaviorRelay<ClashConfig?>(value: nil)
 
-    var isRunning: Bool {
+    var isTunModeInConfig = false
+
+    @MainActor
+    var kernelState: KernelState {
         get {
-            return isRunningVariable.value
+            return kernelStateRelay.value
         }
 
         set {
-            isRunningVariable.accept(newValue)
-			NotificationCenter.default.post(.init(name: .init("ClashRunningStateChanged")))
+            let oldValue = kernelStateRelay.value
+            kernelStateRelay.accept(newValue)
+            Logger.log("kernelState change: \(oldValue) -> \(newValue)", level: .info)
+            NotificationCenter.default.post(.init(name: .init("ClashKernelStateChanged")))
         }
     }
+
+    var proxyState: ProxyState {
+        get { proxyStateRelay.value }
+        set { proxyStateRelay.accept(newValue) }
+    }
+
+    // MARK: - Config Selection
 
     static var selectConfigName: String {
         get {
@@ -49,57 +95,33 @@ class ConfigManager {
         }
         set {
             UserDefaults.standard.set(newValue, forKey: "selectConfigName")
-            watchCurrentConfigFile()
+            Task {
+                await watchCurrentConfigFile()
+            }
         }
     }
 
-    static func watchCurrentConfigFile() {
-        if ICloudManager.shared.useiCloud.value {
-            ICloudManager.shared.getUrl { url in
-                guard let url = url else { return }
-                let configUrl = url.appendingPathComponent(Paths.configFileName(for: selectConfigName))
-                ConfigFileManager.shared.watchFile(path: configUrl.path)
-            }
+    @MainActor
+    static func watchCurrentConfigFile() async {
+        if ICloudManager.shared.useICloudRelay.value {
+            guard let url = await ICloudManager.shared.getUrl() else { return }
+            let configUrl = url.appendingPathComponent(Paths.configFileName(for: selectConfigName))
+            ConfigFileManager.shared.watchFile(path: configUrl.path)
         } else {
             ConfigFileManager.shared.watchFile(path: Paths.localConfigPath(for: selectConfigName))
         }
     }
 
-    let isRunningVariable = BehaviorRelay<Bool>(value: false)
+    // MARK: - Preferences
 
-    var proxyPortAutoSet: Bool {
+    var restoreSystemProxy: Bool {
         get {
-            return UserDefaults.standard.bool(forKey: "proxyPortAutoSet")
+            return UserDefaults.standard.bool(forKey: "restoreSystemProxy")
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: "proxyPortAutoSet")
+            UserDefaults.standard.set(newValue, forKey: "restoreSystemProxy")
         }
     }
-	
-	var restoreSystemProxy: Bool {
-		get {
-			return UserDefaults.standard.bool(forKey: "restoreSystemProxy")
-		}
-		set {
-			UserDefaults.standard.set(newValue, forKey: "restoreSystemProxy")
-		}
-	}
-	
-	var restoreTunProxy: Bool {
-		get {
-			return UserDefaults.standard.bool(forKey: "restoreTunProxy")
-		}
-		set {
-			UserDefaults.standard.set(newValue, forKey: "restoreTunProxy")
-		}
-	}
-
-    let proxyPortAutoSetObservable = UserDefaults.standard.rx.observe(Bool.self, "proxyPortAutoSet").map { $0 ?? false }
-
-    var isProxySetByOtherVariable = BehaviorRelay<Bool>(value: false)
-    var proxyShouldPaused = BehaviorRelay<Bool>(value: false)
-
-    var isTunModeVariable = BehaviorRelay<Bool>(value: false)
 	
 	static let defaultTunDNS = "8.8.8.8"
 	
@@ -109,16 +131,20 @@ class ConfigManager {
 		}
 	}
 
+    private let showNetSpeedIndicatorRelay = BehaviorRelay<Bool>(value: UserDefaults.standard.bool(forKey: "showNetSpeedIndicator"))
     var showNetSpeedIndicator: Bool {
         get {
-            return UserDefaults.standard.bool(forKey: "showNetSpeedIndicator")
+            return showNetSpeedIndicatorRelay.value
         }
         set {
+            showNetSpeedIndicatorRelay.accept(newValue)
             UserDefaults.standard.set(newValue, forKey: "showNetSpeedIndicator")
         }
     }
 
-    let showNetSpeedIndicatorObservable = UserDefaults.standard.rx.observe(Bool.self, "showNetSpeedIndicator")
+    var showNetSpeedIndicatorObservable: Observable<Bool?> {
+        return showNetSpeedIndicatorRelay.map { $0 as Bool? }
+    }
 
     var benchMarkUrl: String = UserDefaults.standard.string(forKey: "benchMarkUrl") ?? "http://cp.cloudflare.com/generate_204" {
         didSet {
@@ -133,17 +159,7 @@ class ConfigManager {
         return "http://127.0.0.1:\(shared.apiPort)"
     }
 
-    static var webSocketUrl: String {
-        if let override = shared.overrideApiURL, var comp = URLComponents(url: override, resolvingAgainstBaseURL: true) {
-            if comp.scheme == "https" {
-                comp.scheme = "wss"
-            } else {
-                comp.scheme = "ws"
-            }
-            return comp.url?.absoluteString ?? ""
-        }
-        return "ws://127.0.0.1:\(shared.apiPort)"
-    }
+
 
     static var selectedProxyRecords = SavedProxyModel.loadsFromUserDefault() {
         didSet {
@@ -184,18 +200,14 @@ class ConfigManager {
         }
     }
 
-    static func getConfigPath(configName: String, complete: ((String) -> Void)? = nil) {
-        if ICloudManager.shared.useiCloud.value {
-            ICloudManager.shared.getUrl { url in
-                guard let url = url else {
-                    return
-                }
-                let configPath = url.appendingPathComponent(Paths.configFileName(for: configName)).path
-                complete?(configPath)
+    static func getConfigPath(configName: String) async -> String? {
+        if ICloudManager.shared.useICloudRelay.value {
+            guard let url = await ICloudManager.shared.getUrl() else {
+                return nil
             }
+            return url.appendingPathComponent(Paths.configFileName(for: configName)).path
         } else {
-            let filePath = Paths.localConfigPath(for: configName)
-            complete?(filePath)
+            return Paths.localConfigPath(for: configName)
         }
     }
 }

@@ -1,14 +1,21 @@
-import Alamofire
 import AppKit
 import Foundation
+import AsyncHTTPClient
 import Gzip
 
 class ClashResourceManager {
+    static let shared = ClashResourceManager()
+
     enum RuleFiles: String {
         case mmdb = "country.mmdb"
         case geosite = "geosite.dat"
         case geoip = "geoip.dat"
     }
+
+    @MainActor
+    private var updateGeoTask: Task<Void, Never>?
+
+    private init() {}
 
     static func check() -> Bool {
         checkConfigDir()
@@ -79,25 +86,63 @@ class ClashResourceManager {
 }
 
 extension ClashResourceManager {
+    @MainActor
+    func updateGeoDatabases() async {
+        guard updateGeoTask == nil else { return }
+
+        _ = await ApiRequest.updateGEO()
+        UserNotificationCenter.shared.post(title: NSLocalizedString("Updating GEO Databases...", comment: ""), info: NSLocalizedString("Good luck to you  🙃", comment: ""))
+
+        updateGeoTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            defer {
+                self.updateGeoTask = nil
+            }
+
+            while !Task.isCancelled {
+                if await self.pollGeoUpdate() {
+                    return
+                }
+                try? await Task.sleep(seconds: 0.5)
+            }
+        }
+    }
+
+    @MainActor
+    private func pollGeoUpdate() async -> Bool {
+        let rules = await ApiRequest.getRules()
+        guard updateGeoTask != nil else { return true }
+
+        if let rule = rules.first,
+           rule.payload == ClashMetaConfig.initRulePayload {
+            Logger.log("Update GEO Finished.")
+            await ConfigReloadManager.shared.updateConfig(showNotification: false)
+            UserNotificationCenter.shared.post(title: "Update GEO Databases Finished.", info: "")
+
+            return true
+        } else {
+            return false
+        }
+    }
+
     static func updateGeoIP() {
         guard let url = showCustomAlert() else { return }
-        AF.download(url, to: { _, _ in
-            let path = kConfigFolderPath.appending("/Country.mmdb")
-            return (URL(fileURLWithPath: path), .removePreviousFile)
-        }).response { res in
+        
+        try? HTTPClient.shared.execute(
+            request: .init(url: url),
+            delegate: FileDownloadDelegate(path: kConfigFolderPath.appending("/Country.mmdb"))
+        )
+        .futureResult
+        .whenComplete {
             var info: String
-            switch res.result {
+            switch $0 {
             case .success:
                 info = NSLocalizedString("Success!", comment: "")
                 Logger.log("update success")
-            case let .failure(err):
+            case .failure(let err):
                 info = NSLocalizedString("Fail:", comment: "") + err.localizedDescription
                 Logger.log("update fail \(err)")
             }
-//            if !verifyGEOIPDataBase().toBool() {
-//                info = "Database verify fail"
-//                checkMMDB()
-//            }
             let alert = NSAlert()
             alert.messageText = NSLocalizedString("Update GEOIP Database", comment: "")
             alert.informativeText = info

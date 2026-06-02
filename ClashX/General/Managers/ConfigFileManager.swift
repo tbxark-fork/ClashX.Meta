@@ -19,6 +19,7 @@ class ConfigFileManager {
         pause = true
     }
 
+    @MainActor
     func watchFile(path: String) {
         witness = Witness(paths: [path], flags: .FileEvents, latency: 0.3) {
             [weak self] events in
@@ -56,6 +57,16 @@ class ConfigFileManager {
         if !FileManager.default.fileExists(atPath: kDefaultConfigFilePath) {
             let path = Bundle.main.path(forResource: "sampleConfig", ofType: "yaml")!
             try? FileManager.default.copyItem(atPath: path, toPath: kDefaultConfigFilePath)
+        }
+    }
+
+    @MainActor
+    func openConfigFolder() async {
+        if ICloudManager.shared.useICloudRelay.value {
+            guard let url = await ICloudManager.shared.getUrl() else { return }
+            NSWorkspace.shared.open(url)
+        } else {
+            NSWorkspace.shared.openFilePath(kConfigFolderPath)
         }
     }
 }

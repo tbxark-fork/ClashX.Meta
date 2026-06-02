@@ -44,11 +44,13 @@ struct ProxyProvidersRowView: View {
 					listView
 				}
 			} header: {
-				ProgressButton(
-					title: "Update All",
-					title2: "Updating",
-					iconName: "arrow.clockwise", inProgress: $isUpdating) {
-						updateAll()
+			ProgressButton(
+				title: "Update All",
+				title2: "Updating",
+				iconName: "arrow.clockwise", inProgress: $isUpdating) {
+						Task {
+							await updateAll()
+						}
 					}
 			}
 			.padding()
@@ -61,20 +63,18 @@ struct ProxyProvidersRowView: View {
 		}
 	}
 	
-	func updateAll() {
+	@MainActor
+	func updateAll() async {
 		isUpdating = true
-		
-		ApiRequest.updateAllProviders(for: .proxy) { _ in
-			ApiRequest.requestProxyProviderList { resp in
-				providerStorage.proxyProviders = resp.allProviders.values.filter {
-					$0.vehicleType == .HTTP
-				}.sorted {
-					$0.name < $1.name
-				}
-				.map(DBProxyProvider.init)
-				isUpdating = false
-			}
+		_ = await ApiRequest.updateAllProviders(for: .proxy)
+		let resp = await ApiRequest.requestProxyProviderList()
+		providerStorage.proxyProviders = resp.allProviders.values.filter {
+			$0.vehicleType == .HTTP
+		}.sorted {
+			$0.name < $1.name
 		}
+		.map(DBProxyProvider.init)
+		isUpdating = false
 	}
 }
 

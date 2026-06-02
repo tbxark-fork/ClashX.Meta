@@ -44,7 +44,9 @@ class ProxyGroupSpeedTestMenuItem: NSMenuItem {
 
     @objc func healthCheck() {
         guard testType == .reTest else { return }
-		ApiRequest.getGroupDelay(groupName: proxyGroup.name) { _ in }
+		Task {
+			_ = await ProxyHealthCheckManager.shared.getGroupDelay(groupName: proxyGroup.name)
+		}
         menu?.cancelTracking()
     }
 }
@@ -83,10 +85,13 @@ private class ProxyGroupSpeedTestMenuItemView: MenuItemBaseView {
     }
 
     override func didClickView() {
-        startBenchmark()
+        Task { [weak self] in
+            await self?.startBenchmark()
+        }
     }
 
-    private func startBenchmark() {
+    @MainActor
+    private func startBenchmark() async {
         guard let group = (enclosingMenuItem as? ProxyGroupSpeedTestMenuItem)?.proxyGroup
         else { return }
 
@@ -94,31 +99,28 @@ private class ProxyGroupSpeedTestMenuItemView: MenuItemBaseView {
         enclosingMenuItem?.isEnabled = false
         setNeedsDisplay()
 
-        ApiRequest.getGroupDelay(groupName: group.name) {
-            [weak self] delays in
-            guard let self = self, let menu = self.enclosingMenuItem else { return }
+        let delays = await ProxyHealthCheckManager.shared.getGroupDelay(groupName: group.name)
+        guard let menu = enclosingMenuItem else { return }
 
-            group.all?.forEach { proxyName in
-                var delayStr = NSLocalizedString("fail", comment: "")
-                var delay = 0
-                if let d = delays[proxyName], d != 0 {
-                    delayStr = "\(d) ms"
-                    delay = d
-                }
-
-                NotificationCenter.default.post(
-                    name: .speedTestFinishForProxy,
-                    object: nil,
-                    userInfo: ["proxyName": proxyName,
-                               "delay": delayStr,
-                               "rawValue": delay])
-
+        group.all?.forEach { proxyName in
+            var delayStr = NSLocalizedString("fail", comment: "")
+            var delay = 0
+            if let d = delays[proxyName], d != 0 {
+                delayStr = "\(d) ms"
+                delay = d
             }
 
-            self.label.stringValue = menu.title
-            menu.isEnabled = true
-            self.setNeedsDisplay()
+            NotificationCenter.default.post(
+                name: .speedTestFinishForProxy,
+                object: nil,
+                userInfo: ["proxyName": proxyName,
+                           "delay": delayStr,
+                           "rawValue": delay])
         }
+
+        label.stringValue = menu.title
+        menu.isEnabled = true
+        setNeedsDisplay()
     }
 }
 

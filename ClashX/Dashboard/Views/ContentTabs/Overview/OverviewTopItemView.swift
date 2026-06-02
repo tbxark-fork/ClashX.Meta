@@ -8,8 +8,8 @@ import SwiftUI
 
 struct OverviewTopItemView: View {
 	
-	@State var name: String
-	@Binding var value: String
+	let name: LocalizedStringKey
+	let value: String
 	
     var body: some View {
 		VStack(alignment: .leading, spacing: 8) {
@@ -29,9 +29,8 @@ struct OverviewTopItemView: View {
     }
 }
 
-struct OverviewTopItemView_Previews: PreviewProvider {
-	@State static var value: String = "Value"
+	struct OverviewTopItemView_Previews: PreviewProvider {
 	static var previews: some View {
-		OverviewTopItemView(name: "Name", value: $value)
+		OverviewTopItemView(name: "Name", value: "Value")
     }
 }

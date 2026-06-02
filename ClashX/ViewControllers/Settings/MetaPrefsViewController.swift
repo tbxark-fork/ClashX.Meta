@@ -105,11 +105,10 @@ class MetaPrefsViewController: NSViewController {
 				await MainActor.run {
 					self.updateAlphaVersion(newVer)
 					let msg = NSLocalizedString("Version: ", comment: "") + newVer
-					UserNotificationCenter.shared.post(title: "Clash Meta Core", info: msg)
+					UserNotificationCenter.shared.postNotificationAlert(title: "Clash Meta Core", info: msg)
 				}
 			} catch {
-				let error = error as? AlphaMetaDownloader.errors
-				UserNotificationCenter.shared.post(title: "Clash Meta Core", info: error?.des() ?? "")
+				UserNotificationCenter.shared.postNotificationAlert(title: "Clash Meta Core", info: error.localizedDescription)
 			}
 			
 			await MainActor.run {
@@ -182,8 +181,7 @@ class MetaPrefsViewController: NSViewController {
 	
 	func setAlphaVersion() {
 		if let alphaCorePath = Paths.alphaCorePath(),
-		   let delegate = NSApplication.shared.delegate as? AppDelegate,
-		   let v = delegate.clashProcess.verifyCoreFile(alphaCorePath.path)?.version {
+		   let v = ClashProcess.verifyCoreFile(alphaCorePath.path)?.version {
 			updateAlphaVersion(v)
 		} else {
 			updateAlphaVersion(nil)

@@ -29,6 +29,7 @@ class ClashMetaConfig: NSObject {
         }()
 
         var externalController = "127.0.0.1:9090"
+        var externalControllerUnix: String?
         var secret: String?
 
         var port: Int?
@@ -57,6 +58,7 @@ class ClashMetaConfig: NSObject {
 
         enum CodingKeys: String, CodingKey {
             case externalController = "external-controller",
+                 externalControllerUnix = "external-controller-unix",
                  externalUI = "external-ui",
                  mixedPort = "mixed-port",
                  port,
@@ -79,6 +81,16 @@ class ClashMetaConfig: NSObject {
             let keys = Config.CodingKeys.self
             if let ec = yaml[keys.externalController.rawValue] as? String {
                 externalController = ec
+            }
+
+            if let ecUnix = yaml[keys.externalControllerUnix.rawValue] as? String {
+                externalControllerUnix = ecUnix
+            } else {
+                let randomStr = {
+                    let chars = "abcdefghijklmnopqrstuvwxyz0123456789"
+                    return String((0..<5).map { _ in chars.randomElement()! })
+                }()
+                externalControllerUnix = "/tmp/clashx_meta_\(randomStr).sock"
             }
 
             if let s = yaml[keys.secret.rawValue] as? String {
@@ -151,12 +163,12 @@ class ClashMetaConfig: NSObject {
         }
     }
 
-    static func generateInitConfig(_ callback: @escaping ((Config) -> Void)) {
+    static func generateInitConfig() async -> Config {
         var config = Config()
-        ApiRequest.findConfigPath(configName: ConfigManager.selectConfigName) {
-            config.loadDefaultConfigFile($0 ?? "")
-            callback(config)
-        }
+        let path = await ApiRequest.findConfigPath(configName: ConfigManager.selectConfigName)
+		config.loadDefaultConfigFile(path ?? "")
+		ApiRequestTransport.unixSocketPath = config.externalControllerUnix
+		return config
     }
 
     static func updateConfigTun(_ config: Data, enable: Bool) -> String? {

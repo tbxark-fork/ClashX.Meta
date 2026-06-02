@@ -58,13 +58,13 @@ class RemoteControlManager {
         return []
     }
 
-    static func setupMenuItem(separator: NSMenuItem) {
+    @MainActor
+    static func setupMenuItem(separator: NSMenuItem) async {
         menuSeparator = separator
         updateMenuItems()
         updateDropDownMenuItems()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            RemoteControlManager.recoverSelection()
-        }
+        try? await Task.sleep(seconds: 0.5)
+        RemoteControlManager.recoverSelection()
     }
 
     private static func recoverSelection() {
@@ -117,9 +117,11 @@ class RemoteControlManager {
             ConfigManager.shared.overrideSecret = nil
         }
         ClashProxy.cleanCache()
-        AppDelegate.shared.resetStreamApi()
-        AppDelegate.shared.syncConfig()
-        MenuItemFactory.recreateProxyMenuItems()
+        Task { @MainActor in
+            ConfigReloadManager.shared.resetStreamApi()
+            await ConfigReloadManager.shared.syncConfig()
+            await MenuItemFactory.recreateProxyMenuItems()
+        }
         updateDropDownMenuItems()
     }
 

@@ -47,10 +47,12 @@ class GeneralSettingViewController: NSViewController {
             .map { $0.components(separatedBy: ",").filter { !$0.isEmpty } }
             .subscribe { arr in
                 Settings.disableSSIDList = arr
-                SSIDSuspendTool.shared.update()
+                Task { @MainActor in
+                    await SSIDSuspendTool.shared.update()
+                }
             }.disposed(by: disposeBag)
 
-        LaunchAtLogin.shared.isEnableVirable
+        LaunchAtLogin.shared.isLaunchAtLoginEnabledRelay
             .map { $0 ? .on : .off }
             .bind(to: launchAtLoginButton.rx.state)
             .disposed(by: disposeBag)
@@ -58,7 +60,7 @@ class GeneralSettingViewController: NSViewController {
             LaunchAtLogin.shared.isEnabled = $0
         }.disposed(by: disposeBag)
 
-        ICloudManager.shared.useiCloud
+        ICloudManager.shared.useICloudRelay
             .map { $0 ? .on : .off }
             .bind(to: useiCloudButton.rx.state)
             .disposed(by: disposeBag)
@@ -134,9 +136,11 @@ class GeneralSettingViewController: NSViewController {
         if url.isUrlVaild() || url.isEmpty {
             Settings.benchMarkUrl = url
         }
-        SSIDSuspendTool.shared.showNoticeOnNotPermission = true
-        SSIDSuspendTool.shared.requestPermissionIfNeed()
-        SSIDSuspendTool.shared.update()
+        Task { @MainActor in
+            SSIDSuspendTool.shared.showNoticeOnNotPermission = true
+            await SSIDSuspendTool.shared.requestPermissionIfNeed()
+            await SSIDSuspendTool.shared.update()
+        }
     }
 
     @IBAction func actionResetIgnoreList(_ sender: Any) {

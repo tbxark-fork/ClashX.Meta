@@ -11,15 +11,46 @@ import CoreWLAN
 import SystemConfiguration
 
 class NetworkChangeNotifier {
-    static func start() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            Thread {
-                startProxiesWatch()
-            }.start()
-            Thread {
-                startIPChangeWatch()
-            }.start()
+    static func proxyChangeStream() -> AsyncStream<Void> {
+        AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation in
+            let observer = NotificationCenter.default.addObserver(
+                forName: .systemNetworkStatusDidChange,
+                object: nil,
+                queue: nil
+            ) { _ in
+                continuation.yield(())
+            }
+
+            continuation.onTermination = { _ in
+                NotificationCenter.default.removeObserver(observer)
+            }
         }
+    }
+
+    static func ipAddressStream(allowIPV6: Bool = false) -> AsyncStream<String?> {
+        AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation in
+            let observer = NotificationCenter.default.addObserver(
+                forName: .systemNetworkStatusIPUpdate,
+                object: nil,
+                queue: nil
+            ) { _ in
+                continuation.yield(getPrimaryIPAddress(allowIPV6: allowIPV6))
+            }
+
+            continuation.onTermination = { _ in
+                NotificationCenter.default.removeObserver(observer)
+            }
+        }
+    }
+
+    static func start() async {
+        try? await Task.sleep(seconds: 0.5)
+        Thread {
+            startProxiesWatch()
+        }.start()
+        Thread {
+            startIPChangeWatch()
+        }.start()
     }
 
     private static func startProxiesWatch() {
@@ -62,7 +93,8 @@ class NetworkChangeNotifier {
     @objc static func onWakeNote(note: NSNotification) {
         NotificationCenter.default.post(name: .systemNetworkStatusIPUpdate, object: nil)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+        Task { @MainActor in
+            try? await Task.sleep(seconds: 1)
             NotificationCenter.default.post(name: .systemNetworkStatusDidChange, object: nil)
         }
     }

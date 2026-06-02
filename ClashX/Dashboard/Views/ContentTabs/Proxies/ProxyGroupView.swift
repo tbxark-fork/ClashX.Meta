@@ -76,7 +76,7 @@ struct ProxyGroupView: View {
 				 ? String(proxyGroup.id.hiddenID)
 					: proxyGroup.name)
 				.font(.system(size: 17))
-            Text(proxyGroup.type.rawString)
+			Text(verbatim: proxyGroup.type.rawString)
 				.font(.system(size: 13))
 				.foregroundColor(.secondary)
 			Text("\(proxyGroup.proxies.count)")
@@ -92,7 +92,9 @@ struct ProxyGroupView: View {
 				title2: "Testing",
 				iconName: "bolt.fill",
 				inProgress: $isTesting) {
-					startBenchmark()
+					Task {
+						await startBenchmark()
+					}
 				}
 		}
 	}
@@ -109,42 +111,44 @@ struct ProxyGroupView: View {
 				.cornerRadius(8)
 				.onTapGesture {
 					let item = proxy
-					updateSelect(item.name)
+					Task {
+						await updateSelect(item.name)
+					}
 				}
 			}
 		}
 	}
 
-	func startBenchmark() {
+	@MainActor
+	func startBenchmark() async {
 		isTesting = true
-		ApiRequest.getGroupDelay(groupName: proxyGroup.name) { delays in
-			proxyGroup.proxies.enumerated().forEach {
-				var delay = 0
-				if let d = delays[$0.element.name], d != 0 {
-					delay = d
-				}
-				guard $0.offset < proxyGroup.proxies.count,
-					  proxyGroup.proxies[$0.offset].name == $0.element.name
-				else { return }
-				proxyGroup.proxies[$0.offset].delay = delay
-				
-				if proxyGroup.currentProxy?.name == $0.element.name {
-					proxyGroup.currentProxy = proxyGroup.proxies[$0.offset]
-				}
+		let delays = await ProxyHealthCheckManager.shared.getGroupDelay(groupName: proxyGroup.name)
+		proxyGroup.proxies.enumerated().forEach {
+			var delay = 0
+			if let d = delays[$0.element.name], d != 0 {
+				delay = d
 			}
-			isTesting = false
+			guard $0.offset < proxyGroup.proxies.count,
+				  proxyGroup.proxies[$0.offset].name == $0.element.name
+			else { return }
+			proxyGroup.proxies[$0.offset].delay = delay
+			
+			if proxyGroup.currentProxy?.name == $0.element.name {
+				proxyGroup.currentProxy = proxyGroup.proxies[$0.offset]
+			}
 		}
+		isTesting = false
 	}
 	
-	func updateSelect(_ name: String) {
+	@MainActor
+	func updateSelect(_ name: String) async {
 		guard selectable, !isUpdatingSelect else { return }
 		isUpdatingSelect = true
-		ApiRequest.updateProxyGroup(group: proxyGroup.name, selectProxy: name) { success in
-			isUpdatingSelect = false
-			guard success else { return }
-			proxyGroup.now = name
-			self.groupSelected = name
-		}
+		let success = await ApiRequest.updateProxyGroup(group: proxyGroup.name, selectProxy: name)
+		isUpdatingSelect = false
+		guard success else { return }
+		proxyGroup.now = name
+		self.groupSelected = name
 	}
 	
 }

@@ -20,14 +20,14 @@ struct OverviewView: View {
 			ZStack(alignment: .topLeading) {
 				LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: columnCount)) {
 					
-					OverviewTopItemView(name: "Upload", value: $data.uploadString)
-					OverviewTopItemView(name: "Download", value: $data.downloadString)
-					OverviewTopItemView(name: "Upload Total", value: $data.uploadTotal)
-					OverviewTopItemView(name: "Download Total", value: $data.downloadTotal)
+					OverviewTopItemView(name: "Upload", value: data.uploadString)
+					OverviewTopItemView(name: "Download", value: data.downloadString)
+					OverviewTopItemView(name: "Upload Total", value: data.uploadTotal)
+					OverviewTopItemView(name: "Download Total", value: data.downloadTotal)
 					
-					OverviewTopItemView(name: "Active Connections", value: $data.activeConns)
-					OverviewTopItemView(name: "Memory Usage", value: $data.memory)
-					OverviewTopItemView(name: "Mihomo", value: $version)
+					OverviewTopItemView(name: "Active Connections", value: data.activeConns)
+					OverviewTopItemView(name: "Memory Usage", value: data.memory)
+					OverviewTopItemView(name: "Mihomo", value: version)
 				}
 				GeometryReader { geometry in
 					Rectangle()
@@ -66,13 +66,16 @@ struct OverviewView: View {
 
 		}
 		.padding()
-		.onAppear {
-			ApiRequest.requestVersion {
-				self.version = $0?.version ?? ""
-			}
+		.task {
+			await loadVersion()
 		}
         .background(Color("SwiftUI Colors/WindowBackgroundColor"))
     }
+
+	@MainActor
+	func loadVersion() async {
+		version = await ApiRequest.requestVersion()?.version ?? ""
+	}
 	
 	func updateColumnCount(_ width: Double) {
 		let v = Int(Int(width) / 155)
