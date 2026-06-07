@@ -197,6 +197,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    @MainActor
     func setupStatusMenuItemData() {
         ConfigManager.shared
             .showNetSpeedIndicatorObservable
@@ -210,7 +211,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }.disposed(by: disposeBag)
 
         statusItemView.updateViewStatus(enableProxy: ConfigManager.shared.proxyState.isSystemProxyEnabled)
-
     }
 	
     func setupData() {
@@ -229,28 +229,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .observe(on: MainScheduler.instance)
             .subscribe { [weak self] state in
                 guard let self = self else { return }
+                Task { @MainActor in
+                    if !state.isSystemProxyEnabled {
+                        self.proxySettingMenuItem.state = .off
+                    } else if state.isProxyPaused || state.isSystemProxySetByOther {
+                        self.proxySettingMenuItem.state = .mixed
+                    } else {
+                        self.proxySettingMenuItem.state = .on
+                    }
 
-                if !state.isSystemProxyEnabled {
-                    self.proxySettingMenuItem.state = .off
-                } else if state.isProxyPaused || state.isSystemProxySetByOther {
-                    self.proxySettingMenuItem.state = .mixed
-                } else {
-                    self.proxySettingMenuItem.state = .on
-                }
+                    if !state.isTunModeEnabled {
+                        self.tunModeMenuItem.state = .off
+                    } else if state.isProxyPaused {
+                        self.tunModeMenuItem.state = .mixed
+                    } else {
+                        self.tunModeMenuItem.state = state.isTunModeActive ? .on : .off
+                    }
 
-                if !state.isTunModeEnabled {
-                    self.tunModeMenuItem.state = .off
-                } else if state.isProxyPaused {
-                    self.tunModeMenuItem.state = .mixed
-                } else {
-                    self.tunModeMenuItem.state = state.isTunModeActive ? .on : .off
-                }
-
-                if state.isProxyPaused {
-                    self.statusItemView.updateViewStatus(enableProxy: false)
-                } else {
-                    let isIconActive = (self.proxySettingMenuItem.state == .on) || state.isTunModeActive
-                    self.statusItemView.updateViewStatus(enableProxy: isIconActive)
+                    if state.isProxyPaused {
+                        self.statusItemView.updateViewStatus(enableProxy: false)
+                    } else {
+                        let isIconActive = (self.proxySettingMenuItem.state == .on) || state.isTunModeActive
+                        self.statusItemView.updateViewStatus(enableProxy: isIconActive)
+                    }
                 }
             }
             .disposed(by: disposeBag)
@@ -660,7 +661,7 @@ extension AppDelegate {
 
     @IBAction func updateGEO(_ sender: NSMenuItem) {
         Task {
-            await ClashResourceManager.shared.updateGeoDatabases()
+            _ = await ApiRequest.updateGEO()
         }
     }
 
@@ -713,11 +714,12 @@ extension AppDelegate {
             if launch_fail_times > 3 {
                 // 发生连续崩溃
                 ConfigFileManager.backupAndRemoveConfigFile()
-				let ruleFiles = ClashResourceManager.RuleFiles.self
+					let ruleFiles = ClashResourceManager.RuleFiles.self
 
-				try? FileManager.default.removeItem(atPath: kConfigFolderPath + ruleFiles.mmdb.rawValue)
-				try? FileManager.default.removeItem(atPath: kConfigFolderPath + ruleFiles.geosite.rawValue)
-				try? FileManager.default.removeItem(atPath: kConfigFolderPath + ruleFiles.geoip.rawValue)
+					try? FileManager.default.removeItem(atPath: kConfigFolderPath + ruleFiles.mmdb.rawValue)
+					try? FileManager.default.removeItem(atPath: kConfigFolderPath + ruleFiles.geosite.rawValue)
+					try? FileManager.default.removeItem(atPath: kConfigFolderPath + ruleFiles.geoip.rawValue)
+					try? FileManager.default.removeItem(atPath: kConfigFolderPath + ruleFiles.bundleMRS.rawValue)
 
                 if let domain = Bundle.main.bundleIdentifier {
                     UserDefaults.standard.removePersistentDomain(forName: domain)
