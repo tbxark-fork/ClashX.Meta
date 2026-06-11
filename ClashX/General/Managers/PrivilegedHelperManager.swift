@@ -18,6 +18,7 @@ final class PrivilegedHelperManager {
         case unavailable
         case remote(String)
         case codec(Error)
+        case timedOut
 
         var errorDescription: String? {
             switch self {
@@ -27,7 +28,22 @@ final class PrivilegedHelperManager {
                 return message
             case let .codec(error):
                 return error.localizedDescription
+            case .timedOut:
+                return "The privileged helper request timed out."
             }
+        }
+    }
+
+    private final class ContinuationCompletion: @unchecked Sendable {
+        private let lock = NSLock()
+        private var didComplete = false
+
+        func tryComplete() -> Bool {
+            lock.lock()
+            defer { lock.unlock() }
+            guard !didComplete else { return false }
+            didComplete = true
+            return true
         }
     }
 
@@ -37,6 +53,7 @@ final class PrivilegedHelperManager {
     private let useLegacyInstall = true
     private var connection: NSXPCConnection?
     private var _helper: ProxyConfigRemoteProcessProtocol?
+    private let requestTimeout: TimeInterval = 15
 
     static let machServiceName = "com.metacubex.ClashX.ProxyConfigHelper"
     static let shared = PrivilegedHelperManager()
@@ -180,31 +197,51 @@ final class PrivilegedHelperManager {
         }
 
         return try await withCheckedThrowingContinuation { continuation in
-            helper.sendRequest(requestData) { responseData, errorMessage in
-                continuation.resume(with: self.decodeRequestResult(responseData: responseData,
-                                                                   errorMessage: errorMessage,
-                                                                   as: Message.self))
+            let completion = ContinuationCompletion()
+            var timeoutTask: Task<Void, Never>?
+
+            let finish: (Result<Message.Response, Error>) -> Void = { result in
+                guard completion.tryComplete() else { return }
+                timeoutTask?.cancel()
+                switch result {
+                case let .success(response):
+                    continuation.resume(returning: response)
+                case let .failure(error):
+                    continuation.resume(throwing: error)
+                }
             }
-        }
-    }
 
-    private func decodeRequestResult<Message: ProxyConfigHelperXPCMessage>(
-        responseData: Data?,
-        errorMessage: NSString?,
-        as type: Message.Type) -> Result<Message.Response, Error> {
-        if let errorMessage {
-            return .failure(AsyncHelperError.remote(errorMessage as String))
-        }
+            helper.sendRequest(requestData) { responseData, errorMessage in
+                if let errorMessage {
+                    self.resetHelper(invalidate: true)
+                    finish(.failure(AsyncHelperError.remote(errorMessage as String)))
+                    return
+                }
 
-        guard let responseData else {
-            return .failure(AsyncHelperError.unavailable)
-        }
+                guard let responseData else {
+                    self.resetHelper(invalidate: true)
+                    finish(.failure(AsyncHelperError.unavailable))
+                    return
+                }
 
-        do {
-            let response = try ProxyConfigHelperXPCCodec.decodeResponse(responseData, as: type)
-            return .success(response)
-        } catch {
-            return .failure(AsyncHelperError.codec(error))
+                do {
+                    let response = try ProxyConfigHelperXPCCodec.decodeResponse(responseData, as: Message.self)
+                    finish(.success(response))
+                } catch {
+                    finish(.failure(AsyncHelperError.codec(error)))
+                }
+            }
+
+            timeoutTask = Task { [requestTimeout] in
+                do {
+                    try await Task.sleep(seconds: requestTimeout)
+                } catch {
+                    return
+                }
+
+                self.resetHelper(invalidate: true)
+                finish(.failure(AsyncHelperError.timedOut))
+            }
         }
     }
 
@@ -219,11 +256,21 @@ final class PrivilegedHelperManager {
             Logger.log("check helper status fail")
             return .noFound
         }
-
-        guard FileManager.default.fileExists(atPath: "/Library/PrivilegedHelperTools/\(PrivilegedHelperManager.machServiceName)") else {
+        
+        let helperInstalledURL = helperInstalledURL()
+        
+        if FileManager.default.fileExists(atPath: helperInstalledURL.path) {
+            if let info = CFBundleCopyInfoDictionaryForURL(helperInstalledURL as CFURL) as? [String: Any],
+               let version = info["CFBundleShortVersionString"] as? String,
+               version == helperVersion {
+                Logger.log("helper version CFBundleShortVersionString \(version)", level: .debug)
+            } else {
+                return .needUpdate
+            }
+        } else {
             return .noFound
         }
-
+        
         let timeout: TimeInterval = 15
         let time = Date()
         return await withTaskGroup(of: HelperStatus.self, returning: HelperStatus.self) { group in
@@ -274,6 +321,10 @@ final class PrivilegedHelperManager {
 
     private func helperBundleURL() -> URL {
         Bundle.main.bundleURL.appendingPathComponent("Contents/Library/LaunchServices/" + PrivilegedHelperManager.machServiceName)
+    }
+    
+    private func helperInstalledURL() -> URL {
+        URL(fileURLWithPath: "/Library/PrivilegedHelperTools/\(PrivilegedHelperManager.machServiceName)")
     }
 
     private func launchDaemonPlistURL() -> URL {
