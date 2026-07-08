@@ -118,6 +118,10 @@ class ApiRequest {
     private var streamRetryTasks: [StreamType: Task<Void, Never>] = [:]
 	@MainActor
     private var streamRetryDelays: [StreamType: TimeInterval] = [.traffic: 1, .logging: 1, .memory: 1]
+	@MainActor
+    private var didTrafficStreamEverConnect = false
+	@MainActor
+    private var isCoreProcessAlive = true
     
     private var logRateLimiter = LogRateLimiter {
         let alert = NSAlert()
@@ -204,35 +208,27 @@ class ApiRequest {
     }
 
     static func updateOutBoundMode(mode: ClashProxyMode) async -> Bool {
-        do {
-            _ = try await req(
-                "/configs",
-                method: .PATCH,
-                parameters: ["mode": mode.rawValue],
-                encoding: .json
-            )
-            .validate()
-            .response
-            return true
-        } catch {
-            return false
-        }
+        let response = await req(
+            "/configs",
+            method: .PATCH,
+            parameters: ["mode": mode.rawValue],
+            encoding: .json
+        )
+        .validate()
+        .response
+        return response.error == nil
     }
 
     static func updateLogLevel(level: ClashLogLevel) async -> Bool {
-        do {
-            _ = try await req(
-                "/configs",
-                method: .PATCH,
-                parameters: ["log-level": level.rawValue],
-                encoding: .json
-            )
-            .validate()
-            .response
-            return true
-        } catch {
-            return false
-        }
+        let response = await req(
+            "/configs",
+            method: .PATCH,
+            parameters: ["log-level": level.rawValue],
+            encoding: .json
+        )
+        .validate()
+        .response
+        return response.error == nil
     }
 
     static func requestProxyGroupList() async -> ClashProxyResp {
@@ -557,6 +553,8 @@ extension ApiRequest {
 extension ApiRequest {
 	@MainActor
 	func resetStreamApis() {
+		didTrafficStreamEverConnect = false
+		isCoreProcessAlive = true
 		StreamType.allCases.forEach { resetStreamApi(for: $0) }
 	}
 
@@ -572,7 +570,7 @@ extension ApiRequest {
 		case .traffic: 
             "/traffic"
 		case .logging:
-            "/logs?level=\(ConfigManager.selectLoggingApiLevel.rawValue)"
+            "/logs?level=\(ConfigOverride.shared.logLevel.rawValue)"
 		case .memory:
             "/memory"
 		}
@@ -663,6 +661,7 @@ extension ApiRequest {
         Logger.log("\(type)Stream did Connect", level: .debug)
 
         if type == .traffic {
+            didTrafficStreamEverConnect = true
             ConfigManager.shared.kernelState = .running
             await notifyStreamStatusChanged()
         }
@@ -687,6 +686,21 @@ extension ApiRequest {
                 ConfigManager.shared.kernelState = .failedToStart
             }
             await notifyStreamStatusChanged()
+
+            if didTrafficStreamEverConnect, !isTerminating,
+               (error as? CancellationError) == nil {
+                if isCoreProcessAlive {
+                    let alive = await ClashProcess.isMetaProcessRunning()
+                    if alive {
+                        UserNotificationCenter.shared.postCoreDisconnectedNotice()
+                        scheduleRetry(for: type)
+                        return
+                    }
+                    isCoreProcessAlive = false
+                }
+                await UserNotificationCenter.shared.postCoreCrashNotice()
+                return
+            }
         }
         
         if let err = error, (err as? HTTPParserError) != .invalidEOFState {

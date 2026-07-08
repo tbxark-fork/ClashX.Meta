@@ -6,6 +6,7 @@
 //
 
 import Cocoa
+import Subprocess
 
 @MainActor
 protocol ClashProcessDelegate: AnyObject {
@@ -32,6 +33,17 @@ actor ClashProcess {
 	}
 
 	static let metaCoreMd5 = "WOSHIZIDONGSHENGCHENGDEA"
+	private static let metaProcessLabel = "com.metacubex.ClashX.ProxyConfigHelper.meta"
+
+	static func isMetaProcessRunning() async -> Bool {
+		let output: String = (try? await run(
+			.name("pgrep"),
+			arguments: ["-x", metaProcessLabel],
+			output: .string(limit: 65536)
+		).standardOutput) ?? ""
+
+		return !output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+	}
 	
 	
 	private var coreState: CoreState = .stopped
@@ -228,7 +240,7 @@ actor ClashProcess {
 
 		Logger.log("Try to copy default config")
 		ICloudManager.shared.setup()
-		ConfigFileManager.copySampleConfigIfNeed()
+		await ConfigFileManager.copySampleConfigIfNeed()
 	}
 
 	private func generateInitConfig() async throws -> ClashMetaConfig.Config {
@@ -244,7 +256,7 @@ actor ClashProcess {
 			throw StartMetaError.startMetaFailed("resourcePath")
 		}
 
-		var paths = [resourcePath + "/dashboard"]
+		var paths = [resourcePath + "/dashboard", Paths.cacheConfigs()]
 		guard ICloudManager.shared.useICloudRelay.value else {
 			return paths
 		}
@@ -296,7 +308,11 @@ actor ClashProcess {
 		let configName = ConfigManager.selectConfigName
 		Logger.log("Push init config file: \(configName)")
 
-		if let error = await ApiRequest.requestConfigUpdate(configName: configName) {
+		guard let composedPath = await ConfigOverride.shared.composeConfig(configName: configName) else {
+			throw StartMetaError.pushConfigFailed("compose config failed")
+		}
+
+		if let error = await ApiRequest.requestConfigUpdate(configPath: composedPath) {
 			throw StartMetaError.pushConfigFailed(error)
 		}
 

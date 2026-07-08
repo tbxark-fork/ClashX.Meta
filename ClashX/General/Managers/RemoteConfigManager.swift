@@ -187,10 +187,10 @@ class RemoteConfigManager {
         config.isPlaceHolderName = false
 
         if ICloudManager.shared.useICloudRelay.value {
-            ConfigFileManager.shared.stopWatchConfigFile()
+            await ConfigFileManager.shared.stopWatchConfigFile()
         }
         if config.name == ConfigManager.selectConfigName {
-            ConfigFileManager.shared.pauseForNextChange()
+            await ConfigFileManager.shared.pauseForNextChange()
         }
 
         let savePath: String?
@@ -214,7 +214,7 @@ class RemoteConfigManager {
     }
 
     static func createCacheConfig(string: String) -> String? {
-		let path = Paths.tempPath() + "/cacheConfigs"
+		let path = Paths.cacheConfigs()
         let confPath = path + "/\(UUID().uuidString).yaml"
 
         let fm = FileManager.default
