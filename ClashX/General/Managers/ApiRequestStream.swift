@@ -8,7 +8,6 @@
 
 import Cocoa
 
-import SwiftyJSON
 import NIOHTTP1
 import NIOCore
 
@@ -25,6 +24,22 @@ final class ApiRequestStream {
 	enum StreamType: CaseIterable {
 		case traffic, logging, memory
 	}
+
+	private struct TrafficMessage: Decodable {
+		let up: Int
+		let down: Int
+	}
+
+	private struct LogMessage: Decodable {
+		let payload: String
+		let type: String?
+	}
+
+	private struct MemoryMessage: Decodable {
+		let inuse: Int64
+	}
+
+	private static let decoder = JSONDecoder()
 
 	@MainActor
 	private struct WeakObserver {
@@ -341,16 +356,17 @@ final class ApiRequestStream {
 
 	@MainActor
 	private func streamDidReceiveMessage(_ type: StreamType, text: String) async {
-		let json = JSON(parseJSON: text)
-
 		switch type {
 		case .traffic:
-			await notifyTrafficUpdate(up: json["up"].intValue, down: json["down"].intValue)
+			guard let message = try? Self.decoder.decode(TrafficMessage.self, from: Data(text.utf8)) else { return }
+			await notifyTrafficUpdate(up: message.up, down: message.down)
 		case .logging:
 			guard await logRateLimiter.processLog() else { return }
-			await notifyLog(log: json["payload"].stringValue, level: json["type"].string ?? "info")
+			guard let message = try? Self.decoder.decode(LogMessage.self, from: Data(text.utf8)) else { return }
+			await notifyLog(log: message.payload, level: message.type ?? "info")
 		case .memory:
-			await notifyMemoryUpdate(memory: json["inuse"].int64Value)
+			guard let message = try? Self.decoder.decode(MemoryMessage.self, from: Data(text.utf8)) else { return }
+			await notifyMemoryUpdate(memory: message.inuse)
 		}
 	}
 }

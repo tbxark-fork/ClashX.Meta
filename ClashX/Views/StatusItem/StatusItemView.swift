@@ -14,10 +14,13 @@ import Foundation
 final class StatusItemView: NSView, StatusItemViewProtocol {
     private var statusItem: NSStatusItem?
 
-    private var up: Int = 0
-    private var down: Int = 0
+    private var upText: String = ""
+    private var downText: String = ""
     private var showSpeed: Bool = true
     private var enableProxy: Bool = false
+
+    private var widthCache: [Int: CGFloat] = [:]
+    private var textHeight: CGFloat?
 
     private let horizontalPadding: CGFloat = 3
     private let iconSize: CGFloat = 16
@@ -90,8 +93,6 @@ final class StatusItemView: NSView, StatusItemViewProtocol {
 
         guard showSpeed else { return }
 
-        let upText = SpeedUtils.getSpeedString(for: up)
-        let downText = SpeedUtils.getSpeedString(for: down)
         let style = NSMutableParagraphStyle()
         style.alignment = .right
 
@@ -103,26 +104,33 @@ final class StatusItemView: NSView, StatusItemViewProtocol {
 
         let upAttributed = NSAttributedString(string: upText, attributes: attributes)
         let downAttributed = NSAttributedString(string: downText, attributes: attributes)
-        let maxDimension: CGFloat = CGFloat.greatestFiniteMagnitude
-
-        let upSize = upAttributed.boundingRect(
-            with: CGSize(width: maxDimension, height: maxDimension),
-            options: [.usesLineFragmentOrigin, .usesFontLeading]
-        ).integral.size
-        let downSize = downAttributed.boundingRect(
-            with: CGSize(width: maxDimension, height: maxDimension),
-            options: [.usesLineFragmentOrigin, .usesFontLeading]
-        ).integral.size
-
-        let textWidth = max(upSize.width, downSize.width)
+        let textWidth = max(measuredWidth(of: upText), measuredWidth(of: downText))
+        let textHeight = measuredTextHeight
         let textRight = bounds.width - horizontalPadding
         let textX = textRight - textWidth
-        let textHeight = max(upSize.height, downSize.height)
         let upRect = CGRect(x: textX, y: 12, width: textWidth, height: textHeight)
         let downRect = CGRect(x: textX, y: 2, width: textWidth, height: textHeight)
 
         upAttributed.draw(with: upRect)
         downAttributed.draw(with: downRect)
+    }
+
+    private func measuredWidth(of text: String) -> CGFloat {
+        if let cached = widthCache[text.count] {
+            return cached
+        }
+        let width = (text as NSString).size(withAttributes: [.font: textFont]).width
+        widthCache[text.count] = width
+        return width
+    }
+
+    private var measuredTextHeight: CGFloat {
+        if let textHeight {
+            return textHeight
+        }
+        let height = (upText as NSString).size(withAttributes: [.font: textFont]).height
+        textHeight = height
+        return height
     }
 
     func updateSize(_ statusItem: NSStatusItem?, width: CGFloat) {
@@ -140,9 +148,11 @@ final class StatusItemView: NSView, StatusItemViewProtocol {
 
     func updateSpeedLabel(up: Int, down: Int) {
         guard showSpeed else { return }
-        guard up != self.up || down != self.down else { return }
-        self.up = up
-        self.down = down
+        let upText = SpeedUtils.getSpeedString(for: up)
+        let downText = SpeedUtils.getSpeedString(for: down)
+        guard upText != self.upText || downText != self.downText else { return }
+        self.upText = upText
+        self.downText = downText
         display()
     }
 
