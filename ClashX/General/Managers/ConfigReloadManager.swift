@@ -21,8 +21,8 @@ final class ConfigReloadManager {
     }
 
     func resetStreamApi() {
-        ApiRequest.shared.delegate = AppDelegate.shared
-        ApiRequest.shared.resetStreamApis()
+        ApiRequestStream.shared.addObserver(AppDelegate.shared)
+        ApiRequestStream.shared.resetStreamApis()
     }
 
     func resetStreamApiIfRemoteControlEnabled() {

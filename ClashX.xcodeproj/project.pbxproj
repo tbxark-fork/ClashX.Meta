@@ -26,6 +26,7 @@
 		0197255A2CA15D6400C14E49 /* UserNotificationCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 019725592CA15D6400C14E49 /* UserNotificationCenter.swift */; };
 		0197255C2CA15FC600C14E49 /* NSWorkspace+openFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0197255B2CA15FC600C14E49 /* NSWorkspace+openFile.swift */; };
 		019A239628657A7A00AE5698 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 019A239528657A7A00AE5698 /* main.swift */; };
+		01BB50A2302E2B80004C38EE /* ApiRequestStream.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BB50A1302E2B80004C38EE /* ApiRequestStream.swift */; };
 		01BC9ABE2928EB5A00F9B177 /* MetaDNS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BC9ABD2928E5C600F9B177 /* MetaDNS.swift */; };
 		01BCDAB32C9ECB560028FA94 /* SwiftUIIntrospect in Frameworks */ = {isa = PBXBuildFile; productRef = 01BCDAB22C9ECB560028FA94 /* SwiftUIIntrospect */; };
 		01BCDAF02C9ECD010028FA94 /* DBProviderStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BCDABB2C9ECD010028FA94 /* DBProviderStorage.swift */; };
@@ -243,6 +244,7 @@
 		0197255B2CA15FC600C14E49 /* NSWorkspace+openFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSWorkspace+openFile.swift"; sourceTree = "<group>"; };
 		019A239528657A7A00AE5698 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		01B1CB092A2E20C10073EA34 /* DashboardManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardManager.swift; sourceTree = "<group>"; };
+		01BB50A1302E2B80004C38EE /* ApiRequestStream.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiRequestStream.swift; sourceTree = "<group>"; };
 		01BC9ABD2928E5C600F9B177 /* MetaDNS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaDNS.swift; sourceTree = "<group>"; };
 		01BCDAB92C9ECD010028FA94 /* DashboardViewContoller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewContoller.swift; sourceTree = "<group>"; };
 		01BCDABA2C9ECD010028FA94 /* DBConnectionSnapShot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DBConnectionSnapShot.swift; sourceTree = "<group>"; };
@@ -631,6 +633,7 @@
 				499ADAFC2498CC5900C488FE /* RemoteControlManager.swift */,
 				4929F67E258CE04700A435F6 /* Settings.swift */,
 				01EF58B52FF77D1B00432213 /* ConfigOverride.swift */,
+				01BB50A1302E2B80004C38EE /* ApiRequestStream.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -1080,6 +1083,7 @@
 				01F3360A2AD10D0B0048AF77 /* PrivilegedHelperManager+Legacy.swift in Sources */,
 				01F3360C2AD10D0B0048AF77 /* NSAlert+Extension.swift in Sources */,
 				01F3360D2AD10D0B0048AF77 /* ClashWebViewContoller.swift in Sources */,
+				01BB50A2302E2B80004C38EE /* ApiRequestStream.swift in Sources */,
 				01F3360E2AD10D0B0048AF77 /* ProxyGroupSpeedTestMenuItem.swift in Sources */,
 				01F3360F2AD10D0B0048AF77 /* LoginServiceKit.swift in Sources */,
 				01F336102AD10D0B0048AF77 /* NormalMenuItemView.swift in Sources */,
