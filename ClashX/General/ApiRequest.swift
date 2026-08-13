@@ -11,6 +11,7 @@ import Cocoa
 import SwiftyJSON
 import Foundation
 import NIOHTTP1
+import NIOCore
 
 protocol ApiRequestStreamDelegate: AnyObject {
     func didUpdateTraffic(up: Int, down: Int) async
@@ -57,14 +58,16 @@ class ApiRequest {
         method: HTTPMethod = .GET,
         parameters: [String: Any]? = nil,
         encoding: ApiParameterEncoding = .default,
-        requiresCoreRunning: Bool = true
+        requiresCoreRunning: Bool = true,
+        timeout: TimeAmount? = nil
     ) async -> ApiRequestTransport.Handle {
         await ApiRequestTransport.req(
             url,
             method: method,
             parameters: parameters,
             encoding: encoding,
-            requiresCoreRunning: requiresCoreRunning
+            requiresCoreRunning: requiresCoreRunning,
+            timeout: timeout
         )
     }
 
@@ -115,11 +118,11 @@ class ApiRequest {
 	@MainActor
     private var streamTasks: [StreamType: Task<Void, Never>] = [:]
 	@MainActor
+    private var streamGenerations: [StreamType: UUID] = [:]
+	@MainActor
     private var streamRetryTasks: [StreamType: Task<Void, Never>] = [:]
 	@MainActor
     private var streamRetryDelays: [StreamType: TimeInterval] = [.traffic: 1, .logging: 1, .memory: 1]
-	@MainActor
-    private var didTrafficStreamEverConnect = false
 	@MainActor
     private var isCoreProcessAlive = true
     
@@ -136,9 +139,9 @@ class ApiRequest {
         }
     }
 
-    static func requestVersion() async -> ClashVersion? {
+    static func requestVersion(timeout: TimeAmount? = nil) async -> ClashVersion? {
         do {
-            return try await req("/version", requiresCoreRunning: false)
+            return try await req("/version", requiresCoreRunning: false, timeout: timeout)
                 .validate()
                 .responseDecodable(ClashVersion.self)
         } catch {
@@ -553,13 +556,14 @@ extension ApiRequest {
 extension ApiRequest {
 	@MainActor
 	func resetStreamApis() {
-		didTrafficStreamEverConnect = false
 		isCoreProcessAlive = true
 		StreamType.allCases.forEach { resetStreamApi(for: $0) }
 	}
 
 	@MainActor
 	func resetStreamApi(for type: StreamType) {
+		let requiresCoreRunning = type != .traffic || ConfigManager.shared.kernelState.isOperational
+		guard requiresCoreRunning else { return }
 		cancelRetryTask(for: type)
 		streamRetryDelays[type] = 1
 		startStream(for: type)
@@ -582,10 +586,12 @@ extension ApiRequest {
 		streamTasks[type]?.cancel()
 
 		let uri = streamUri(for: type)
+		let generation = UUID()
+		streamGenerations[type] = generation
 
 		streamTasks[type] = Task { @MainActor [weak self] in
 			do {
-                let requiresCoreRunning = type != .traffic
+                let requiresCoreRunning = ConfigManager.shared.kernelState.isOperational
                 
 				let stream = await ApiRequest.req(uri, requiresCoreRunning: requiresCoreRunning).stream
 				var didConnect = false
@@ -596,9 +602,9 @@ extension ApiRequest {
 					}
 					await self?.streamDidReceiveMessage(type, text: line)
 				}
-				await self?.streamDidDisconnect(type, error: nil)
+				await self?.streamDidDisconnect(type, error: nil, generation: generation)
 			} catch {
-				await self?.streamDidDisconnect(type, error: error)
+				await self?.streamDidDisconnect(type, error: error, generation: generation)
 			}
 		}
 	}
@@ -655,60 +661,150 @@ extension ApiRequest {
 
 	// MARK: Stream Event Handlers
 
-    @MainActor
-    private func streamDidConnect(_ type: StreamType) async {
-        streamRetryDelays[type] = 1
-        Logger.log("\(type)Stream did Connect", level: .debug)
+	@MainActor
+	private func streamDidConnect(_ type: StreamType) async {
+		streamRetryDelays[type] = 1
+		Logger.log("\(type)Stream did Connect", level: .debug)
 
-        if type == .traffic {
-            didTrafficStreamEverConnect = true
-            ConfigManager.shared.kernelState = .running
-            await notifyStreamStatusChanged()
-        }
-    }
+		if type == .traffic {
+			await notifyStreamStatusChanged()
+		}
+	}
 
 	@MainActor
-	private func streamDidDisconnect(_ type: StreamType, error: Error?) async {
-        streamTasks[type]?.cancel()
-        if type == .traffic {
-            let kernelState = ConfigManager.shared.kernelState
-            let shouldTreatAsStartupFailure: Bool
-            switch kernelState {
-            case .stopped, .checkingLaunchPath, .checkingHelper, .preparingConfig, .starting:
-                shouldTreatAsStartupFailure = true
-            case .reloadingConfig, .running, .disconnected, .failedToStart:
-                shouldTreatAsStartupFailure = false
-            }
+	private func streamDidDisconnect(_ type: StreamType, error: Error?, generation: UUID) async {
+		guard streamGenerations[type] == generation else { return }
 
-            if error == nil || (error as? HTTPParserError) == .invalidEOFState || !shouldTreatAsStartupFailure {
-                ConfigManager.shared.kernelState = .disconnected
-            } else {
-                ConfigManager.shared.kernelState = .failedToStart
-            }
-            await notifyStreamStatusChanged()
-
-            if didTrafficStreamEverConnect, !isTerminating,
-               (error as? CancellationError) == nil {
-                if isCoreProcessAlive {
-                    let alive = await ClashProcess.isMetaProcessRunning()
-                    if alive {
-                        UserNotificationCenter.shared.postCoreDisconnectedNotice()
-                        scheduleRetry(for: type)
-                        return
-                    }
-                    isCoreProcessAlive = false
-                }
-                await UserNotificationCenter.shared.postCoreCrashNotice()
-                return
-            }
-        }
-        
-        if let err = error, (err as? HTTPParserError) != .invalidEOFState {
-            Logger.log(err.localizedDescription, level: .error)
-        }
+		if let err = error, (err as? HTTPParserError) != .invalidEOFState {
+			Logger.log("\(type)Stream did disconnect with error: \(err.localizedDescription)", level: .error)
+		}
 
 		Logger.log("\(type)Stream did disconnect", level: .debug)
+
+		if type == .logging {
+			await verifyCoreHealthAfterStreamDisconnect()
+		}
 		scheduleRetry(for: type)
+	}
+
+	// MARK: Core Health Verification
+	// Stream events only trigger the check; kernel state is decided by /version + launchctl.
+
+	private enum CoreHealth {
+		case alive
+		case crashed
+		case unknown
+	}
+
+	@MainActor
+	private func verifyCoreHealthAfterStreamDisconnect() async {
+		guard !isTerminating else { return }
+		let state = ConfigManager.shared.kernelState
+		guard state.isOperational || state == .disconnected else { return }
+
+		let health = await verifyCoreHealth()
+
+		// Ignore the result if the core was restarted during verification.
+		let currentState = ConfigManager.shared.kernelState
+		guard !isTerminating, currentState.isOperational || currentState == .disconnected else { return }
+		Logger.log("Core health verdict: \(health). kernelState: \(currentState)", level: .info)
+
+		switch health {
+		case .alive:
+			if currentState == .disconnected {
+				ConfigManager.shared.kernelState = .running
+				await notifyStreamStatusChanged()
+			}
+		case .crashed:
+			guard isCoreProcessAlive else { return }
+			isCoreProcessAlive = false
+			await UserNotificationCenter.shared.postCoreCrashNotice()
+		case .unknown:
+			if currentState.isOperational {
+				ConfigManager.shared.kernelState = .disconnected
+				await notifyStreamStatusChanged()
+			}
+		}
+	}
+
+	@MainActor
+	private func verifyCoreHealth() async -> CoreHealth {
+		// Layer 1: pick by mode, not fallback chain.
+		let isRestfulMode = RemoteControlManager.selectConfig != nil || ApiRequestTransport.debugUseHttpApi
+
+		if isRestfulMode {
+			if await ApiRequest.requestVersion(timeout: .seconds(2)) != nil {
+				return .alive
+			}
+		} else {
+			if let socketPath = ApiRequestTransport.unixSocketPath,
+			   await Self.probeUnixSocket(socketPath) {
+				return .alive
+			}
+		}
+
+		// Remote control mode: the core is not local, launchd is meaningless.
+		guard RemoteControlManager.selectConfig == nil else {
+			return .unknown
+		}
+
+		guard let status = await ClashProcess.metaLaunchdStatus() else {
+			Logger.log("Core health: launchd status unavailable", level: .error)
+			return .unknown
+		}
+
+		Logger.log("Core health: launchd pid=\(status.pid.map(String.init) ?? "nil") lastExitCode=\(status.lastExitCode ?? "nil") lastSignal=\(status.lastTerminatingSignal ?? "nil")", level: .info)
+
+		if status.isRunning {
+			return .alive
+		}
+
+		if let exitCode = status.lastExitCode, exitCode != "(never exited)" {
+			Logger.log("Core process exited with code \(exitCode)", level: .error)
+			return .crashed
+		}
+
+		if let signal = status.lastTerminatingSignal, !signal.isEmpty {
+			Logger.log("Core process terminated by \(signal)", level: .error)
+			return .crashed
+		}
+
+		return .unknown
+	}
+
+	private static func probeUnixSocket(_ path: String) async -> Bool {
+		await withCheckedContinuation { continuation in
+			DispatchQueue.global().async {
+				let fd = socket(AF_UNIX, SOCK_STREAM, 0)
+				guard fd >= 0 else {
+					continuation.resume(returning: false)
+					return
+				}
+				defer { close(fd) }
+
+				var addr = sockaddr_un()
+				addr.sun_family = sa_family_t(AF_UNIX)
+				let pathBytes = Array(path.utf8)
+				guard pathBytes.count < MemoryLayout.size(ofValue: addr.sun_path) else {
+					continuation.resume(returning: false)
+					return
+				}
+				pathBytes.withUnsafeBufferPointer { buf in
+					withUnsafeMutablePointer(to: &addr.sun_path) { sunPath in
+						buf.baseAddress?.withMemoryRebound(to: Int8.self, capacity: buf.count) { src in
+							memcpy(sunPath, src, buf.count)
+						}
+					}
+				}
+
+				let result = withUnsafePointer(to: &addr) { ptr in
+					ptr.withMemoryRebound(to: sockaddr.self, capacity: 1) { sa in
+						connect(fd, sa, socklen_t(MemoryLayout<sockaddr_un>.size))
+					}
+				}
+				continuation.resume(returning: result == 0)
+			}
+		}
 	}
 
 	private func streamDidReceiveMessage(_ type: StreamType, text: String) async {

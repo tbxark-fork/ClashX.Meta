@@ -439,6 +439,7 @@
       }
     },
     "Connection lost. Retrying automatically." : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -537,6 +538,7 @@
       }
     },
     "Core Disconnected" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {

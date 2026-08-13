@@ -35,14 +35,61 @@ actor ClashProcess {
 	static let metaCoreMd5 = "WOSHIZIDONGSHENGCHENGDEA"
 	private static let metaProcessLabel = "com.metacubex.ClashX.ProxyConfigHelper.meta"
 
-	static func isMetaProcessRunning() async -> Bool {
-		let output: String = (try? await run(
-			.name("pgrep"),
-			arguments: ["-x", metaProcessLabel],
-			output: .string(limit: 65536)
-		).standardOutput) ?? ""
+	struct MetaLaunchdStatus {
+		var pid: Int?
+		var lastExitCode: String?
+		var lastTerminatingSignal: String?
 
-		return !output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+		var isRunning: Bool {
+			(pid ?? 0) > 0
+		}
+	}
+
+	static func metaLaunchdStatus() async -> MetaLaunchdStatus? {
+		for attempt in 1...2 {
+			let result = try? await run(
+				.name("launchctl"),
+				arguments: ["print", "system/\(metaProcessLabel)"],
+				output: .string(limit: 65536),
+				error: .string(limit: 65536)
+			)
+
+			guard let result else {
+				Logger.log("metaLaunchdStatus: launchctl print attempt \(attempt) failed", level: .info)
+				if attempt == 1 {
+					try? await Task.sleep(seconds: 0.3)
+				}
+				continue
+			}
+
+			if let output = result.standardOutput, !output.isEmpty {
+				return Self.parseMetaLaunchdStatus(from: output)
+			}
+
+			let errorOutput = result.standardError ?? ""
+			let stderr = errorOutput.isEmpty ? "(empty)" : errorOutput.trimmingCharacters(in: .whitespacesAndNewlines)
+			Logger.log("metaLaunchdStatus: launchctl print attempt \(attempt) returned empty output, stderr: \(stderr)", level: .info)
+
+			if attempt == 1 {
+				try? await Task.sleep(seconds: 0.3)
+			}
+		}
+		return nil
+	}
+
+	private static func parseMetaLaunchdStatus(from output: String) -> MetaLaunchdStatus {
+		func value(for key: String) -> String? {
+			output.split(separator: "\n")
+				.first { $0.contains(key) }
+				.flatMap { $0.split(separator: "=").last }
+				.map { $0.trimmingCharacters(in: .whitespaces) }
+		}
+
+		return MetaLaunchdStatus(
+			pid: value(for: "pid =").flatMap(Int.init),
+			lastExitCode: value(for: "last exit code ="),
+			lastTerminatingSignal: value(for: "last terminating signal =")
+		)
 	}
 	
 	
