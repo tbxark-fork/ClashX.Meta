@@ -29,21 +29,33 @@ final class StatusItemView: NSView, StatusItemViewProtocol {
         let view = StatusItemView(frame: NSRect(x: 0, y: 0, width: statusItemLengthWithSpeed, height: 22))
         view.statusItem = statusItem
 
-        guard let button = statusItem?.button, let itemView = button.superview else {
+        guard let button = statusItem?.button else {
             Logger.log("button = nil")
             await ConfigFileManager.shared.openConfigFolder()
             return view
         }
 
-        itemView.subviews.filter { $0 is StatusItemView }.forEach { $0.removeFromSuperview() }
-        itemView.addSubview(view)
+        button.subviews.filter { $0 is StatusItemView }.forEach { $0.removeFromSuperview() }
+        button.addSubview(view)
+        button.image = NSImage()
         view.updateViewStatus(enableProxy: false)
         return view
     }
 
+    // macOS 26: suppress the WindowServer "Invalid window" log spam.
+    // Status bar windows can never be tiled, so override the tiling gate to skip the sync.
+    // Source: https://github.com/exelban/stats (helpers.swift, #3395)
+    static func suppressStatusBarTilingConstraintUpdates() {
+        guard #available(macOS 26.0, *) else { return }
+        let selector = NSSelectorFromString("_needsTilingConstraintUpdate")
+        guard let cls = NSClassFromString("NSStatusBarWindow"),
+              let method = class_getInstanceMethod(cls, selector) else { return }
+        let block: @convention(block) (AnyObject) -> Bool = { _ in false }
+        class_addMethod(cls, selector, imp_implementationWithBlock(block), method_getTypeEncoding(method))
+    }
+
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
-        wantsLayer = false
     }
 
     @available(*, unavailable)
@@ -114,25 +126,28 @@ final class StatusItemView: NSView, StatusItemViewProtocol {
     }
 
     func updateSize(_ statusItem: NSStatusItem?, width: CGFloat) {
+        let newLength = max(width, 1)
+        guard frame.width != width || statusItem?.length != newLength else { return }
         frame = NSRect(x: 0, y: 0, width: width, height: itemHeight)
-        statusItem?.length = max(width, 1)
-        needsDisplay = true
+        statusItem?.length = newLength
+        display()
     }
 
     func updateViewStatus(enableProxy: Bool) {
         self.enableProxy = enableProxy
-        needsDisplay = true
+        display()
     }
 
     func updateSpeedLabel(up: Int, down: Int) {
         guard showSpeed else { return }
+        guard up != self.up || down != self.down else { return }
         self.up = up
         self.down = down
-        needsDisplay = true
+        display()
     }
 
     func showSpeedContainer(show: Bool) {
         showSpeed = show
-        needsDisplay = true
+        display()
     }
 }

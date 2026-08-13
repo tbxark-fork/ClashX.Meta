@@ -86,6 +86,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         Logger.log("———————————————————————————————————————————————————————————")
         Logger.log("Appversion: \(AppVersionUtil.currentVersion) \(AppVersionUtil.currentBuild)")
         ProcessInfo.processInfo.disableSuddenTermination()
+        StatusItemView.suppressStatusBarTilingConstraintUpdates()
         Task { @MainActor in
             // setup menu item first
             statusItem = NSStatusBar.system.statusItem(withLength: statusItemLengthWithSpeed)
