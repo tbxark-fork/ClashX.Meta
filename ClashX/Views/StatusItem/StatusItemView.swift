@@ -14,8 +14,8 @@ import Foundation
 final class StatusItemView: NSView, StatusItemViewProtocol {
     private var statusItem: NSStatusItem?
 
-    private var upText: String = ""
-    private var downText: String = ""
+    private var upText: String = SpeedUtils.getSpeedString(for: 0)
+    private var downText: String = SpeedUtils.getSpeedString(for: 0)
     private var showSpeed: Bool = true
     private var enableProxy: Bool = false
 

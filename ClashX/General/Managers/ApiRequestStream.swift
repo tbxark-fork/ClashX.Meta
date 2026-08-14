@@ -230,6 +230,8 @@ final class ApiRequestStream {
 
 		if type == .logging {
 			await verifyCoreHealthAfterStreamDisconnect()
+		} else if type == .traffic {
+			await notifyTrafficUpdate(up: 0, down: 0)
 		}
 		scheduleRetry(for: type)
 	}
