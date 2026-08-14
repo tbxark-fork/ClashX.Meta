@@ -143,11 +143,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     @MainActor
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        Task { @MainActor in
-            let ok = await ExitManager.shared.handleShouldTerminate()
-            NSApp.reply(toApplicationShouldTerminate: ok)
+        switch ExitManager.shared.quitState {
+        case .done:
+            return .terminateNow
+        case .cleaning:
+            return .terminateCancel
+        case .idle:
+            Task { @MainActor in
+                let decision = await ExitManager.shared.handleShouldTerminate()
+                if decision == .terminateNow {
+                    NSApp.terminate(nil)
+                }
+            }
+            return .terminateCancel
         }
-        return .terminateLater
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {

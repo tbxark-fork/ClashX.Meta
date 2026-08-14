@@ -15,35 +15,45 @@ import RxSwift
 final class ExitManager {
     static let shared = ExitManager()
 
+    enum QuitDecision {
+        case terminateNow
+        case cancel
+    }
+
+    enum QuitState {
+        case idle
+        case cleaning
+        case done
+    }
+
     private let normalTimeout: TimeInterval = 5
     private let forceTimeout: TimeInterval = 2
 
-    private(set) var isTerminating = false
+    private(set) var quitState: QuitState = .idle
     private var forceQuitPending = false
 
     // MARK: - External API
 
     func requestQuit(force: Bool) {
         forceQuitPending = force
-        #warning("Use thread 'global' to ensure 'Task' in 'applicationShouldTerminate' executes correctly. 💩💩💩")
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.main.async {
             NSApp.terminate(nil)
         }
     }
     
-    func handleShouldTerminate() async -> Bool {
-        guard !isTerminating else {
-            return true
+    func handleShouldTerminate() async -> QuitDecision {
+        guard quitState == .idle else {
+            return .cancel
         }
-        isTerminating = true
+        quitState = .cleaning
 
         let shouldForce = forceQuitPending
         forceQuitPending = false
 
         if !shouldForce {
             guard confirmAction() else {
-                isTerminating = false
-                return false
+                quitState = .idle
+                return .cancel
             }
         }
 
@@ -63,7 +73,8 @@ final class ExitManager {
         guard decision.shouldClean else {
             _ = await stopTask
             Logger.log("ClashX quit without clean waiting")
-            return true
+            quitState = .done
+            return .terminateNow
         }
 
         Logger.log("ClashX quit need clean proxy setting")
@@ -79,7 +90,8 @@ final class ExitManager {
             Logger.log("ClashX quit after clean up timeout")
         }
 
-        return true
+        quitState = .done
+        return .terminateNow
     }
 
     @MainActor
