@@ -374,7 +374,7 @@ final class ProxyManager: NSObject {
     /// Single point that drives every TUN state change.
     @discardableResult
     private func applyTunOnKernel(enabled: Bool) async -> Bool {
-        if enabled && ExitManager.shared.isTerminating { return false }
+        if enabled && ExitManager.shared.quitState != .idle { return false }
         tunApplyGeneration += 1
         let generation = tunApplyGeneration
         await ApiRequest.updateTun(enable: enabled)
@@ -387,7 +387,10 @@ final class ProxyManager: NSObject {
     }
 
     func disableTunForTermination() async {
-        _ = await applyTunOnKernel(enabled: false)
+        tunApplyGeneration += 1
+        try? await PrivilegedHelperManager.shared.request(
+            ProxyConfigHelperMessages.UpdateTun(state: false, dns: ConfigManager.metaTunDNS))
+        runtimeState.tunActive = false
     }
 
     // MARK: - Port Change
@@ -413,7 +416,6 @@ final class ProxyManager: NSObject {
 
     func disableAllProxiesForTermination(force: Bool) async {
         _ = await disableSystemProxy(force: force)
-        _ = await disableTun()
     }
 
     // MARK: - Private

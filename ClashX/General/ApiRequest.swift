@@ -11,13 +11,7 @@ import Cocoa
 import SwiftyJSON
 import Foundation
 import NIOHTTP1
-
-protocol ApiRequestStreamDelegate: AnyObject {
-    func didUpdateTraffic(up: Int, down: Int) async
-    func didGetLog(log: String, level: String) async
-    func didUpdateMemory(memory: Int64) async
-    func streamStatusChanged() async
-}
+import NIOCore
 
 typealias ErrorString = String
 
@@ -31,9 +25,6 @@ class ApiRequest {
 
     private var proxyRespCache: ClashProxyResp?
     
-    @MainActor
-    private var isTerminating = false
-
     private lazy var logQueue = DispatchQueue(label: "com.ClashX.core.log")
 
     @objc enum ProviderType: Int {
@@ -57,14 +48,16 @@ class ApiRequest {
         method: HTTPMethod = .GET,
         parameters: [String: Any]? = nil,
         encoding: ApiParameterEncoding = .default,
-        requiresCoreRunning: Bool = true
+        requiresCoreRunning: Bool = true,
+        timeout: TimeAmount? = nil
     ) async -> ApiRequestTransport.Handle {
         await ApiRequestTransport.req(
             url,
             method: method,
             parameters: parameters,
             encoding: encoding,
-            requiresCoreRunning: requiresCoreRunning
+            requiresCoreRunning: requiresCoreRunning,
+            timeout: timeout
         )
     }
 
@@ -105,40 +98,9 @@ class ApiRequest {
         return success
     }
 
-    weak var delegate: ApiRequestStreamDelegate?
-	weak var dashboardDelegate: ApiRequestStreamDelegate?
-
-	enum StreamType: CaseIterable {
-		case traffic, logging, memory
-	}
-
-	@MainActor
-    private var streamTasks: [StreamType: Task<Void, Never>] = [:]
-	@MainActor
-    private var streamRetryTasks: [StreamType: Task<Void, Never>] = [:]
-	@MainActor
-    private var streamRetryDelays: [StreamType: TimeInterval] = [.traffic: 1, .logging: 1, .memory: 1]
-	@MainActor
-    private var didTrafficStreamEverConnect = false
-	@MainActor
-    private var isCoreProcessAlive = true
-    
-    private var logRateLimiter = LogRateLimiter {
-        let alert = NSAlert()
-        alert.messageText = NSLocalizedString("Log system crashed.", comment: "")
-        alert.addButton(withTitle: NSLocalizedString("Quit", comment: ""))
-        alert.addButton(withTitle: NSLocalizedString("OK", comment: ""))
-        let response = alert.runModal()
-        if response == .alertFirstButtonReturn {
-            Task {
-                await ExitManager.shared.requestQuit(force: true)
-            }
-        }
-    }
-
-    static func requestVersion() async -> ClashVersion? {
+    static func requestVersion(timeout: TimeAmount? = nil) async -> ClashVersion? {
         do {
-            return try await req("/version", requiresCoreRunning: false)
+            return try await req("/version", requiresCoreRunning: false, timeout: timeout)
                 .validate()
                 .responseDecodable(ClashVersion.self)
         } catch {
@@ -553,175 +515,16 @@ extension ApiRequest {
 extension ApiRequest {
 	@MainActor
 	func resetStreamApis() {
-		didTrafficStreamEverConnect = false
-		isCoreProcessAlive = true
-		StreamType.allCases.forEach { resetStreamApi(for: $0) }
+		ApiRequestStream.shared.resetStreamApis()
 	}
 
 	@MainActor
-	func resetStreamApi(for type: StreamType) {
-		cancelRetryTask(for: type)
-		streamRetryDelays[type] = 1
-		startStream(for: type)
-	}
-
-	private func streamUri(for type: StreamType) -> String {
-		switch type {
-		case .traffic: 
-            "/traffic"
-		case .logging:
-            "/logs?level=\(ConfigOverride.shared.logLevel.rawValue)"
-		case .memory:
-            "/memory"
-		}
-	}
-
-	@MainActor
-	private func startStream(for type: StreamType) {
-		cancelRetryTask(for: type)
-		streamTasks[type]?.cancel()
-
-		let uri = streamUri(for: type)
-
-		streamTasks[type] = Task { @MainActor [weak self] in
-			do {
-                let requiresCoreRunning = type != .traffic
-                
-				let stream = await ApiRequest.req(uri, requiresCoreRunning: requiresCoreRunning).stream
-				var didConnect = false
-				for try await line in stream {
-					if !didConnect {
-						didConnect = true
-						await self?.streamDidConnect(type)
-					}
-					await self?.streamDidReceiveMessage(type, text: line)
-				}
-				await self?.streamDidDisconnect(type, error: nil)
-			} catch {
-				await self?.streamDidDisconnect(type, error: error)
-			}
-		}
-	}
-
-	@MainActor
-	private func cancelRetryTask(for type: StreamType) {
-		streamRetryTasks[type]?.cancel()
-		streamRetryTasks[type] = nil
-	}
-
-	@MainActor
-	private func scheduleRetry(for type: StreamType) {
-		guard !isTerminating else { return }
-		let delay = streamRetryDelays[type] ?? 1
-		cancelRetryTask(for: type)
-		streamRetryTasks[type] = Task { @MainActor [weak self] in
-			try? await Task.sleep(seconds: delay)
-			guard let self, !Task.isCancelled, !self.isTerminating else { return }
-			self.startStream(for: type)
-		}
-		streamRetryDelays[type] = delay * 2
+	func resetStreamApi(for type: ApiRequestStream.StreamType) {
+		ApiRequestStream.shared.resetStreamApi(for: type)
 	}
 
 	@MainActor
 	func prepareForTermination() {
-		isTerminating = true
-		streamTasks.values.forEach { $0.cancel() }
-		streamRetryTasks.values.forEach { $0.cancel() }
-		streamTasks.removeAll()
-		streamRetryTasks.removeAll()
-	}
-
-	// MARK: Notify Delegates
-
-	private func notifyStreamStatusChanged() async {
-		await delegate?.streamStatusChanged()
-		await dashboardDelegate?.streamStatusChanged()
-	}
-
-	private func notifyTrafficUpdate(up: Int, down: Int) async {
-		await delegate?.didUpdateTraffic(up: up, down: down)
-		await dashboardDelegate?.didUpdateTraffic(up: up, down: down)
-	}
-
-	private func notifyLog(log: String, level: String) async {
-		await delegate?.didGetLog(log: log, level: level)
-		await dashboardDelegate?.didGetLog(log: log, level: level)
-	}
-
-	private func notifyMemoryUpdate(memory: Int64) async {
-		await delegate?.didUpdateMemory(memory: memory)
-		await dashboardDelegate?.didUpdateMemory(memory: memory)
-	}
-
-	// MARK: Stream Event Handlers
-
-    @MainActor
-    private func streamDidConnect(_ type: StreamType) async {
-        streamRetryDelays[type] = 1
-        Logger.log("\(type)Stream did Connect", level: .debug)
-
-        if type == .traffic {
-            didTrafficStreamEverConnect = true
-            ConfigManager.shared.kernelState = .running
-            await notifyStreamStatusChanged()
-        }
-    }
-
-	@MainActor
-	private func streamDidDisconnect(_ type: StreamType, error: Error?) async {
-        streamTasks[type]?.cancel()
-        if type == .traffic {
-            let kernelState = ConfigManager.shared.kernelState
-            let shouldTreatAsStartupFailure: Bool
-            switch kernelState {
-            case .stopped, .checkingLaunchPath, .checkingHelper, .preparingConfig, .starting:
-                shouldTreatAsStartupFailure = true
-            case .reloadingConfig, .running, .disconnected, .failedToStart:
-                shouldTreatAsStartupFailure = false
-            }
-
-            if error == nil || (error as? HTTPParserError) == .invalidEOFState || !shouldTreatAsStartupFailure {
-                ConfigManager.shared.kernelState = .disconnected
-            } else {
-                ConfigManager.shared.kernelState = .failedToStart
-            }
-            await notifyStreamStatusChanged()
-
-            if didTrafficStreamEverConnect, !isTerminating,
-               (error as? CancellationError) == nil {
-                if isCoreProcessAlive {
-                    let alive = await ClashProcess.isMetaProcessRunning()
-                    if alive {
-                        UserNotificationCenter.shared.postCoreDisconnectedNotice()
-                        scheduleRetry(for: type)
-                        return
-                    }
-                    isCoreProcessAlive = false
-                }
-                await UserNotificationCenter.shared.postCoreCrashNotice()
-                return
-            }
-        }
-        
-        if let err = error, (err as? HTTPParserError) != .invalidEOFState {
-            Logger.log(err.localizedDescription, level: .error)
-        }
-
-		Logger.log("\(type)Stream did disconnect", level: .debug)
-		scheduleRetry(for: type)
-	}
-
-	private func streamDidReceiveMessage(_ type: StreamType, text: String) async {
-		let json = JSON(parseJSON: text)
-
-		switch type {
-		case .traffic:
-			await notifyTrafficUpdate(up: json["up"].intValue, down: json["down"].intValue)
-		case .logging:
-			guard await logRateLimiter.processLog() else { return }
-			await notifyLog(log: json["payload"].stringValue, level: json["type"].string ?? "info")
-		case .memory:
-			await notifyMemoryUpdate(memory: json["inuse"].int64Value)
-		}
+		ApiRequestStream.shared.prepareForTermination()
 	}
 }

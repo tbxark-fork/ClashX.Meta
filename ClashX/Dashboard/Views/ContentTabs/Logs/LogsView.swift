@@ -48,7 +48,10 @@ struct LogsView: View {
 	func logLevelChanged(_ level: ClashLogLevel) {
 		logStorage.logs.removeAll()
 		ConfigOverride.shared.logLevel = level
-		ApiRequest.shared.resetStreamApi(for: .logging)
+        Task { @MainActor in
+            await ApiRequest.updateLogLevel(level: level)
+            ApiRequestStream.shared.resetStreamApi(for: .logging)
+        }
 	}
     
     func logFilterChanged(_ filter: DashboardViewContoller.LogFilter) {

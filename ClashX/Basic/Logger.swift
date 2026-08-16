@@ -11,21 +11,33 @@ import Foundation
 
 private class AppLogFileManager: DDLogFileManagerDefault {
     override var newLogFileName: String {
-        let df = DateFormatter()
-        df.dateFormat = "dd_HH-mm-ss"
-        return "clashx_\(df.string(from: Date())).log"
+        "clashx.log"
     }
 
     override func isLogFile(withName fileName: String) -> Bool {
-        fileName.range(of: #"^clashx_\d{2}_\d{2}-\d{2}-\d{2}\.log$"#, options: .regularExpression) != nil
+        fileName.range(of: #"^clashx\.log(\.\d+)?$"#, options: .regularExpression) != nil
+    }
+}
+
+private class CoreLogFileManager: DDLogFileManagerDefault {
+    override var newLogFileName: String {
+        let df = DateFormatter()
+        df.dateFormat = "dd_HH-mm-ss"
+        return "clashx_core_\(df.string(from: Date())).log"
+    }
+
+    override func isLogFile(withName fileName: String) -> Bool {
+        fileName.range(of: #"^clashx_core_\d{2}_\d{2}-\d{2}-\d{2}\.log(\.\d+)?$"#, options: .regularExpression) != nil
     }
 }
 
 class Logger {
     static let shared = Logger()
     var fileLogger: DDFileLogger = .init()
+    var coreFileLogger: DDFileLogger = .init()
     private(set) var sessionId = ""
     
+    private let coreLog = DDLog()
     private var cleanupLogTask: Task<Void, Never>?
 
     var coreLogPath: String {
@@ -40,44 +52,56 @@ class Logger {
         #if DEBUG
             DDLog.add(DDOSLogger.sharedInstance)
         #endif
-        dynamicLogLevel = ConfigOverride.shared.logLevel.toDDLogLevel()
+        dynamicLogLevel = .debug
     }
 
     func configure(logDirectory: String, sessionId: String) {
         self.sessionId = sessionId
         let dateFormatter = DateFormatter()
         dateFormatter.setLocalizedDateFormatFromTemplate("YYYY/MM/dd HH:mm:ss:SSS")
+
         let fm = AppLogFileManager(logsDirectory: logDirectory)
         let newLogger = DDFileLogger(logFileManager: fm)
         newLogger.logFormatter = DDLogFileFormatterDefault(dateFormatter: dateFormatter)
-        newLogger.rollingFrequency = TimeInterval(60 * 60 * 24) // 24 hours
-        newLogger.maximumFileSize = 5 * 1024 * 1024 // 5MB
-        newLogger.logFileManager.maximumNumberOfLogFiles = 3
         DDLog.remove(fileLogger)
         fileLogger = newLogger
         DDLog.add(newLogger)
+
+        let coreFm = CoreLogFileManager(logsDirectory: logDirectory)
+        let newCoreLogger = DDFileLogger(logFileManager: coreFm)
+        newCoreLogger.logFormatter = DDLogFileFormatterDefault(dateFormatter: dateFormatter)
+        newCoreLogger.rollingFrequency = TimeInterval(60 * 60 * 24) // 24 hours
+        newCoreLogger.maximumFileSize = 5 * 1024 * 1024 // 5MB
+        newCoreLogger.logFileManager.maximumNumberOfLogFiles = 3
+        coreLog.removeAllLoggers()
+        coreLog.add(newCoreLogger)
+        coreFileLogger = newCoreLogger
         
         startCleanup()
     }
 
-    private func logToFile(msg: String, level: ClashLogLevel) {
+    private func logToLog(_ ddlog: DDLog, msg: String, level: ClashLogLevel) {
         switch level {
         case .debug, .silent:
-            DDLogDebug(DDLogMessageFormat(stringLiteral: msg))
+            DDLogDebug(DDLogMessageFormat(stringLiteral: msg), ddlog: ddlog)
         case .error:
-            DDLogError(DDLogMessageFormat(stringLiteral: msg))
+            DDLogError(DDLogMessageFormat(stringLiteral: msg), ddlog: ddlog)
         case .info:
-            DDLogInfo(DDLogMessageFormat(stringLiteral: msg))
+            DDLogInfo(DDLogMessageFormat(stringLiteral: msg), ddlog: ddlog)
         case .warning:
-            DDLogWarn(DDLogMessageFormat(stringLiteral: msg))
+            DDLogWarn(DDLogMessageFormat(stringLiteral: msg), ddlog: ddlog)
         case .unknow:
-            DDLogWarn(DDLogMessageFormat(stringLiteral: msg))
+            DDLogWarn(DDLogMessageFormat(stringLiteral: msg), ddlog: ddlog)
         }
     }
 
     static func log(_ msg: String, level: ClashLogLevel = .info, file: String = #file, function: String = #function) {
 		let fileName = URL(fileURLWithPath: file).lastPathComponent
-        shared.logToFile(msg: "[\(level.rawValue)] \(fileName) \(function) \(msg)", level: level)
+        shared.logToLog(.sharedInstance, msg: "[\(level.rawValue)] \(fileName) \(function) \(msg)", level: level)
+    }
+
+    static func logCore(_ msg: String, level: ClashLogLevel) {
+        shared.logToLog(shared.coreLog, msg: "[\(level.rawValue)] \(msg)", level: level)
     }
 
     func logFilePath() -> String {

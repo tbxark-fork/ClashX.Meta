@@ -38,9 +38,10 @@ class ClashApiDatasStorage: NSObject, ObservableObject {
 	}
 	
 	func resetStreamApi() {
-		ApiRequest.shared.dashboardDelegate = self
-		if ApiRequest.shared.delegate == nil {
-			ApiRequest.shared.resetStreamApis()
+		let needsStreamStart = !ApiRequestStream.shared.hasObservers
+		ApiRequestStream.shared.addObserver(self)
+		if needsStreamStart {
+			ApiRequestStream.shared.resetStreamApis()
 		}
 	}
 }

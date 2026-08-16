@@ -13,8 +13,6 @@ import Sparkle
 import SwiftyJSON
 import Yams
 
-let statusItemLengthWithSpeed: CGFloat = 72
-
 @main
 class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) var statusItem: NSStatusItem!
@@ -86,11 +84,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         Logger.log("———————————————————————————————————————————————————————————")
         Logger.log("Appversion: \(AppVersionUtil.currentVersion) \(AppVersionUtil.currentBuild)")
         ProcessInfo.processInfo.disableSuddenTermination()
+        StatusItemView.suppressStatusBarTilingConstraintUpdates()
         Task { @MainActor in
             // setup menu item first
-            statusItem = NSStatusBar.system.statusItem(withLength: statusItemLengthWithSpeed)
-            statusItemView = await StatusItemView.create(statusItem: statusItem)
-            statusItemView.updateSize(statusItem, width: statusItemLengthWithSpeed)
+            statusItemView = await StatusItemView.create()
+            statusItem = statusItemView.statusItem
             statusMenu.delegate = self
             setupStatusMenuItemData()
             
@@ -145,11 +143,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     @MainActor
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        Task { @MainActor in
-            let ok = await ExitManager.shared.handleShouldTerminate()
-            NSApp.reply(toApplicationShouldTerminate: ok)
+        switch ExitManager.shared.quitState {
+        case .done:
+            return .terminateNow
+        case .cleaning:
+            return .terminateCancel
+        case .idle:
+            Task { @MainActor in
+                let decision = await ExitManager.shared.handleShouldTerminate()
+                if decision == .terminateNow {
+                    NSApp.terminate(nil)
+                }
+            }
+            return .terminateCancel
         }
-        return .terminateLater
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
@@ -196,9 +203,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .bind { [weak self] show in
                 guard let self = self else { return }
                 self.showNetSpeedIndicatorMenuItem.state = (show ?? true) ? .on : .off
-                let statusItemLength: CGFloat = (show ?? true) ? statusItemLengthWithSpeed : 25
-                self.statusItem.length = statusItemLength
-                self.statusItemView.updateSize(self.statusItem, width: statusItemLength)
+                self.statusItemView.updateSize(self.statusItem, showSpeed: show ?? true)
                 self.statusItemView.showSpeedContainer(show: show ?? true)
             }.disposed(by: disposeBag)
 
@@ -590,7 +595,7 @@ extension AppDelegate: ApiRequestStreamDelegate {
     }
 
     func didGetLog(log: String, level: String) async {
-        Logger.log(log, level: ClashLogLevel(rawValue: level) ?? .unknow)
+        Logger.logCore(log, level: ClashLogLevel(rawValue: level) ?? .unknow)
     }
 }
 

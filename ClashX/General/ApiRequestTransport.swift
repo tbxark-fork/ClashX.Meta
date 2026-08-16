@@ -59,32 +59,33 @@ enum ApiRequestTransport {
         case failure(Error)
     }
 
-    struct Handle {
-        let backend: RequestBackend
-        let shouldValidate: Bool
+	struct Handle {
+		let backend: RequestBackend
+		let shouldValidate: Bool
+		let timeout: TimeAmount?
 
-        func validate() -> Handle {
-            return Handle(backend: backend, shouldValidate: true)
-        }
+		func validate() -> Handle {
+			return Handle(backend: backend, shouldValidate: true, timeout: timeout)
+		}
 
-        var response: DataResponse {
-            get async {
-                await ApiRequestTransport.makeDataResponse(backend: backend, shouldValidate: shouldValidate)
-            }
-        }
+		var response: DataResponse {
+			get async {
+				await ApiRequestTransport.makeDataResponse(backend: backend, shouldValidate: shouldValidate, timeout: timeout)
+			}
+		}
 
-        var responseData: Data {
-            get async throws {
-                let response = await ApiRequestTransport.makeDataResponse(backend: backend, shouldValidate: shouldValidate)
-                if let error = response.error {
-                    throw error
-                }
-                guard let data = response.data else {
-                    throw RequestError.invalidResponse
-                }
-                return data
-            }
-        }
+		var responseData: Data {
+			get async throws {
+				let response = await ApiRequestTransport.makeDataResponse(backend: backend, shouldValidate: shouldValidate, timeout: timeout)
+				if let error = response.error {
+					throw error
+				}
+				guard let data = response.data else {
+					throw RequestError.invalidResponse
+				}
+				return data
+			}
+		}
 
         func responseDecodable<T: Decodable>(_ type: T.Type, decoder: JSONDecoder = ApiRequestTransport.makeJSONDecoder()) async throws -> T {
             let data = try await responseData
@@ -120,57 +121,58 @@ enum ApiRequestTransport {
         return decoder
     }
 
-    @discardableResult
-    static func req(
-        _ url: String,
-        method: HTTPMethod = .GET,
-        parameters: [String: Any]? = nil,
-        encoding: ApiParameterEncoding = .default,
-        requiresCoreRunning: Bool = true
-    ) async -> Handle {
-        let isCoreRunning = await MainActor.run {
-            ConfigManager.shared.kernelState.isOperational
-        }
+	@discardableResult
+	static func req(
+		_ url: String,
+		method: HTTPMethod = .GET,
+		parameters: [String: Any]? = nil,
+		encoding: ApiParameterEncoding = .default,
+		requiresCoreRunning: Bool = true,
+		timeout: TimeAmount? = nil
+	) async -> Handle {
+		let isCoreRunning = await MainActor.run {
+			ConfigManager.shared.kernelState.isOperational
+		}
 
-        if requiresCoreRunning && !isCoreRunning {
-            return Handle(backend: .failure(RequestError.coreNotRunning), shouldValidate: false)
-        }
+		if requiresCoreRunning && !isCoreRunning {
+			return Handle(backend: .failure(RequestError.coreNotRunning), shouldValidate: false, timeout: timeout)
+		}
 
-        let isLocal = RemoteControlManager.selectConfig == nil
-        let baseURL = isLocal ? localRequestBaseURL : ConfigManager.apiUrl
-        let socketPath: String?
+		let isLocal = RemoteControlManager.selectConfig == nil
+		let baseURL = isLocal ? localRequestBaseURL : ConfigManager.apiUrl
+		let socketPath: String?
 
-        if isLocal {
-            guard let path = unixSocketPath, !path.isEmpty else {
-                return Handle(backend: .failure(RequestError.missingUnixSocketPath), shouldValidate: false)
-            }
-            
+		if isLocal {
+			guard let path = unixSocketPath, !path.isEmpty else {
+				return Handle(backend: .failure(RequestError.missingUnixSocketPath), shouldValidate: false, timeout: timeout)
+			}
+			
 #if DEBUG
-            if debugUseHttpApi {
-                socketPath = nil
-            } else {
-                socketPath = path
-            }
+			if debugUseHttpApi {
+				socketPath = nil
+			} else {
+				socketPath = path
+			}
 #else
-            socketPath = path
+			socketPath = path
 #endif
-        } else {
-            socketPath = nil
-        }
+		} else {
+			socketPath = nil
+		}
 
-        guard let clientRequest = buildRequest(
-            baseURL: baseURL,
-            url: url,
-            method: method,
-            parameters: parameters,
-            encoding: encoding,
-            socketPath: socketPath
-        ) else {
-            return Handle(backend: .failure(RequestError.invalidURL), shouldValidate: false)
-        }
+		guard let clientRequest = buildRequest(
+			baseURL: baseURL,
+			url: url,
+			method: method,
+			parameters: parameters,
+			encoding: encoding,
+			socketPath: socketPath
+		) else {
+			return Handle(backend: .failure(RequestError.invalidURL), shouldValidate: false, timeout: timeout)
+		}
 
-        return Handle(backend: .request(clientRequest), shouldValidate: false)
-    }
+		return Handle(backend: .request(clientRequest), shouldValidate: false, timeout: timeout)
+	}
 
 
     struct DataResponse {
@@ -179,14 +181,15 @@ enum ApiRequestTransport {
         let error: Error?
     }
 
-    private static func makeDataResponse(
-        backend: RequestBackend,
-        shouldValidate: Bool
-    ) async -> DataResponse {
-        switch backend {
-        case .request(let request):
-            do {
-                let httpResponse = try await performClientRequest(request, shouldValidate: shouldValidate)
+	private static func makeDataResponse(
+		backend: RequestBackend,
+		shouldValidate: Bool,
+		timeout: TimeAmount? = nil
+	) async -> DataResponse {
+		switch backend {
+		case .request(let request):
+			do {
+				let httpResponse = try await performClientRequest(request, shouldValidate: shouldValidate, timeout: timeout)
                 let data = try await streamResponseToData(httpResponse)
                 let response = makeHTTPURLResponse(from: httpResponse, requestURL: request.url)
                 return DataResponse(httpResponse: response, data: data, error: nil)

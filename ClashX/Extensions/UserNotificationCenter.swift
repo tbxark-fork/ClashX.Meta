@@ -93,11 +93,6 @@ class UserNotificationCenter: NSObject {
 			 identifier: "postConfigFileChangeDetectionNotice")
 	}
 	
-	func postCoreDisconnectedNotice() {
-		post(title: NSLocalizedString("Core Disconnected", comment: ""),
-			 info: NSLocalizedString("Connection lost. Retrying automatically.", comment: ""))
-	}
-
 	@MainActor
 	func postCoreCrashNotice() async {
 		let alert = NSAlert()
