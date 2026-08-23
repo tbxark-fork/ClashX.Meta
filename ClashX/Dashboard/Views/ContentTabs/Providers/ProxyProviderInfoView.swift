@@ -62,7 +62,7 @@ struct ProxyProviderInfoView: View {
 				Spacer()
 			}
 			HStack {
-				Text(String(format: NSLocalizedString("Updated %@", comment: ""), provider.updatedAt))
+				Text(provider.updatedAt)
 				Spacer()
 			}
 		}
