@@ -53,6 +53,9 @@
     "%lld" : {
 
     },
+    "%lld nodes" : {
+
+    },
     "%lld rules" : {
 
     },
@@ -148,6 +151,9 @@
           }
         }
       }
+    },
+    "API" : {
+
     },
     "Apply and Quit" : {
       "localizations" : {
@@ -472,6 +478,22 @@
         }
       }
     },
+    "Connections" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "连接数"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "連線數"
+          }
+        }
+      }
+    },
     "Conns" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -505,6 +527,22 @@
         }
       }
     },
+    "Copy API address" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制 API 地址"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "複製 API 位址"
+          }
+        }
+      }
+    },
     "Copy Shell Command" : {
       "localizations" : {
         "zh-Hans" : {
@@ -533,6 +571,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "複製終端代理命令(外部IP)"
+          }
+        }
+      }
+    },
+    "Copy terminal proxy command" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "复制终端代理命令"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "複製終端代理命令"
+          }
+        }
+      }
+    },
+    "Core" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内核版本"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "內核版本"
           }
         }
       }
@@ -840,13 +910,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "下载"
+            "value" : "下载速度"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "下載"
+            "value" : "下載速度"
           }
         }
       }
@@ -888,13 +958,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "下载总量"
+            "value" : "总下载"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "下載總量"
+            "value" : "總下載"
           }
         }
       }
@@ -1178,6 +1248,9 @@
         }
       }
     },
+    "Hide Names" : {
+
+    },
     "Host" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1255,6 +1328,9 @@
           }
         }
       }
+    },
+    "HTTP(S)" : {
+
     },
     "iCloud not available" : {
       "localizations" : {
@@ -1440,6 +1516,9 @@
         }
       }
     },
+    "Log Filter" : {
+
+    },
     "Log Level" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1489,7 +1568,24 @@
         }
       }
     },
+    "Memory" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内存"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "記憶體"
+          }
+        }
+      }
+    },
     "Memory Usage" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1506,6 +1602,7 @@
       }
     },
     "Mihomo" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1549,6 +1646,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "需要重啟ClashX生效，請手動啟動ClashX"
+          }
+        }
+      }
+    },
+    "Network" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "网络状态"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "網路狀態"
           }
         }
       }
@@ -1764,6 +1877,7 @@
       }
     },
     "Providers" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1797,6 +1911,7 @@
       }
     },
     "Proxy" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1829,6 +1944,7 @@
       }
     },
     "Proxy Provider" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1845,6 +1961,7 @@
       }
     },
     "Proxy Provider Inline" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2146,6 +2263,7 @@
       }
     },
     "Rule Inline" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2216,6 +2334,9 @@
           }
         }
       }
+    },
+    "Search" : {
+
     },
     "Should be a least 1 hour" : {
       "localizations" : {
@@ -2302,6 +2423,9 @@
         }
       }
     },
+    "Speed" : {
+
+    },
     "Start Meta Fail!" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2337,6 +2461,25 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "狀態"
+          }
+        }
+      }
+    },
+    "Stop All" : {
+
+    },
+    "Subscription Usage" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "订阅用量"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "訂閱用量"
           }
         }
       }
@@ -2390,6 +2533,22 @@
         }
       }
     },
+    "Sys Proxy" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "系统代理"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "machine_translated",
+            "value" : "系統代理"
+          }
+        }
+      }
+    },
     "System Proxy" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2437,6 +2596,9 @@
           }
         }
       }
+    },
+    "Test Latency" : {
+
     },
     "Testing" : {
       "localizations" : {
@@ -2545,6 +2707,22 @@
         }
       }
     },
+    "Top Processes" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "网络活动"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "網路活動"
+          }
+        }
+      }
+    },
     "total: %d, success: %d" : {
       "localizations" : {
         "zh-Hans" : {
@@ -2560,6 +2738,25 @@
           }
         }
       }
+    },
+    "Traffic" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "流量"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "流量"
+          }
+        }
+      }
+    },
+    "TUN" : {
+
     },
     "TUN IP Stack" : {
       "localizations" : {
@@ -2814,6 +3011,7 @@
       }
     },
     "Updated %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2874,13 +3072,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "上传"
+            "value" : "上传速度"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "上傳"
+            "value" : "上傳速度"
           }
         }
       }
@@ -2890,13 +3088,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "上传总量"
+            "value" : "总上传"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "上傳總量"
+            "value" : "總上傳"
           }
         }
       }
@@ -2935,5 +3133,5 @@
       }
     }
   },
-  "version" : "1.2"
+  "version" : "1.3"
 }
