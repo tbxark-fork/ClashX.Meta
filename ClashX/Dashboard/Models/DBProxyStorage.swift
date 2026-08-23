@@ -19,6 +19,20 @@ class DBProxyStorage: ObservableObject {
 			DBProxyGroup($0, resp: resp)
 		}
 	}
+
+	func updateGroups(_ newGroups: [DBProxyGroup]) {
+		var map = Dictionary(uniqueKeysWithValues: groups.map { ($0.name, $0) })
+		for newGroup in newGroups {
+			if let existing = map[newGroup.name] {
+				existing.update(from: newGroup)
+			} else {
+				groups.append(newGroup)
+				map[newGroup.name] = newGroup
+			}
+		}
+		let newNames = Set(newGroups.map(\.name))
+		groups.removeAll { !newNames.contains($0.name) }
+	}
 }
 
 class DBProxyGroup: ObservableObject, Identifiable {
@@ -36,22 +50,31 @@ class DBProxyGroup: ObservableObject, Identifiable {
 	@Published var proxies: [DBProxy]
 	@Published var currentProxy: DBProxy?
 	
-    @Published var hidden: Bool
+@Published var hidden: Bool
     
-	init(_ group: ClashProxy, resp: ClashProxyResp) {
-		name = group.name
-		type = group.type
-		now = group.now
+    init(_ group: ClashProxy, resp: ClashProxyResp) {
+        name = group.name
+        type = group.type
+        now = group.now
         hidden = group.hidden ?? false
 
-		proxies = group.all?.compactMap { name in
-			resp.proxiesMap[name]
-		}.map(DBProxy.init) ?? []
-		
-		currentProxy = proxies.first {
-			$0.name == now
-		}
-	}
+        proxies = group.all?.compactMap { name in
+            resp.proxiesMap[name]
+        }.map(DBProxy.init) ?? []
+        
+        currentProxy = proxies.first {
+            $0.name == now
+        }
+    }
+
+    func update(from other: DBProxyGroup) {
+        name = other.name
+        type = other.type
+        hidden = other.hidden
+        now = other.now
+        proxies = other.proxies
+        currentProxy = proxies.first { $0.name == now }
+    }
 }
 
 class DBProxy: ObservableObject {
@@ -94,7 +117,7 @@ class DBProxy: ObservableObject {
 	static func delayString(_ delay: Int) -> String {
 		switch delay {
 		case 0:
-			return NSLocalizedString("fail", comment: "")
+			return "--"
 		default:
 			return "\(delay) ms"
 		}
@@ -102,20 +125,29 @@ class DBProxy: ObservableObject {
 	
 	static func delayColor(_ delay: Int) -> Color {
 		let httpsTest = ConfigManager.shared.benchMarkUrl.hasPrefix("https://")
+		let good = httpsTest ? 800 : 200
+		let normal = httpsTest ? 1500 : 500
 		
 		switch delay {
 		case 0:
-            return .red
-		case ..<200 where !httpsTest:
+			return .secondary
+		case ..<good:
 			return .green
-		case ..<800 where httpsTest:
-			return .green
-		case 200..<500 where !httpsTest:
-			return .yellow
-		case 800..<1500 where httpsTest:
+		case ..<normal:
 			return .yellow
 		default:
 			return .orange
+		}
+	}
+}
+
+extension ClashProxyType {
+	var displayString: String {
+		switch self {
+		case .proxy("Shadowsocks"):
+			return "SS"
+		default:
+			return rawString
 		}
 	}
 }
