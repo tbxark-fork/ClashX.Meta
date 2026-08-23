@@ -145,13 +145,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         switch ExitManager.shared.quitState {
         case .done:
+            Logger.log("quit state done, terminate now")
             return .terminateNow
         case .cleaning:
+            Logger.log("quit in progress, ignore this terminate request")
             return .terminateCancel
         case .idle:
+            Logger.log("quit state idle, start cleanup")
             Task { @MainActor in
                 let decision = await ExitManager.shared.handleShouldTerminate()
                 if decision == .terminateNow {
+                    Logger.log("cleanup finished, re-terminate")
                     NSApp.terminate(nil)
                 }
             }
