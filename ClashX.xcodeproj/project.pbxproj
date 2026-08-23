@@ -12,7 +12,6 @@
 		01110DA02FD51EF60015D815 /* dashboard in Resources */ = {isa = PBXBuildFile; fileRef = 01110D9E2FD51EF60015D815 /* dashboard */; };
 		0112DEAA2F8B84E50019410B /* HTTPClientResponse+.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0112DEA92F8B84E50019410B /* HTTPClientResponse+.swift */; };
 		0114F0CF2E5B60CB007C7AAC /* LogRateLimiter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0114F0CE2E5B60CB007C7AAC /* LogRateLimiter.swift */; };
-		013B21FB2F7E95E0009B30CB /* DGCharts in Frameworks */ = {isa = PBXBuildFile; productRef = 013B21FA2F7E95E0009B30CB /* DGCharts */; };
 		013B21FD2F7EC4F9009B30CB /* ProxyConfigHelperXPCTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 013B21FC2F7EC4F9009B30CB /* ProxyConfigHelperXPCTransport.swift */; };
 		013B21FE2F7EC551009B30CB /* ProxyConfigHelperXPCTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 013B21FC2F7EC4F9009B30CB /* ProxyConfigHelperXPCTransport.swift */; };
 		013B21FF2F7FB18A009B30CB /* Task+Sleep.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15E90002E5C9A1100C0FFEE /* Task+Sleep.swift */; };
@@ -32,6 +31,13 @@
 		01BB50B3302F6AC5004C38EE /* ProxyGroupCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BB50B2302F6AC5004C38EE /* ProxyGroupCard.swift */; };
 		01BB50B7302F88FB004C38EE /* DashboardTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BB50B6302F88FB004C38EE /* DashboardTheme.swift */; };
 		01BB50B9302F8C17004C38EE /* TextMeasurement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BB50B8302F8C17004C38EE /* TextMeasurement.swift */; };
+		01BB50C43030303C004C38EE /* ProxyGroupCollapseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BB50C33030303C004C38EE /* ProxyGroupCollapseStore.swift */; };
+		01BB50C830304019004C38EE /* TrafficCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BB50C730304019004C38EE /* TrafficCardView.swift */; };
+		01BB50CA303044A4004C38EE /* TrafficHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BB50C9303044A4004C38EE /* TrafficHistoryStore.swift */; };
+		01BB50CB30304815004C38EE /* Collections in Frameworks */ = {isa = PBXBuildFile; productRef = D4A5B6C7E8F9012345AB678A /* Collections */; };
+		01BB50CD30304DB0004C38EE /* MemoryCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BB50CC30304DB0004C38EE /* MemoryCardView.swift */; };
+		01BB50CF303057F8004C38EE /* FormatterExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BB50CE303057F8004C38EE /* FormatterExtension.swift */; };
+		01BB50D330309B40004C38EE /* OverviewGridLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BB50D230309B40004C38EE /* OverviewGridLayout.swift */; };
 		01BC9ABE2928EB5A00F9B177 /* MetaDNS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BC9ABD2928E5C600F9B177 /* MetaDNS.swift */; };
 		01BCDAB32C9ECB560028FA94 /* SwiftUIIntrospect in Frameworks */ = {isa = PBXBuildFile; productRef = 01BCDAB22C9ECB560028FA94 /* SwiftUIIntrospect */; };
 		01BCDAF02C9ECD010028FA94 /* DBProviderStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BCDABB2C9ECD010028FA94 /* DBProviderStorage.swift */; };
@@ -253,6 +259,12 @@
 		01BB50B2302F6AC5004C38EE /* ProxyGroupCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProxyGroupCard.swift; sourceTree = "<group>"; };
 		01BB50B6302F88FB004C38EE /* DashboardTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardTheme.swift; sourceTree = "<group>"; };
 		01BB50B8302F8C17004C38EE /* TextMeasurement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextMeasurement.swift; sourceTree = "<group>"; };
+		01BB50C33030303C004C38EE /* ProxyGroupCollapseStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProxyGroupCollapseStore.swift; sourceTree = "<group>"; };
+		01BB50C730304019004C38EE /* TrafficCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrafficCardView.swift; sourceTree = "<group>"; };
+		01BB50C9303044A4004C38EE /* TrafficHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrafficHistoryStore.swift; sourceTree = "<group>"; };
+		01BB50CC30304DB0004C38EE /* MemoryCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryCardView.swift; sourceTree = "<group>"; };
+		01BB50CE303057F8004C38EE /* FormatterExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatterExtension.swift; sourceTree = "<group>"; };
+		01BB50D230309B40004C38EE /* OverviewGridLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewGridLayout.swift; sourceTree = "<group>"; };
 		01BC9ABD2928E5C600F9B177 /* MetaDNS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaDNS.swift; sourceTree = "<group>"; };
 		01BCDAB92C9ECD010028FA94 /* DashboardViewContoller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewContoller.swift; sourceTree = "<group>"; };
 		01BCDABA2C9ECD010028FA94 /* DBConnectionSnapShot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DBConnectionSnapShot.swift; sourceTree = "<group>"; };
@@ -405,6 +417,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				01BB50CB30304815004C38EE /* Collections in Frameworks */,
 				01F336242AD10D0B0048AF77 /* RxSwift in Frameworks */,
 				01BCDAB32C9ECB560028FA94 /* SwiftUIIntrospect in Frameworks */,
 				01F336252AD10D0B0048AF77 /* SwiftyJSON in Frameworks */,
@@ -412,7 +425,6 @@
 				01F336272AD10D0B0048AF77 /* CocoaLumberjackSwift in Frameworks */,
 				01F3362A2AD10D0B0048AF77 /* KeyboardShortcuts in Frameworks */,
 				01BCDB212C9EEE260028FA94 /* Sparkle in Frameworks */,
-				013B21FB2F7E95E0009B30CB /* DGCharts in Frameworks */,
 				01F3362C2AD10D0B0048AF77 /* CocoaLumberjack in Frameworks */,
 				01F3362D2AD10D0B0048AF77 /* Yams in Frameworks */,
 				013B220E2F88A219009B30CB /* AsyncHTTPClient in Frameworks */,
@@ -458,6 +470,7 @@
 				01EF58B12FF647BD00432213 /* ProxiesSearchString.swift */,
 				01BB50B6302F88FB004C38EE /* DashboardTheme.swift */,
 				01BB50B8302F8C17004C38EE /* TextMeasurement.swift */,
+				01BB50C33030303C004C38EE /* ProxyGroupCollapseStore.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -496,6 +509,9 @@
 				01BCDAD02C9ECD010028FA94 /* OverviewView.swift */,
 				01BCDACF2C9ECD010028FA94 /* OverviewTopItemView.swift */,
 				01BCDAD12C9ECD010028FA94 /* TrafficGraphView.swift */,
+				01BB50C730304019004C38EE /* TrafficCardView.swift */,
+				01BB50CC30304DB0004C38EE /* MemoryCardView.swift */,
+				01BB50D230309B40004C38EE /* OverviewGridLayout.swift */,
 			);
 			path = Overview;
 			sourceTree = "<group>";
@@ -577,6 +593,7 @@
 				01BCDAEE2C9ECD010028FA94 /* SwiftUIViewExtensions.swift */,
 				01BCDAED2C9ECD010028FA94 /* NSTableViewExtension.swift */,
 				01BCDABE2C9ECD010028FA94 /* NotificationNames.swift */,
+				01BB50CE303057F8004C38EE /* FormatterExtension.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -643,6 +660,7 @@
 				4929F67E258CE04700A435F6 /* Settings.swift */,
 				01EF58B52FF77D1B00432213 /* ConfigOverride.swift */,
 				01BB50A1302E2B80004C38EE /* ApiRequestStream.swift */,
+				01BB50C9303044A4004C38EE /* TrafficHistoryStore.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -912,9 +930,9 @@
 				01F335C82AD10D0B0048AF77 /* Yams */,
 				01BCDAB22C9ECB560028FA94 /* SwiftUIIntrospect */,
 				01BCDB202C9EEE260028FA94 /* Sparkle */,
-				013B21FA2F7E95E0009B30CB /* DGCharts */,
 				013B220D2F88A219009B30CB /* AsyncHTTPClient */,
 				01E908FD2FEE787900C95A3A /* Subprocess */,
+				D4A5B6C7E8F9012345AB678A /* Collections */,
 			);
 			productName = ClashX;
 			productReference = 01F336442AD10D0B0048AF77 /* ClashX Meta.app */;
@@ -975,9 +993,9 @@
 				015B97812A4F311300F9FA4D /* XCRemoteSwiftPackageReference "Yams" */,
 				01BCDAB12C9ECB560028FA94 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */,
 				01BCDB1F2C9EEE260028FA94 /* XCRemoteSwiftPackageReference "Sparkle" */,
-				013B21F92F7E95E0009B30CB /* XCRemoteSwiftPackageReference "Charts" */,
 				013B220C2F88A219009B30CB /* XCRemoteSwiftPackageReference "async-http-client" */,
 				01E908FA2FEE786F00C95A3A /* XCRemoteSwiftPackageReference "swift-subprocess" */,
+				D4A5B6C7E8F9012345AB6789 /* XCRemoteSwiftPackageReference "swift-collections" */,
 			);
 			productRefGroup = 49CF3B1E20CD7463001EBF94 /* Products */;
 			projectDirPath = "";
@@ -1023,6 +1041,7 @@
 				01F335CF2AD10D0B0048AF77 /* StatusItemTool.swift in Sources */,
 				01F335D02AD10D0B0048AF77 /* ClashResourceManager.swift in Sources */,
 				01F335D12AD10D0B0048AF77 /* ConfigFileManager.swift in Sources */,
+				01BB50CD30304DB0004C38EE /* MemoryCardView.swift in Sources */,
 				01F335D22AD10D0B0048AF77 /* AboutViewController.swift in Sources */,
 				01F335D32AD10D0B0048AF77 /* Paths.swift in Sources */,
 				01F335D42AD10D0B0048AF77 /* TunModeSettingCommand.swift in Sources */,
@@ -1032,6 +1051,7 @@
 				01F335D82AD10D0B0048AF77 /* ClashConnection.swift in Sources */,
 				01F335D92AD10D0B0048AF77 /* ConnectionManager.swift in Sources */,
 				01F335DB2BD10D0B0048AF77 /* ConfigReloadManager.swift in Sources */,
+				01BB50C830304019004C38EE /* TrafficCardView.swift in Sources */,
 				01F335DA2BD10D0B0048AF77 /* ProxyHealthCheckManager.swift in Sources */,
 				01F335DA2AD10D0B0048AF77 /* StatusItemView.swift in Sources */,
 				01F335DB2AD10D0B0048AF77 /* ProxyManager.swift in Sources */,
@@ -1076,6 +1096,7 @@
 				01F335F92AD10D0B0048AF77 /* DualTitleMenuItem.swift in Sources */,
 				01BB50B9302F8C17004C38EE /* TextMeasurement.swift in Sources */,
 				01EF58B02FF6472600432213 /* HideProxyNames.swift in Sources */,
+				01BB50C43030303C004C38EE /* ProxyGroupCollapseStore.swift in Sources */,
 				01E909002FEF838700C95A3A /* ExitManager.swift in Sources */,
 				01EF58B62FF77D1B00432213 /* ConfigOverride.swift in Sources */,
 				01F335FA2AD10D0B0048AF77 /* RemoteConfigManager.swift in Sources */,
@@ -1093,10 +1114,12 @@
 				01BCDB1D2C9EE2CF0028FA94 /* ProgressButton.swift in Sources */,
 				01F336072AD10D0B0048AF77 /* RemoteConfigModel.swift in Sources */,
 				01F336082AD10D0B0048AF77 /* ProxyGroupMenuItemView.swift in Sources */,
+				01BB50D330309B40004C38EE /* OverviewGridLayout.swift in Sources */,
 				01F336092AD10D0B0048AF77 /* PrivilegedHelperManager.swift in Sources */,
 				01F3360A2AD10D0B0048AF77 /* PrivilegedHelperManager+Legacy.swift in Sources */,
 				01F3360C2AD10D0B0048AF77 /* NSAlert+Extension.swift in Sources */,
 				01F3360D2AD10D0B0048AF77 /* ClashWebViewContoller.swift in Sources */,
+				01BB50CA303044A4004C38EE /* TrafficHistoryStore.swift in Sources */,
 				01BB50A2302E2B80004C38EE /* ApiRequestStream.swift in Sources */,
 				01F3360E2AD10D0B0048AF77 /* ProxyGroupSpeedTestMenuItem.swift in Sources */,
 				01F3360F2AD10D0B0048AF77 /* LoginServiceKit.swift in Sources */,
@@ -1153,6 +1176,7 @@
 				01F3361D2AD10D0B0048AF77 /* ClashRule.swift in Sources */,
 				01EF58B22FF647BD00432213 /* ProxiesSearchString.swift in Sources */,
 				01EF58AE2FF646FB00432213 /* DashboardToolbarState.swift in Sources */,
+				01BB50CF303057F8004C38EE /* FormatterExtension.swift in Sources */,
 				01F3361E2AD10D0B0048AF77 /* ClashRuleProvider.swift in Sources */,
 				01F3361F2AD10D0B0048AF77 /* ClashProxy.swift in Sources */,
 				01F336202AD10D0B0048AF77 /* UserDefaultWrapper.swift in Sources */,
@@ -1562,14 +1586,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		013B21F92F7E95E0009B30CB /* XCRemoteSwiftPackageReference "Charts" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ChartsOrg/Charts";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.1.0;
-			};
-		};
 		013B220C2F88A219009B30CB /* XCRemoteSwiftPackageReference "async-http-client" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/swift-server/async-http-client";
@@ -1714,14 +1730,17 @@
 				minimumVersion = 2.0.0;
 			};
 		};
+		D4A5B6C7E8F9012345AB6789 /* XCRemoteSwiftPackageReference "swift-collections" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-collections.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.6.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		013B21FA2F7E95E0009B30CB /* DGCharts */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 013B21F92F7E95E0009B30CB /* XCRemoteSwiftPackageReference "Charts" */;
-			productName = DGCharts;
-		};
 		013B220D2F88A219009B30CB /* AsyncHTTPClient */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 013B220C2F88A219009B30CB /* XCRemoteSwiftPackageReference "async-http-client" */;
@@ -1791,6 +1810,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 01F335C92AD10D0B0048AF77 /* XCRemoteSwiftPackageReference "Yams" */;
 			productName = Yams;
+		};
+		D4A5B6C7E8F9012345AB678A /* Collections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D4A5B6C7E8F9012345AB6789 /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = Collections;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
