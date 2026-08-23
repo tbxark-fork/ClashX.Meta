@@ -8,11 +8,11 @@ import SwiftUI
 
 struct ProxyGroupCard: View {
 	@ObservedObject var proxyGroup: DBProxyGroup
+	let width: CGFloat
 	@EnvironmentObject var hideProxyNames: HideProxyNames
 	@EnvironmentObject var searchString: ProxiesSearchString
 	@EnvironmentObject var proxyStorage: DBProxyStorage
 
-	@State private var isOpen = true
 	@State private var isTesting = false
 	@State private var isUpdatingSelect = false
 	@State private var collapseOverride = false
@@ -44,7 +44,7 @@ struct ProxyGroupCard: View {
 	}
 
 	private var effectiveIsOpen: Bool {
-		isOpen || forceOpen
+		proxyGroup.isOpen || forceOpen
 	}
 
 	private var visibleProxies: [DBProxy] {
@@ -70,11 +70,7 @@ struct ProxyGroupCard: View {
 	var body: some View {
 		VStack(spacing: 0) {
 			headerView
-			if effectiveIsOpen {
-				nodeListView
-			} else {
-				summaryView
-			}
+			bodyView
 		}
 		.cornerRadius(DashboardTheme.cardCornerRadius)
 		.overlay(
@@ -85,6 +81,19 @@ struct ProxyGroupCard: View {
 			collapseOverride = false
 		}
 		.animation(.easeInOut(duration: 0.2), value: effectiveIsOpen)
+	}
+
+	var bodyView: some View {
+		ZStack(alignment: .top) {
+			nodeListView
+				.opacity(effectiveIsOpen ? 1 : 0)
+				.allowsHitTesting(effectiveIsOpen)
+			summaryView
+				.opacity(effectiveIsOpen ? 0 : 1)
+				.allowsHitTesting(!effectiveIsOpen)
+		}
+		.frame(height: width > 0 ? bodyHeight : nil, alignment: .top)
+		.clipped()
 	}
 
 	var headerView: some View {
@@ -132,7 +141,7 @@ struct ProxyGroupCard: View {
 	}
 
 	var nodeListView: some View {
-		LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: DashboardTheme.spacingGrid)], alignment: .leading, spacing: DashboardTheme.spacingGrid) {
+		LazyVGrid(columns: [GridItem(.adaptive(minimum: Metrics.columnMinWidth), spacing: DashboardTheme.spacingGrid)], alignment: .leading, spacing: DashboardTheme.spacingGrid) {
 			ForEach(visibleProxies, id: \.name) { proxy in
 				ProxyRowView(
 					proxy: proxy,
@@ -164,11 +173,44 @@ struct ProxyGroupCard: View {
 		.padding(16)
 	}
 
+	// MARK: - Deterministic height (no measurement; constants calibrated to SwiftUI layout)
+
+	private var columnCount: Int {
+		guard width > 0 else { return 1 }
+		let available = width - Metrics.nodePaddingHorizontal * 2
+		let divisor = Metrics.columnMinWidth + DashboardTheme.spacingGrid
+		return max(1, Int(floor((available + DashboardTheme.spacingGrid) / divisor)))
+	}
+
+	private var rowCount: Int {
+		Int(ceil(Double(visibleProxies.count) / Double(columnCount)))
+	}
+
+	private var gridHeight: CGFloat {
+		let rows = rowCount
+		return CGFloat(rows) * Metrics.rowHeight
+			+ CGFloat(max(0, rows - 1)) * DashboardTheme.spacingGrid
+			+ Metrics.nodePaddingVertical * 2
+	}
+
+	private var bodyHeight: CGFloat {
+		effectiveIsOpen ? gridHeight : Metrics.summaryHeight
+	}
+
+	private enum Metrics {
+		static let columnMinWidth: CGFloat = 160
+		static let nodePaddingHorizontal: CGFloat = 12
+		static let nodePaddingVertical: CGFloat = 12
+
+		static let rowHeight = DashboardTheme.nodeRowHeight
+		static let summaryHeight = 16 * 2 + DashboardTheme.lineHeight(DashboardTheme.secondaryTextNSFont)
+	}
+
 	func toggle() {
 		if forceOpen {
 			collapseOverride = true
 		} else {
-			isOpen.toggle()
+			proxyGroup.isOpen.toggle()
 		}
 	}
 

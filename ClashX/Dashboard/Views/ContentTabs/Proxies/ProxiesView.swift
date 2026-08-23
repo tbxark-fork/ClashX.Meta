@@ -15,6 +15,7 @@ struct ProxiesView: View {
 	@EnvironmentObject var searchString: ProxiesSearchString
 	
 	@State private var isGlobalMode = false
+	@State private var containerWidth: CGFloat = 0
 	
 	private var filterSegments: [String] {
 		searchString.string
@@ -33,26 +34,45 @@ struct ProxiesView: View {
 	}
 	
     var body: some View {
-		ScrollView {
-			VStack(spacing: DashboardTheme.spacingBetweenCards) {
-				ForEach(visibleGroups) { group in
-					ProxyGroupCard(proxyGroup: group)
+		ZStack {
+			ScrollView {
+				LazyVStack(spacing: DashboardTheme.spacingBetweenCards) {
+					ForEach(visibleGroups) { group in
+						ProxyGroupCard(proxyGroup: group, width: cardWidth)
+					}
 				}
+				.padding(DashboardTheme.spacingPage)
 			}
-			.padding(DashboardTheme.spacingPage)
+			.background(DashboardTheme.pageBackground)
+			.onAppear {
+				hideProxyNames.hide = toolbarState.hideProxyNames
+			}
+			.onChange(of: toolbarState.hideProxyNames) { newValue in
+				hideProxyNames.hide = newValue
+			}
+			.task {
+				await loadProxies()
+			}
+			.environmentObject(proxyStorage)
+
+			GeometryReader { geometry in
+				Rectangle()
+					.fill(.clear)
+					.frame(height: 1)
+					.onChange(of: geometry.size.width) { newValue in
+						containerWidth = newValue
+					}
+					.onAppear {
+						containerWidth = geometry.size.width
+					}
+			}
+			.frame(height: 1)
 		}
-		.background(DashboardTheme.pageBackground)
-		.onAppear {
-			hideProxyNames.hide = toolbarState.hideProxyNames
-		}
-		.onChange(of: toolbarState.hideProxyNames) { newValue in
-			hideProxyNames.hide = newValue
-		}
-		.task {
-			await loadProxies()
-		}
-		.environmentObject(proxyStorage)
     }
+
+	private var cardWidth: CGFloat {
+		containerWidth - DashboardTheme.spacingPage * 2
+	}
 	
 	func matchesFilter(_ name: String) -> Bool {
 		let lower = name.lowercased()

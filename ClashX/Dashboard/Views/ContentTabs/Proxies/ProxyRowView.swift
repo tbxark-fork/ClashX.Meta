@@ -32,7 +32,7 @@ struct ProxyRowView: View {
 	}
 
 	var body: some View {
-		VStack(alignment: .leading, spacing: 6) {
+		VStack(alignment: .leading, spacing: DashboardTheme.spacingRowInner) {
 			HStack(spacing: 8) {
 				Text(hideProxyNames.hide ? String(proxy.id.hiddenID) : proxy.name)
 					.font(DashboardTheme.primaryTextFont)
@@ -45,24 +45,25 @@ struct ProxyRowView: View {
 					.show(isVisible: !isBuiltIn && !proxy.udpString.isEmpty)
 			}
 
-			HStack(spacing: 6) {
-				Text(verbatim: proxy.type.displayString)
-					.font(DashboardTheme.secondaryTextFont)
-					.foregroundColor(.secondary)
-				Text("[TFO]")
-					.font(DashboardTheme.secondaryTextFont)
-					.foregroundColor(.secondary)
-					.show(isVisible: proxy.tfo)
-				Spacer(minLength: 6)
-				ProxyLatencyView(number: proxy.delay > 0 ? proxy.delay : nil, isTesting: isTesting) {
-					Task { await testLatency() }
+			if !isBuiltIn {
+				HStack(spacing: 6) {
+					Text(verbatim: proxy.type.displayString)
+						.font(DashboardTheme.secondaryTextFont)
+						.foregroundColor(.secondary)
+					Text("[TFO]")
+						.font(DashboardTheme.secondaryTextFont)
+						.foregroundColor(.secondary)
+						.show(isVisible: proxy.tfo)
+					Spacer(minLength: 6)
+					ProxyLatencyView(number: proxy.delay > 0 ? proxy.delay : nil, isTesting: isTesting) {
+						Task { await testLatency() }
+					}
 				}
 			}
-			.opacity(isBuiltIn ? 0 : 1)
-			.allowsHitTesting(!isBuiltIn)
 		}
 		.padding(.horizontal, 14)
 		.padding(.vertical, 8)
+		.frame(height: DashboardTheme.nodeRowHeight, alignment: .center)
 		.frame(maxWidth: .infinity, alignment: .leading)
 		.background(backgroundColor)
 		.contentShape(Rectangle())
