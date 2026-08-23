@@ -5,22 +5,44 @@
 //
 
 import SwiftUI
+@_spi(Advanced) import SwiftUIIntrospect
 
 struct SidebarView: View {
 	
-	@StateObject var clashApiDatasStorage = ClashApiDatasStorage()
+	@Binding var selection: SidebarItem?
 	
-	@State private var sidebarSelectionName: SidebarItem? = .overview
+	let clashApiDatasStorage: ClashApiDatasStorage
+	
+	@State private var reloadID = UUID().uuidString
 	@State private var updateConnectionsTask: Task<Void, Never>?
 	@State private var pollingTask: Task<Void, Never>?
 	
     var body: some View {
-		Group {
-			SidebarListView(selection: $sidebarSelectionName)
+		List(selection: $selection) {
+			SidebarLabel(item: .overview)
+				.tag(SidebarItem.overview)
+			
+			SidebarLabel(item: .proxies)
+				.tag(SidebarItem.proxies)
+			
+			SidebarLabel(item: .rules)
+				.tag(SidebarItem.rules)
+			
+			SidebarLabel(item: .conns)
+				.tag(SidebarItem.conns)
+			
+			SidebarLabel(item: .config)
+				.tag(SidebarItem.config)
+			
+			SidebarLabel(item: .logs)
+				.tag(SidebarItem.logs)
 		}
-		.environmentObject(clashApiDatasStorage.overviewData)
-		.environmentObject(clashApiDatasStorage.logStorage)
-		.environmentObject(clashApiDatasStorage.connsStorage)
+		.introspect(.table, on: .macOS(.v12...)) {
+			$0.refusesFirstResponder = true
+			$0.allowsEmptySelection = false
+		}
+		.listStyle(.sidebar)
+		.id(reloadID)
 		.onAppear {
 			if ConfigOverride.shared.logLevel == .unknow {
 				ConfigOverride.shared.logLevel = .info
@@ -32,8 +54,11 @@ struct SidebarView: View {
 			updateConnections()
 			startPollingConnections()
 		}
-		.onChange(of: sidebarSelectionName) { newValue in
+		.onChange(of: selection) { newValue in
 			sidebarItemChanged(newValue)
+		}
+		.onReceive(NotificationCenter.default.publisher(for: .reloadDashboard)) { _ in
+			reloadID = UUID().uuidString
 		}
 		.onDisappear {
 			pollingTask?.cancel()
@@ -41,7 +66,6 @@ struct SidebarView: View {
 			updateConnectionsTask?.cancel()
 			updateConnectionsTask = nil
 		}
-
 	}
 
 	func startPollingConnections() {
@@ -79,9 +103,3 @@ struct SidebarView: View {
 		NotificationCenter.default.post(name: .sidebarItemChanged, object: nil, userInfo: ["item": item])
 	}
 }
-
-//struct SidebarView_Previews: PreviewProvider {
-//    static var previews: some View {
-//		SidebarView()
-//    }
-//}
