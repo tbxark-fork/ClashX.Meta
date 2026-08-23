@@ -25,7 +25,7 @@ struct DashboardView: View {
 	var body: some View {
 		NavigationSplitView {
 			SidebarView(selection: $selection, clashApiDatasStorage: clashApiDatasStorage)
-				.navigationSplitViewColumnWidth(min: 160, ideal: 180, max: 230)
+				.navigationSplitViewColumnWidth(min: 160, ideal: 200, max: 240)
 		} detail: {
 			detailView
 		}
@@ -38,6 +38,9 @@ struct DashboardView: View {
 		.environmentObject(toolbarState)
 		.environmentObject(proxiesSearchString)
 		.environmentObject(hideProxyNames)
+		.environment(\.overviewDataRefs, OverviewDataRefs(
+			overview: clashApiDatasStorage.overviewData,
+			conns: clashApiDatasStorage.connsStorage))
 		.environmentObject(providerStorage)
 		.frame(
 			minWidth: Self.minimumSize.width,

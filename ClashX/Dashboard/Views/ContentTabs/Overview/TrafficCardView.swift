@@ -8,7 +8,10 @@ import SwiftUI
 
 // Traffic chart card: title, legend, and Down/Up history charts
 struct TrafficCardView: View {
-	@EnvironmentObject var data: ClashOverviewData
+	@Environment(\.overviewDataRefs) private var refs
+
+	@State private var downloadHistories = [CGFloat]()
+	@State private var uploadHistories = [CGFloat]()
 
 	var body: some View {
 		OverviewCard {
@@ -16,26 +19,35 @@ struct TrafficCardView: View {
 				Text("Traffic")
 					.font(DashboardTheme.titleFont)
 
-				legendItem(color: Color(nsColor: .systemBlue), name: "Down")
-				TrafficGraphView(values: $data.downloadHistories,
-								 graphColor: Color(nsColor: .systemBlue))
+				legendItem(color: DashboardTheme.chartBlue, name: "Down")
+				TrafficGraphView(values: $downloadHistories,
+								 graphColor: DashboardTheme.chartBlue)
 
-				legendItem(color: Color(nsColor: .systemGreen), name: "Up")
+				legendItem(color: DashboardTheme.chartGreen, name: "Up")
 					.padding(.top, 16)
-				TrafficGraphView(values: $data.uploadHistories,
-								 graphColor: Color(nsColor: .systemGreen))
+				TrafficGraphView(values: $uploadHistories,
+								 graphColor: DashboardTheme.chartGreen)
 			}
 			.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 		}
+		.task(refreshLoop)
 	}
 
-	private func legendItem(color: Color, name: String) -> some View {
+	private func refreshLoop() async {
+		while !Task.isCancelled {
+			downloadHistories = refs.overview.downloadHistories
+			uploadHistories = refs.overview.uploadHistories
+			try? await Task.sleep(seconds: OverviewRefresh.chartInterval)
+		}
+	}
+
+	private func legendItem(color: Color, name: LocalizedStringKey) -> some View {
 		HStack(spacing: DashboardTheme.spacingRowInner) {
 			RoundedRectangle(cornerRadius: 2)
 				.fill(color)
 				.frame(width: 14, height: 9)
 			Text(name)
-				.font(DashboardTheme.secondaryTextFont)
+				.font(DashboardTheme.overviewLabelFont)
 				.foregroundColor(.secondary)
 		}
 	}

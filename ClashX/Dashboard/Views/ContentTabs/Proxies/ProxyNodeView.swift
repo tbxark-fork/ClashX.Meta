@@ -78,7 +78,7 @@ struct ProxyNodeView: View {
 				.padding(1)
 		)
 		
-		.background(now == proxy.name ? Color.accentColor.opacity(0.7) : Color("SwiftUI Colors/ContentBackgroundColor"))
+		.background(now == proxy.name ? DashboardTheme.cellSelectedBackground : Color("SwiftUI Colors/ContentBackgroundColor"))
 	}
 }
 

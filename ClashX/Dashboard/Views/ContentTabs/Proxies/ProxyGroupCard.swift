@@ -261,6 +261,8 @@ struct ProxyGroupCard: View {
 		let success = await ApiRequest.updateProxyGroup(group: proxyGroup.name, selectProxy: name)
 		isUpdatingSelect = false
 		guard success else { return }
+		ConfigManager.recordProxySelection(group: proxyGroup.name, selected: name)
+		await ConnectionManager.closeConnection(for: proxyGroup.name)
 		proxyGroup.now = name
 	}
 }

@@ -12,9 +12,6 @@ struct LogsView: View {
 	
 	@EnvironmentObject var toolbarState: DashboardToolbarState
 	@State var searchString: String = ""
-    @State var logFilter = DashboardViewContoller.LogFilter.all
-    
-	@State var logLevel = ConfigOverride.shared.logLevel
 	
     var body: some View {
 		Group {
@@ -39,7 +36,7 @@ struct LogsView: View {
 		logStorage.logs.removeAll()
 		ConfigOverride.shared.logLevel = level
         Task { @MainActor in
-            await ApiRequest.updateLogLevel(level: level)
+            _ = await ApiRequest.updateLogLevel(level: level)
             ApiRequestStream.shared.resetStreamApi(for: .logging)
         }
 	}

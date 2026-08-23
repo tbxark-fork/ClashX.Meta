@@ -30,14 +30,15 @@ struct OverviewTopItemView: View {
 	
     var body: some View {
 		OverviewCard {
-			VStack(alignment: .leading, spacing: DashboardTheme.spacingRowInner) {
+			VStack(alignment: .leading, spacing: DashboardTheme.spacingOverviewStatText) {
 				Text(name)
-					.font(DashboardTheme.secondaryTextFont)
+					.font(DashboardTheme.overviewLabelFont)
 					.foregroundColor(.secondary)
 					.lineLimit(1)
 				Text(value)
-					.font(DashboardTheme.primaryTextFont)
+					.font(DashboardTheme.overviewValueFont)
 					.lineLimit(1)
+					.minimumScaleFactor(0.6)
 			}
 			.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
 		}
@@ -53,18 +54,18 @@ struct OverviewHeroItemView: View {
 
     var body: some View {
 		OverviewCard {
-			VStack(alignment: .leading, spacing: DashboardTheme.spacingRowInner) {
+			VStack(alignment: .leading, spacing: DashboardTheme.spacingOverviewStatText) {
 				HStack(spacing: DashboardTheme.spacingRowInner) {
 					Circle()
 						.fill(color)
 						.frame(width: 8, height: 8)
 					Text(name)
-						.font(DashboardTheme.secondaryTextFont)
+						.font(DashboardTheme.overviewLabelFont)
 						.foregroundColor(.secondary)
 						.lineLimit(1)
 				}
 				Text(value)
-					.font(DashboardTheme.heroValueFont)
+					.font(DashboardTheme.overviewValueFont)
 					.lineLimit(1)
 					.minimumScaleFactor(0.6)
 			}

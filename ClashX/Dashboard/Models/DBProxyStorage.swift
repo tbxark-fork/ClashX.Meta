@@ -138,11 +138,11 @@ class DBProxy: ObservableObject {
 		case 0:
 			return .secondary
 		case ..<good:
-			return .green
+			return DashboardTheme.latencyGood
 		case ..<normal:
-			return .yellow
+			return DashboardTheme.latencyNormal
 		default:
-			return .orange
+			return DashboardTheme.latencySlow
 		}
 	}
 }

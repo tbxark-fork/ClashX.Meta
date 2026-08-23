@@ -49,6 +49,7 @@ struct SidebarView: View {
 			}
 			
 			clashApiDatasStorage.resetStreamApi()
+			clashApiDatasStorage.seedHistoryFromStore()
 			clashApiDatasStorage.connsStorage.conns.removeAll()
 			
 			updateConnections()

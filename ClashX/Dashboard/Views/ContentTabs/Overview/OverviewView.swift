@@ -6,6 +6,34 @@
 
 import SwiftUI
 
+// Overview card refresh tiers:
+// - stream: heroes/totals follow the core push streams
+// - chart: history graphs sample the streams at a lower rate
+// - polled: connections/top processes/subscription/network status poll local APIs
+// - none: core version never refreshes
+enum OverviewRefresh {
+	static let streamInterval: TimeInterval = 1
+	static let chartInterval: TimeInterval = 3
+	static let polledInterval: TimeInterval = 5
+}
+
+// Unobserved references for polled cards, so stream pushes don't invalidate them.
+struct OverviewDataRefs {
+	let overview: ClashOverviewData
+	let conns: ClashConnsStorage
+}
+
+private struct OverviewDataRefsKey: EnvironmentKey {
+	static let defaultValue = OverviewDataRefs(overview: ClashOverviewData(), conns: ClashConnsStorage())
+}
+
+extension EnvironmentValues {
+	var overviewDataRefs: OverviewDataRefs {
+		get { self[OverviewDataRefsKey.self] }
+		set { self[OverviewDataRefsKey.self] = newValue }
+	}
+}
+
 struct OverviewView: View {
 	
 	@EnvironmentObject var data: ClashOverviewData
@@ -15,22 +43,28 @@ struct OverviewView: View {
     var body: some View {
 		ScrollView {
 			OverviewGrid {
-				OverviewHeroItemView(name: "Upload", value: data.uploadString, color: Color(nsColor: .systemGreen))
+				OverviewHeroItemView(name: "Upload", value: data.uploadString, color: DashboardTheme.chartGreen)
 					.gridCell(column: 0, row: 0)
-				OverviewHeroItemView(name: "Download", value: data.downloadString, color: Color(nsColor: .systemBlue))
+				OverviewHeroItemView(name: "Download", value: data.downloadString, color: DashboardTheme.chartBlue)
 					.gridCell(column: 1, row: 0)
 				OverviewTopItemView(name: "Download Total", value: data.downloadTotal)
 					.gridCell(column: 2, row: 0)
 				OverviewTopItemView(name: "Upload Total", value: data.uploadTotal)
 					.gridCell(column: 3, row: 0)
-				OverviewTopItemView(name: "Active Connections", value: data.activeConns)
+				ConnectionsStatsCardView()
 					.gridCell(column: 0, row: 1)
-				OverviewTopItemView(name: "Mihomo", value: version)
+				SubscriptionUsageCardView()
 					.gridCell(column: 1, row: 1)
 				MemoryCardView()
 					.gridCell(column: 2, row: 1)
+				OverviewTopItemView(name: "Core", value: version)
+					.gridCell(column: 3, row: 1)
 				TrafficCardView()
 					.gridCell(column: 0, row: 2, columnSpan: 2, rowSpan: 2)
+				TopProcessesCardView()
+					.gridCell(column: 2, row: 2, columnSpan: 2, rowSpan: 2)
+				NetworkStatusCardView()
+					.gridCell(column: 0, row: 4, columnSpan: 2, rowSpan: 2)
 			}
 			.padding(DashboardTheme.spacingPage)
 		}

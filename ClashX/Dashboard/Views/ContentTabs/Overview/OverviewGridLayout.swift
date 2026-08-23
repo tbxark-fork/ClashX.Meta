@@ -80,8 +80,8 @@ struct OverviewGrid<Content: View>: View {
 	var body: some View {
 		OverviewGridLayout(
 			columns: 4,
-			rowCount: 4,
-			rowHeight: 70,
+			rowCount: 6,
+			rowHeight: 72,
 			spacing: DashboardTheme.spacingBetweenCards,
 			baseWidth: 680
 		) {

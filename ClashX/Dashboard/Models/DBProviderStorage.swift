@@ -27,12 +27,14 @@ class DBProxyProvider: ObservableObject, Identifiable {
 	@Published var trafficPercentage: String
 	@Published var expireDate: String
 	@Published var updatedAt: String
-	
+	@Published var subscriptionUsage: SubscriptionUsage?
+
 	init(provider: ClashProvider) {
 		name = provider.name
 		proxies = provider.proxies.map(DBProxy.init)
 		type = provider.type
 		vehicleType = provider.vehicleType
+		subscriptionUsage = SubscriptionUsage(info: provider.subscriptionInfo)
 		
 		if let info = provider.subscriptionInfo {
 			let used = info.download + info.upload
@@ -40,7 +42,7 @@ class DBProxyProvider: ObservableObject, Identifiable {
 			
 			let trafficRate = "\(String(format: "%.2f", Double(used)/Double(total/100)))%"
 			
-			let formatter = ByteCountFormatter()
+			let formatter = DashboardFormatters.byteCount
 			
 			trafficInfo = formatter.string(fromByteCount: used)
 			+ " / "
@@ -69,9 +71,7 @@ class DBProxyProvider: ObservableObject, Identifiable {
 			trafficPercentage = "0.0%"
 		}
 		
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        self.updatedAt = formatter.localizedString(for: provider.updatedAt, relativeTo: Date())
+        self.updatedAt = DashboardFormatters.providerUpdateText(for: provider.updatedAt)
 	}
 	
 	func updateInfo(_ new: DBProxyProvider) {
@@ -80,6 +80,32 @@ class DBProxyProvider: ObservableObject, Identifiable {
 		expireDate = new.expireDate
 		trafficInfo = new.trafficInfo
 		trafficPercentage = new.trafficPercentage
+		subscriptionUsage = new.subscriptionUsage
+	}
+}
+
+// Normalized subscription usage; nil when data is missing or non-standard
+// (mihomo passes through unparsable or negative userinfo values).
+struct SubscriptionUsage: Equatable {
+	let usedText: String
+	let totalText: String
+	let percentText: String
+	let ratio: CGFloat
+
+	init?(info: ClashProviderSubInfo?) {
+		guard let info,
+		      info.upload >= 0,
+		      info.download >= 0,
+		      info.total > 0 else { return nil }
+		let used = info.upload + info.download
+		guard used >= 0 else { return nil }
+
+		let formatter = DashboardFormatters.byteCount
+		usedText = formatter.string(fromByteCount: used)
+		totalText = formatter.string(fromByteCount: info.total)
+		ratio = min(CGFloat(used) / CGFloat(info.total), 1)
+		let percent = Int((Double(used) / Double(info.total) * 100).rounded())
+		percentText = String(format: "%d%%", percent)
 	}
 }
 

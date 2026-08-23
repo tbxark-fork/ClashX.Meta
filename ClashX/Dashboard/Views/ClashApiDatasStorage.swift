@@ -233,4 +233,10 @@ class ClashLogStorage: ObservableObject {
 
 class ClashConnsStorage: ObservableObject {
 	@Published var conns = [DBConnection]()
+
+	private let appNameResolver = AppNameResolver()
+
+	func appName(processPath: String, process: String) async -> String {
+		await appNameResolver.appName(processPath: processPath, process: process)
+	}
 }

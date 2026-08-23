@@ -24,7 +24,10 @@ struct ProxyProviderColumnWidths {
 		let fontSize: CGFloat = 12
 		let typeTexts = providers.map { $0.vehicleType.rawValue }
 		let qtyTexts = providers.map { String(format: NSLocalizedString("%lld nodes", comment: ""), $0.proxies.count) }
-		let trafficTexts = providers.map(\.trafficInfo)
+		let usageTexts = providers.map { provider -> String in
+			guard let usage = provider.subscriptionUsage else { return "—" }
+			return "\(usage.usedText) / \(usage.totalText)  \(usage.percentText)"
+		}
 		let expireTexts = providers.map(\.expireDate)
 		let updatedTexts = providers.map(\.updatedAt)
 
@@ -34,7 +37,7 @@ struct ProxyProviderColumnWidths {
 		index = 30
 		first = max(
 			TextMeasurement.maxWidth(of: providers.map(\.name), font: DashboardTheme.primaryTextNSFont),
-			TextMeasurement.maxWidth(of: trafficTexts, font: DashboardTheme.secondaryTextNSFont)
+			TextMeasurement.maxWidth(of: usageTexts, font: DashboardTheme.secondaryTextNSFont) + 14
 		)
 		second = TextMeasurement.maxWidth(of: typeTexts, font: DashboardTheme.secondaryTextNSFont) + typeIconWidth + Self.badgeIconSpacing
 		third = TextMeasurement.maxWidth(of: qtyTexts, font: DashboardTheme.secondaryTextNSFont) + thirdIconWidth + Self.badgeIconSpacing
@@ -108,22 +111,20 @@ struct ProviderRowView: View {
 						.lineLimit(1)
 						.frame(width: columnWidths.third, alignment: .leading)
 				}
-				HStack(spacing: ProxyProviderColumnWidths.columnSpacing) {
-					Text(verbatim: proxyProvider.trafficInfo)
-						.lineLimit(1)
-						.truncationMode(.tail)
-						.frame(width: columnWidths.first, alignment: .leading)
-					Text(proxyProvider.expireDate)
-						.lineLimit(1)
-						.truncationMode(.tail)
-						.frame(width: columnWidths.fourth, alignment: .leading)
-					Text(proxyProvider.updatedAt)
-						.lineLimit(1)
-						.truncationMode(.tail)
-						.frame(width: columnWidths.fifth, alignment: .leading)
-				}
-				.font(DashboardTheme.secondaryTextFont)
-				.foregroundColor(.secondary)
+			HStack(spacing: ProxyProviderColumnWidths.columnSpacing) {
+				usageCell
+					.frame(width: columnWidths.first, alignment: .leading)
+				Text(proxyProvider.expireDate)
+					.lineLimit(1)
+					.truncationMode(.tail)
+					.frame(width: columnWidths.fourth, alignment: .leading)
+				Text(proxyProvider.updatedAt)
+					.lineLimit(1)
+					.truncationMode(.tail)
+					.frame(width: columnWidths.fifth, alignment: .leading)
+			}
+			.font(DashboardTheme.secondaryTextFont)
+			.foregroundColor(.secondary)
 			}
 		}
 	}
@@ -136,6 +137,37 @@ struct ProviderRowView: View {
 		}
 		.font(DashboardTheme.secondaryTextFont)
 		.foregroundColor(.secondary)
+	}
+
+	// Traffic usage with the progress bar drawn behind the text, matching the
+	// Overview subscription card colors (track 0.15 / solid accent fill).
+	private var usageCell: some View {
+		Group {
+			if let usage = proxyProvider.subscriptionUsage {
+				HStack(spacing: 8) {
+					Text(verbatim: "\(usage.usedText) / \(usage.totalText)")
+						.lineLimit(1)
+						.minimumScaleFactor(0.7)
+					Spacer(minLength: 0)
+					Text(verbatim: usage.percentText)
+						.monospacedDigit()
+				}
+				.padding(.horizontal, 6)
+				.background {
+					GeometryReader { proxy in
+						ZStack(alignment: .leading) {
+							RoundedRectangle(cornerRadius: 4)
+								.fill(DashboardTheme.usageBarTrack)
+							RoundedRectangle(cornerRadius: 4)
+								.fill(DashboardTheme.usageBarFill)
+								.frame(width: max(0, min(proxy.size.width, proxy.size.width * usage.ratio)))
+						}
+					}
+				}
+			} else {
+				Text(verbatim: "—")
+			}
+		}
 	}
 
 	@MainActor
