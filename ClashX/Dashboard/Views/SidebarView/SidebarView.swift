@@ -54,9 +54,6 @@ struct SidebarView: View {
 			updateConnections()
 			startPollingConnections()
 		}
-		.onChange(of: selection) { newValue in
-			sidebarItemChanged(newValue)
-		}
 		.onReceive(NotificationCenter.default.publisher(for: .reloadDashboard)) { _ in
 			reloadID = UUID().uuidString
 		}
@@ -95,11 +92,5 @@ struct SidebarView: View {
 		clashApiDatasStorage.overviewData.downTotal = snap.downloadTotal
 		clashApiDatasStorage.overviewData.activeConns = "\(snap.connections.count)"
 		clashApiDatasStorage.connsStorage.conns = snap.connections
-	}
-	
-	func sidebarItemChanged(_ item: SidebarItem?) {
-		guard let item else { return }
-		
-		NotificationCenter.default.post(name: .sidebarItemChanged, object: nil, userInfo: ["item": item])
 	}
 }

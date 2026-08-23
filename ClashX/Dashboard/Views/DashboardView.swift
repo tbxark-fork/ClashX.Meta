@@ -16,8 +16,11 @@ struct DashboardView: View {
 	@StateObject private var toolbarState = DashboardToolbarState()
 	@StateObject private var proxiesSearchString = ProxiesSearchString()
 	@StateObject private var hideProxyNames = HideProxyNames()
+	@StateObject private var providerStorage = DBProviderStorage()
 	@State private var proxyContentSegment = ProxyContentSegment.proxyList
 	@State private var ruleContentSegment = RuleContentSegment.ruleList
+	@State private var isUpdatingRuleProviders = false
+	@State private var isUpdatingProxyProviders = false
 	
 	var body: some View {
 		NavigationSplitView {
@@ -35,6 +38,7 @@ struct DashboardView: View {
 		.environmentObject(toolbarState)
 		.environmentObject(proxiesSearchString)
 		.environmentObject(hideProxyNames)
+		.environmentObject(providerStorage)
 		.frame(
 			minWidth: Self.minimumSize.width,
 			idealWidth: Self.minimumSize.width,
@@ -85,11 +89,6 @@ struct DashboardView: View {
 				.pickerStyle(.segmented)
 			}
 		}
-		ToolbarItem(placement: .automatic) {
-			if selection == nil {
-				EmptyView()
-			}
-		}
 		if let selection {
 			toolbarButtons(for: selection)
 		}
@@ -101,6 +100,21 @@ struct DashboardView: View {
 		case .overview, .config:
 			ToolbarItem(placement: .automatic) { EmptyView() }
 		case .proxies:
+			if proxyContentSegment == .proxyProviders {
+				ToolbarItem(placement: .automatic) {
+					Button {
+						Task { await updateAllProxyProviders() }
+					} label: {
+						if isUpdatingProxyProviders {
+							ProgressView()
+								.controlSize(.small)
+						} else {
+							Label("Update All", systemImage: "arrow.clockwise")
+						}
+					}
+					.disabled(isUpdatingProxyProviders)
+				}
+			}
 			ToolbarItem(placement: .automatic) {
 				Toggle(isOn: Binding(
 					get: { toolbarState.hideProxyNames },
@@ -123,6 +137,21 @@ struct DashboardView: View {
 				.frame(width: 220)
 			}
 		case .rules:
+			if ruleContentSegment == .ruleProviders {
+				ToolbarItem(placement: .automatic) {
+					Button {
+						Task { await updateAllRuleProviders() }
+					} label: {
+						if isUpdatingRuleProviders {
+							ProgressView()
+								.controlSize(.small)
+						} else {
+							Label("Update All", systemImage: "arrow.clockwise")
+						}
+					}
+					.disabled(isUpdatingRuleProviders)
+				}
+			}
 			ToolbarItem(placement: .automatic) {
 				TextField("Search", text: Binding(
 					get: { toolbarState.searchText },
@@ -184,56 +213,68 @@ struct DashboardView: View {
 				.textFieldStyle(.roundedBorder)
 				.frame(width: 220)
 			}
-		default:
-			EmptyView()
 		}
 	}
 	
+	private func updateAllRuleProviders() async {
+		guard !isUpdatingRuleProviders else { return }
+		isUpdatingRuleProviders = true
+		defer { isUpdatingRuleProviders = false }
+		_ = await ApiRequest.updateAllProviders(for: .rule)
+		NotificationCenter.default.post(name: .ruleProvidersUpdated, object: nil)
+	}
+
+	private func updateAllProxyProviders() async {
+		guard !isUpdatingProxyProviders else { return }
+		isUpdatingProxyProviders = true
+		defer { isUpdatingProxyProviders = false }
+		_ = await ApiRequest.updateAllProviders(for: .proxy)
+		NotificationCenter.default.post(name: .proxyProvidersUpdated, object: nil)
+	}
+
 	@ViewBuilder
 	private var detailView: some View {
-		switch selection {
-		case .overview:
-			OverviewView()
-		case .proxies:
-			DashboardPlaceholderView(title: proxyContentSegment.rawValue)
-		case .rules:
-			DashboardPlaceholderView(title: ruleContentSegment.rawValue)
-		case .conns:
-			ConnectionsView()
-		case .config:
-			ConfigView()
-		case .logs:
-			LogsView()
-		case .none:
-			EmptyView()
+		NavigationStack {
+			switch selection {
+			case .overview:
+				OverviewView()
+			case .proxies:
+				switch proxyContentSegment {
+				case .proxyList:
+					ProxiesView()
+				case .proxyProviders:
+					ProvidersView(mode: .proxy)
+				}
+			case .rules:
+				switch ruleContentSegment {
+				case .ruleList:
+					RulesView()
+				case .ruleProviders:
+					ProvidersView(mode: .rule)
+				}
+			case .conns:
+				ConnectionsView()
+			case .config:
+				ConfigView()
+			case .logs:
+				LogsView()
+			case .none:
+				EmptyView()
+			}
 		}
 	}
 }
 
 private enum ProxyContentSegment: String, CaseIterable, Identifiable {
 	case proxyList = "代理"
-	case proxyProviders = "代理提供商"
+	case proxyProviders = "提供商"
 
 	var id: String { rawValue }
 }
 
 private enum RuleContentSegment: String, CaseIterable, Identifiable {
 	case ruleList = "规则"
-	case ruleProviders = "规则提供商"
+	case ruleProviders = "提供商"
 
 	var id: String { rawValue }
-}
-
-private struct DashboardPlaceholderView: View {
-	let title: String
-
-	var body: some View {
-		ZStack {
-			Color.clear
-			Text(title)
-				.font(.title2.weight(.semibold))
-				.foregroundStyle(.secondary)
-		}
-		.frame(maxWidth: .infinity, maxHeight: .infinity)
-	}
 }
