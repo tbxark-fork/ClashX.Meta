@@ -79,9 +79,8 @@ class DBConnectionObject: NSObject {
 	}
 	
 	init(_ conn: DBConnection) {
-		let byteCountFormatter = ByteCountFormatter()
-		let startFormatter = RelativeDateTimeFormatter()
-		startFormatter.unitsStyle = .short
+		let byteCountFormatter = DashboardFormatters.byteCount
+		let startFormatter = DashboardFormatters.relativeDateTimeShort
 		
 		let metadata = conn.metadata
 		
@@ -121,7 +120,7 @@ class DBConnectionObject: NSObject {
 			return
 		}
 		
-		let byteCountFormatter = ByteCountFormatter()
+		let byteCountFormatter = DashboardFormatters.byteCount
 		
 		downloadSpeed = download - old.download
 		uploadSpeed = upload - old.upload

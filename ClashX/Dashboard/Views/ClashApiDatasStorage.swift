@@ -19,7 +19,6 @@ class ClashApiDatasStorage: NSObject, ObservableObject {
 
 	private var pendingTraffic: (up: Int, down: Int)?
 	private var pendingLogs = [(level: String, log: String)]()
-	private var pendingMemory: String?
 	private var uiUpdateTask: Task<Void, Never>?
 
 	override init() {
@@ -44,6 +43,18 @@ class ClashApiDatasStorage: NSObject, ObservableObject {
 			ApiRequestStream.shared.resetStreamApis()
 		}
 	}
+
+	// Seed history from ApiRequestStream so the dashboard opens with recent data instead of zeros
+	func seedHistoryFromStore() {
+		let store = ApiRequestStream.shared.trafficHistoryStore
+		overviewData.downloadHistories = store.down
+		overviewData.uploadHistories = store.up
+		overviewData.memoryHistories = store.memory.map(CGFloat.init)
+		if let memory = store.latestMemory {
+			overviewData.memory = Self.memoryFormatter.string(fromByteCount: memory)
+		}
+		Logger.log("seed memory history: first=\(store.memory.first ?? -1) last=\(store.memory.last ?? -1) count=\(store.memory.count)", level: .debug)
+	}
 }
 
 extension ClashApiDatasStorage: ApiRequestStreamDelegate {
@@ -59,8 +70,7 @@ extension ClashApiDatasStorage: ApiRequestStreamDelegate {
 	}
 	
 	func didUpdateMemory(memory: Int64) async {
-        let memoryString = Self.memoryFormatter.string(fromByteCount: memory)
-        enqueueMemory(memoryString)
+		// Store handles sampling and history; nothing to do here
 	}
 
 	func enqueueTrafficUpdate(up: Int, down: Int) {
@@ -69,10 +79,6 @@ extension ClashApiDatasStorage: ApiRequestStreamDelegate {
 
 	func enqueueLog(level: String, log: String) {
 		pendingLogs.append((level: level, log: log))
-	}
-
-	func enqueueMemory(_ value: String) {
-		pendingMemory = value
 	}
 
 	func flushPendingUpdates() {
@@ -91,20 +97,25 @@ extension ClashApiDatasStorage: ApiRequestStreamDelegate {
 			}
 		}
 
-		if let memory = pendingMemory {
-			if overviewData.memory != memory {
-				overviewData.memory = memory
-			}
-			pendingMemory = nil
+		// Sync history straight from the store; all sampling happens there
+		let store = ApiRequestStream.shared.trafficHistoryStore
+		overviewData.downloadHistories = store.down
+		overviewData.uploadHistories = store.up
+		overviewData.memoryHistories = store.memory.map(CGFloat.init)
+		if let memory = store.latestMemory {
+			overviewData.memory = Self.memoryFormatter.string(fromByteCount: memory)
 		}
 	}
 	
 }
 
-fileprivate let TrafficHistoryLimit = 120
+fileprivate let TrafficHistoryLimit = 30
+fileprivate let MemoryHistoryLimit = 15
 
 class ClashOverviewData: ObservableObject, Identifiable {
 	let id = UUID().uuidString
+
+	private static let memoryFormatter = ByteCountFormatter()
 	
 	@Published var uploadString = "N/A"
 	@Published var downloadString = "N/A"
@@ -118,26 +129,17 @@ class ClashOverviewData: ObservableObject, Identifiable {
 	
 	@Published var downloadHistories = [CGFloat](repeating: 0, count: TrafficHistoryLimit)
 	@Published var uploadHistories = [CGFloat](repeating: 0, count: TrafficHistoryLimit)
+	@Published var memoryHistories = [CGFloat](repeating: 0, count: MemoryHistoryLimit)
 	
 	var down: Int = 0 {
 		didSet {
 			downloadString = getSpeedString(for: down)
-			downloadHistories.append(CGFloat(down))
-			
-			if downloadHistories.count > TrafficHistoryLimit {
-				downloadHistories.removeFirst()
-			}
 		}
 	}
 	
 	var up: Int = 0 {
 		didSet {
 			uploadString = getSpeedString(for: up)
-			uploadHistories.append(CGFloat(up))
-			
-			if uploadHistories.count > TrafficHistoryLimit {
-				uploadHistories.removeFirst()
-			}
 		}
 	}
 	
@@ -154,21 +156,42 @@ class ClashOverviewData: ObservableObject, Identifiable {
 	}
 	
 	func getSpeedString(for byte: Int) -> String {
-		let kb = byte / 1000
-		if kb < 1000 {
-			return  "\(kb)KB/s"
-		} else {
-			let mb = Double(kb) / 1000
-			if mb >= 100 {
-				if mb >= 1000 {
-					return String(format: "%.1fGB/s", mb/1000)
-				}
-				return String(format: "%.1fMB/s", mb)
-			} else {
-				return String(format: "%.2fMB/s", mb)
-			}
+		speedString(for: byte)
+	}
+}
+
+func speedString(for byte: Int, suffix: String = "/s") -> String {
+	if byte < 1_000 {
+		return "\(byte)B" + suffix
+	}
+	let kb = Double(byte) / 1_000
+	if kb < 999.5 {
+		return threeSigFigures(kb) + "KB" + suffix
+	}
+	let mb = kb / 1_000
+	if mb < 999.5 {
+		return threeSigFigures(mb) + "MB" + suffix
+	}
+	return threeSigFigures(mb / 1_000) + "GB" + suffix
+}
+
+// At most 3 significant figures with trailing zeros trimmed: 123, 1.23, 12.3
+func threeSigFigures(_ value: Double) -> String {
+	if value == 0 { return "0" }
+	let exponent = floor(log10(value))
+	let scale = pow(10, exponent - 2)
+	let rounded = (value / scale).rounded() * scale
+	let decimals = max(0, 2 - Int(exponent))
+	var text = String(format: "%.\(decimals)f", rounded)
+	if text.contains(".") {
+		while text.hasSuffix("0") {
+			text.removeLast()
+		}
+		if text.hasSuffix(".") {
+			text.removeLast()
 		}
 	}
+	return text
 }
 
 class ClashLogStorage: ObservableObject {

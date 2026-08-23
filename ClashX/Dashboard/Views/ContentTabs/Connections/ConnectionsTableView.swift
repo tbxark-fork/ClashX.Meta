@@ -28,14 +28,6 @@ struct ConnectionsTableView<Item: Hashable>: NSViewRepresentable {
 	var data: [Item]
 	var filterString: String
 	
-	var startFormatter: RelativeDateTimeFormatter = {
-		let startFormatter = RelativeDateTimeFormatter()
-		startFormatter.unitsStyle = .short
-		return startFormatter
-	}()
-	
-	var byteCountFormatter = ByteCountFormatter()
-
 	class NonRespondingScrollView: NSScrollView {
 		override var acceptsFirstResponder: Bool { false }
 	}
