@@ -4,14 +4,12 @@
 //
 //
 
-import Cocoa
+import Foundation
 
-class ToolbarStore: NSObject {
+@MainActor
+final class ToolbarStore {
 	static let shared = ToolbarStore()
-	
-	private override init() {
-		
-	}
-	
+	private init() {}
+
 	var searchStrings = [String: String]()
 }
