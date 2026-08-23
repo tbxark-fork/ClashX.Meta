@@ -12,13 +12,20 @@
 		01110DA02FD51EF60015D815 /* dashboard in Resources */ = {isa = PBXBuildFile; fileRef = 01110D9E2FD51EF60015D815 /* dashboard */; };
 		0112DEAA2F8B84E50019410B /* HTTPClientResponse+.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0112DEA92F8B84E50019410B /* HTTPClientResponse+.swift */; };
 		0114F0CF2E5B60CB007C7AAC /* LogRateLimiter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0114F0CE2E5B60CB007C7AAC /* LogRateLimiter.swift */; };
+		011C613630397B0C00374954 /* ConnectionsStatsCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 011C613530397B0C00374954 /* ConnectionsStatsCardView.swift */; };
+		011C61383039B15B00374954 /* AppNameResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 011C61373039B15B00374954 /* AppNameResolver.swift */; };
+		011C613A3039B18000374954 /* TopProcessesCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 011C61393039B18000374954 /* TopProcessesCardView.swift */; };
+		011C613D3039B4A200374954 /* StatusItemView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 011C613C3039B4A200374954 /* StatusItemView.xib */; };
+		011C61403039B4A200374954 /* Dashboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 011C613F3039B4A200374954 /* Dashboard.storyboard */; };
+		011C61433039B54100374954 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 011C61423039B54100374954 /* InfoPlist.xcstrings */; };
+		011C61453039D34B00374954 /* NetworkStatusCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 011C61443039D34B00374954 /* NetworkStatusCardView.swift */; };
 		013B21FD2F7EC4F9009B30CB /* ProxyConfigHelperXPCTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 013B21FC2F7EC4F9009B30CB /* ProxyConfigHelperXPCTransport.swift */; };
 		013B21FE2F7EC551009B30CB /* ProxyConfigHelperXPCTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 013B21FC2F7EC4F9009B30CB /* ProxyConfigHelperXPCTransport.swift */; };
 		013B21FF2F7FB18A009B30CB /* Task+Sleep.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15E90002E5C9A1100C0FFEE /* Task+Sleep.swift */; };
 		013B22002F7FB3DC009B30CB /* Command.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49FEC6682AD9369C00BAD9F5 /* Command.swift */; };
-		013B22022F7FEA2D009B30CB /* Dashboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 013B22012F7FEA2D009B30CB /* Dashboard.storyboard */; };
 		013B220E2F88A219009B30CB /* AsyncHTTPClient in Frameworks */ = {isa = PBXBuildFile; productRef = 013B220D2F88A219009B30CB /* AsyncHTTPClient */; };
 		0162E74F2864B819007218A6 /* MetaTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0162E74E2864B819007218A6 /* MetaTask.swift */; };
+		0181B0913039FA7D002ED958 /* SubscriptionUsageCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0181B0903039FA7D002ED958 /* SubscriptionUsageCardView.swift */; };
 		0190155C2FC7EB7000EB077C /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 0190155B2FC7EB7000EB077C /* Localizable.xcstrings */; };
 		019015602FCA938C00EB077C /* MetaPrefs.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0190155F2FCA938C00EB077C /* MetaPrefs.storyboard */; };
 		019015642FCAA8BC00EB077C /* RemoteConfigAddView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 019015632FCAA8BC00EB077C /* RemoteConfigAddView.xib */; };
@@ -186,7 +193,6 @@
 		01F336352AD10D0B0048AF77 /* ProxySetting.sdef in Resources */ = {isa = PBXBuildFile; fileRef = 8A2BBEA627A03ACB0081EBEF /* ProxySetting.sdef */; };
 		01F336362AD10D0B0048AF77 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F9FAB31D262BE04800DE02A6 /* Images.xcassets */; };
 		01F336372AD10D0B0048AF77 /* menu_icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 01E33AB429B5C5E300FD1006 /* menu_icon@2x.png */; };
-		01F336382AD10D0B0048AF77 /* StatusItemView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 495340AF20DE5F7200B0D3FF /* StatusItemView.xib */; };
 		01F3363A2AD10D0B0048AF77 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 49CF3B2620CD7465001EBF94 /* Main.storyboard */; };
 		01F3363C2AD10D0B0048AF77 /* sampleConfig.yaml in Resources */ = {isa = PBXBuildFile; fileRef = 4989F98D20D0AE990001E564 /* sampleConfig.yaml */; };
 		01F3363D2AD10D0B0048AF77 /* com.metacubex.ClashX.ProxyConfigHelper.meta.gz in Resources */ = {isa = PBXBuildFile; fileRef = 01C1462928962E4E00346AF3 /* com.metacubex.ClashX.ProxyConfigHelper.meta.gz */; };
@@ -235,12 +241,20 @@
 		01110D9E2FD51EF60015D815 /* dashboard */ = {isa = PBXFileReference; lastKnownFileType = folder; path = dashboard; sourceTree = "<group>"; };
 		0112DEA92F8B84E50019410B /* HTTPClientResponse+.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HTTPClientResponse+.swift"; sourceTree = "<group>"; };
 		0114F0CE2E5B60CB007C7AAC /* LogRateLimiter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogRateLimiter.swift; sourceTree = "<group>"; };
+		011C613530397B0C00374954 /* ConnectionsStatsCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionsStatsCardView.swift; sourceTree = "<group>"; };
+		011C61373039B15B00374954 /* AppNameResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppNameResolver.swift; sourceTree = "<group>"; };
+		011C61393039B18000374954 /* TopProcessesCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopProcessesCardView.swift; sourceTree = "<group>"; };
+		011C613B3039B4A200374954 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/StatusItemView.xib; sourceTree = "<group>"; };
+		011C613E3039B4A200374954 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Dashboard.storyboard; sourceTree = "<group>"; };
+		011C61413039B54000374954 /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/StatusItemView.xcstrings; sourceTree = "<group>"; };
+		011C61423039B54100374954 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
+		011C61443039D34B00374954 /* NetworkStatusCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkStatusCardView.swift; sourceTree = "<group>"; };
 		013B21FC2F7EC4F9009B30CB /* ProxyConfigHelperXPCTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProxyConfigHelperXPCTransport.swift; sourceTree = "<group>"; };
-		013B22012F7FEA2D009B30CB /* Dashboard.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Dashboard.storyboard; sourceTree = "<group>"; };
 		015F1E90288E42A50052B20A /* ClashMetaConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClashMetaConfig.swift; sourceTree = "<group>"; };
 		0162E74D2864B818007218A6 /* com.metacubex.ClashX.ProxyConfigHelper-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "com.metacubex.ClashX.ProxyConfigHelper-Bridging-Header.h"; sourceTree = "<group>"; };
 		0162E74E2864B819007218A6 /* MetaTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaTask.swift; sourceTree = "<group>"; };
 		016BEAAF29D80102001586C5 /* AlphaMetaDownloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlphaMetaDownloader.swift; sourceTree = "<group>"; };
+		0181B0903039FA7D002ED958 /* SubscriptionUsageCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionUsageCardView.swift; sourceTree = "<group>"; };
 		018F88F8286DD0CB004DD0F7 /* DualTitleMenuItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DualTitleMenuItem.swift; sourceTree = "<group>"; };
 		0190155B2FC7EB7000EB077C /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		0190155D2FC7EB7000EB077C /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/Main.xcstrings; sourceTree = "<group>"; };
@@ -336,7 +350,6 @@
 		4949D153213242F600EF85E6 /* Paths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Paths.swift; sourceTree = "<group>"; };
 		4952C3BE2115C7CA004A4FA8 /* MenuItemFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuItemFactory.swift; sourceTree = "<group>"; };
 		4952C3CF2117027C004A4FA8 /* ConfigFileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigFileManager.swift; sourceTree = "<group>"; };
-		495340AF20DE5F7200B0D3FF /* StatusItemView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = StatusItemView.xib; path = ClashX/Views/StatusItem/StatusItemView.xib; sourceTree = SOURCE_ROOT; };
 		495340B220DE68C300B0D3FF /* StatusItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemView.swift; sourceTree = "<group>"; };
 		495A44D220D267D000888A0A /* LaunchAtLogin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLogin.swift; sourceTree = "<group>"; };
 		495BFB8721919B9800C8779D /* RemoteConfigManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteConfigManager.swift; sourceTree = "<group>"; };
@@ -453,7 +466,7 @@
 				01BCDB1E2C9EE32F0028FA94 /* Extensions */,
 				01BCDAEF2C9ECD010028FA94 /* Views */,
 				01BCDAB92C9ECD010028FA94 /* DashboardViewContoller.swift */,
-				013B22012F7FEA2D009B30CB /* Dashboard.storyboard */,
+				011C613F3039B4A200374954 /* Dashboard.storyboard */,
 				01BCDABF2C9ECD010028FA94 /* ToolbarStore.swift */,
 			);
 			path = Dashboard;
@@ -471,6 +484,7 @@
 				01BB50B6302F88FB004C38EE /* DashboardTheme.swift */,
 				01BB50B8302F8C17004C38EE /* TextMeasurement.swift */,
 				01BB50C33030303C004C38EE /* ProxyGroupCollapseStore.swift */,
+				011C61373039B15B00374954 /* AppNameResolver.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -512,6 +526,10 @@
 				01BB50C730304019004C38EE /* TrafficCardView.swift */,
 				01BB50CC30304DB0004C38EE /* MemoryCardView.swift */,
 				01BB50D230309B40004C38EE /* OverviewGridLayout.swift */,
+				011C613530397B0C00374954 /* ConnectionsStatsCardView.swift */,
+				011C61393039B18000374954 /* TopProcessesCardView.swift */,
+				011C61443039D34B00374954 /* NetworkStatusCardView.swift */,
+				0181B0903039FA7D002ED958 /* SubscriptionUsageCardView.swift */,
 			);
 			path = Overview;
 			sourceTree = "<group>";
@@ -791,7 +809,7 @@
 		49BC1B4029AEEBBB002007B1 /* StatusItem */ = {
 			isa = PBXGroup;
 			children = (
-				495340AF20DE5F7200B0D3FF /* StatusItemView.xib */,
+				011C613C3039B4A200374954 /* StatusItemView.xib */,
 				495340B220DE68C300B0D3FF /* StatusItemView.swift */,
 				49D6A45129AEEC15006487EF /* StatusItemTool.swift */,
 				49D6A45529AEEC55006487EF /* StatusItemViewProtocol.swift */,
@@ -849,6 +867,7 @@
 			isa = PBXGroup;
 			children = (
 				0190155B2FC7EB7000EB077C /* Localizable.xcstrings */,
+				011C61423039B54100374954 /* InfoPlist.xcstrings */,
 			);
 			path = "Support Files";
 			sourceTree = "<group>";
@@ -1014,12 +1033,13 @@
 			files = (
 				01110D9F2FD51EF60015D815 /* meta-rules-dat in Resources */,
 				01110DA02FD51EF60015D815 /* dashboard in Resources */,
-				013B22022F7FEA2D009B30CB /* Dashboard.storyboard in Resources */,
+				011C61403039B4A200374954 /* Dashboard.storyboard in Resources */,
 				01F336352AD10D0B0048AF77 /* ProxySetting.sdef in Resources */,
 				019015602FCA938C00EB077C /* MetaPrefs.storyboard in Resources */,
 				01F336362AD10D0B0048AF77 /* Images.xcassets in Resources */,
 				01F336372AD10D0B0048AF77 /* menu_icon@2x.png in Resources */,
-				01F336382AD10D0B0048AF77 /* StatusItemView.xib in Resources */,
+				011C613D3039B4A200374954 /* StatusItemView.xib in Resources */,
+				011C61433039B54100374954 /* InfoPlist.xcstrings in Resources */,
 				0190155C2FC7EB7000EB077C /* Localizable.xcstrings in Resources */,
 				01F3363A2AD10D0B0048AF77 /* Main.storyboard in Resources */,
 				019015642FCAA8BC00EB077C /* RemoteConfigAddView.xib in Resources */,
@@ -1036,9 +1056,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				01F335CD2AD10D0B0048AF77 /* UnsafePointer+bridge.swift in Sources */,
+				0181B0913039FA7D002ED958 /* SubscriptionUsageCardView.swift in Sources */,
 				01F335CE2AD10D0B0048AF77 /* RemoteConfigViewController.swift in Sources */,
 				01CA6BC22B6A1B3100E386D6 /* MetaServer.swift in Sources */,
 				01F335CF2AD10D0B0048AF77 /* StatusItemTool.swift in Sources */,
+				011C61453039D34B00374954 /* NetworkStatusCardView.swift in Sources */,
 				01F335D02AD10D0B0048AF77 /* ClashResourceManager.swift in Sources */,
 				01F335D12AD10D0B0048AF77 /* ConfigFileManager.swift in Sources */,
 				01BB50CD30304DB0004C38EE /* MemoryCardView.swift in Sources */,
@@ -1055,14 +1077,17 @@
 				01F335DA2BD10D0B0048AF77 /* ProxyHealthCheckManager.swift in Sources */,
 				01F335DA2AD10D0B0048AF77 /* StatusItemView.swift in Sources */,
 				01F335DB2AD10D0B0048AF77 /* ProxyManager.swift in Sources */,
+				011C613A3039B18000374954 /* TopProcessesCardView.swift in Sources */,
 				01F335DC2AD10D0B0048AF77 /* LaunchAtLogin.swift in Sources */,
 				01F335DD2AD10D0B0048AF77 /* Combine+Ext.swift in Sources */,
 				A15E90012E5C9A1100C0FFEE /* Task+Sleep.swift in Sources */,
 				01F335DE2AD10D0B0048AF77 /* DebugSettingViewController.swift in Sources */,
+				011C61383039B15B00374954 /* AppNameResolver.swift in Sources */,
 				01F335DF2AD10D0B0048AF77 /* ClashWindowController.swift in Sources */,
 				01F335E02AD10D0B0048AF77 /* Settings.swift in Sources */,
 				01F335E12AD10D0B0048AF77 /* StatusItemViewProtocol.swift in Sources */,
 				01F335E22AD10D0B0048AF77 /* AppVersionUtil.swift in Sources */,
+				011C613630397B0C00374954 /* ConnectionsStatsCardView.swift in Sources */,
 				01F335E32AD10D0B0048AF77 /* AppDelegate.swift in Sources */,
 				0112DEAA2F8B84E50019410B /* HTTPClientResponse+.swift in Sources */,
 				01F335E42AD10D0B0048AF77 /* SpeedUtils.swift in Sources */,
@@ -1213,6 +1238,24 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
+		011C613C3039B4A200374954 /* StatusItemView.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				011C613B3039B4A200374954 /* Base */,
+				011C61413039B54000374954 /* mul */,
+			);
+			name = StatusItemView.xib;
+			path = ClashX/Views/StatusItem;
+			sourceTree = SOURCE_ROOT;
+		};
+		011C613F3039B4A200374954 /* Dashboard.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				011C613E3039B4A200374954 /* Base */,
+			);
+			name = Dashboard.storyboard;
+			sourceTree = "<group>";
+		};
 		0190155F2FCA938C00EB077C /* MetaPrefs.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
