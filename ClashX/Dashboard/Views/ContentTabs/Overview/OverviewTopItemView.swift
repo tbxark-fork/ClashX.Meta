@@ -2,7 +2,6 @@
 //  OverviewTopItemView.swift
 //  ClashX Dashboard
 //
-//
 
 import SwiftUI
 
@@ -24,25 +23,18 @@ struct OverviewCard<Content: View>: View {
 
 // Small stat card: label above value
 struct OverviewTopItemView: View {
-	
+
 	let name: LocalizedStringKey
 	let value: String
-	
-    var body: some View {
-		OverviewCard {
-			VStack(alignment: .leading, spacing: DashboardTheme.spacingOverviewStatText) {
-				Text(name)
-					.font(DashboardTheme.overviewLabelFont)
-					.foregroundColor(.secondary)
-					.lineLimit(1)
-				Text(value)
-					.font(DashboardTheme.overviewValueFont)
-					.lineLimit(1)
-					.minimumScaleFactor(0.6)
-			}
-			.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+
+	var body: some View {
+		OverviewStatCard(title: { Text(name) }) {
+			Text(value)
+				.font(DashboardTheme.overviewValueFont)
+				.lineLimit(1)
+				.minimumScaleFactor(0.6)
 		}
-    }
+	}
 }
 
 // Large stat card: colored dot, label and hero value
@@ -52,26 +44,21 @@ struct OverviewHeroItemView: View {
 	let value: String
 	let color: Color
 
-    var body: some View {
-		OverviewCard {
-			VStack(alignment: .leading, spacing: DashboardTheme.spacingOverviewStatText) {
-				HStack(spacing: DashboardTheme.spacingRowInner) {
-					Circle()
-						.fill(color)
-						.frame(width: 8, height: 8)
-					Text(name)
-						.font(DashboardTheme.overviewLabelFont)
-						.foregroundColor(.secondary)
-						.lineLimit(1)
-				}
-				Text(value)
-					.font(DashboardTheme.overviewValueFont)
-					.lineLimit(1)
-					.minimumScaleFactor(0.6)
+	var body: some View {
+		OverviewStatCard(title: {
+			HStack(spacing: DashboardTheme.spacingRowInner) {
+				Circle()
+					.fill(color)
+					.frame(width: 8, height: 8)
+				Text(name)
 			}
-			.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+		}) {
+			Text(value)
+				.font(DashboardTheme.overviewValueFont)
+				.lineLimit(1)
+				.minimumScaleFactor(0.6)
 		}
-    }
+	}
 }
 
 struct OverviewTopItemView_Previews: PreviewProvider {

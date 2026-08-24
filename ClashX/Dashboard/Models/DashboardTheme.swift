@@ -89,11 +89,11 @@ enum DashboardTheme {
 	static let secondaryTextFont = Font.system(size: 12)
 	// Overview two-tier scale: Text1 labels, Text2 values
 	static let overviewLabelFont = Font.system(size: 12)
+	static let overviewStatTitleFont = Font.system(size: 13)
 	static let overviewValueFont = Font.system(size: 18)
-
-	static let titleNSFont = NSFont.systemFont(ofSize: 15, weight: .medium)
 	static let primaryTextNSFont = NSFont.systemFont(ofSize: 13)
 	static let secondaryTextNSFont = NSFont.systemFont(ofSize: 12)
+	static let overviewStatTitleNSFont = NSFont.systemFont(ofSize: 13)
 
 	// Line height as laid out by SwiftUI (matches NSLayoutManager for system fonts)
 	static func lineHeight(_ font: NSFont) -> CGFloat {

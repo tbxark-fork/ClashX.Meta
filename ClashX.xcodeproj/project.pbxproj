@@ -197,6 +197,7 @@
 		01F3363C2AD10D0B0048AF77 /* sampleConfig.yaml in Resources */ = {isa = PBXBuildFile; fileRef = 4989F98D20D0AE990001E564 /* sampleConfig.yaml */; };
 		01F3363D2AD10D0B0048AF77 /* com.metacubex.ClashX.ProxyConfigHelper.meta.gz in Resources */ = {isa = PBXBuildFile; fileRef = 01C1462928962E4E00346AF3 /* com.metacubex.ClashX.ProxyConfigHelper.meta.gz */; };
 		01F336402AD10D0B0048AF77 /* com.metacubex.ClashX.ProxyConfigHelper in Copy Files */ = {isa = PBXBuildFile; fileRef = F9A7C0692306E874007163C7 /* com.metacubex.ClashX.ProxyConfigHelper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		01FB594F303CAE7500DF219F /* OverviewStatCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01FB594E303CAE7500DF219F /* OverviewStatCard.swift */; };
 		01FBC6312B9C2B0800810BFF /* ClashProcess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01FBC62F2B9C2B0800810BFF /* ClashProcess.swift */; };
 		A15E90012E5C9A1100C0FFEE /* Task+Sleep.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15E90002E5C9A1100C0FFEE /* Task+Sleep.swift */; };
 		F935B2FA23083EE6009E4D33 /* ProxySettingTool.m in Sources */ = {isa = PBXBuildFile; fileRef = F935B2F923083EE6009E4D33 /* ProxySettingTool.m */; };
@@ -332,6 +333,7 @@
 		01F335DA2CD10D0B0048AF77 /* ConfigReloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigReloadManager.swift; sourceTree = "<group>"; };
 		01F335F82F7F9E8A00A1B2C3 /* ApiRequestTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiRequestTransport.swift; sourceTree = "<group>"; };
 		01F336442AD10D0B0048AF77 /* ClashX Meta.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ClashX Meta.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		01FB594E303CAE7500DF219F /* OverviewStatCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewStatCard.swift; sourceTree = "<group>"; };
 		01FBC62F2B9C2B0800810BFF /* ClashProcess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClashProcess.swift; sourceTree = "<group>"; };
 		2753484F2A3082FD0077B458 /* TunModeSettingCommand.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TunModeSettingCommand.swift; sourceTree = "<group>"; };
 		4905A2C42A2058B000AEDA2E /* GlobalShortCutViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalShortCutViewController.swift; sourceTree = "<group>"; };
@@ -530,6 +532,7 @@
 				011C61393039B18000374954 /* TopProcessesCardView.swift */,
 				011C61443039D34B00374954 /* NetworkStatusCardView.swift */,
 				0181B0903039FA7D002ED958 /* SubscriptionUsageCardView.swift */,
+				01FB594E303CAE7500DF219F /* OverviewStatCard.swift */,
 			);
 			path = Overview;
 			sourceTree = "<group>";
@@ -1192,6 +1195,7 @@
 				01F336142AD10D0B0048AF77 /* MenuItemBaseView.swift in Sources */,
 				01F336152AD10D0B0048AF77 /* RemoteControlManager.swift in Sources */,
 				01F336162AD10D0B0048AF77 /* LoginKitWrapper.m in Sources */,
+				01FB594F303CAE7500DF219F /* OverviewStatCard.swift in Sources */,
 				01F336172AD10D0B0048AF77 /* ProxyMenuItem.swift in Sources */,
 				01F336182AD10D0B0048AF77 /* UpdateExternalResourceAction.swift in Sources */,
 				01F336192AD10D0B0048AF77 /* UpdateConfigAction.swift in Sources */,
