@@ -32,7 +32,7 @@ extension View {
 	}
 }
 
-// Fixed-column grid: card spans are presets, width drives proportional scaling
+// Fixed-column grid: card spans are presets; row heights come in 1x/2x tiers
 struct OverviewGridLayout: Layout {
 	let columns: Int
 	let rowCount: Int
@@ -44,15 +44,31 @@ struct OverviewGridLayout: Layout {
 		CGFloat(rowCount) * rowHeight + CGFloat(rowCount - 1) * spacing
 	}
 
-	func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-		let width = proposal.width ?? baseWidth
-		return CGSize(width: width, height: baseHeight * (width / baseWidth))
+	struct Cache {
+		var lastRealWidth: CGFloat = -1
+		var lastSize: CGSize = .zero
 	}
 
-	func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-		let factor = bounds.width / baseWidth
-		let scaledSpacing = spacing * factor
-		let columnWidth = (bounds.width - scaledSpacing * CGFloat(columns - 1)) / CGFloat(columns)
+	func makeCache(subviews: Subviews) -> Cache {
+		Cache()
+	}
+
+	func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) -> CGSize {
+		let width = (proposal.width ?? baseWidth).rounded(.toNearestOrEven)
+		if width <= 0 {
+			return .zero
+		}
+		if width == cache.lastRealWidth {
+			return cache.lastSize
+		}
+		let size = CGSize(width: width, height: baseHeight)
+		cache.lastRealWidth = width
+		cache.lastSize = size
+		return size
+	}
+
+	func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) {
+		let columnWidth = ((bounds.width - spacing * CGFloat(columns - 1)) / CGFloat(columns)).rounded(.toNearestOrEven)
 
 		for subview in subviews {
 			let column = subview[GridColumnKey.self]
@@ -60,10 +76,10 @@ struct OverviewGridLayout: Layout {
 			let columnSpan = subview[GridColumnSpanKey.self]
 			let rowSpan = subview[GridRowSpanKey.self]
 
-			let x = bounds.minX + CGFloat(column) * (columnWidth + scaledSpacing)
-			let y = bounds.minY + CGFloat(row) * (rowHeight + scaledSpacing)
-			let cellWidth = CGFloat(columnSpan) * columnWidth + CGFloat(columnSpan - 1) * scaledSpacing
-			let cellHeight = CGFloat(rowSpan) * rowHeight + CGFloat(rowSpan - 1) * scaledSpacing
+			let x = bounds.minX + CGFloat(column) * (columnWidth + spacing)
+			let y = bounds.minY + CGFloat(row) * (rowHeight + spacing)
+			let cellWidth = (CGFloat(columnSpan) * columnWidth + CGFloat(columnSpan - 1) * spacing).rounded(.toNearestOrEven)
+			let cellHeight = CGFloat(rowSpan) * rowHeight + CGFloat(rowSpan - 1) * spacing
 
 			subview.place(
 				at: CGPoint(x: x, y: y),
