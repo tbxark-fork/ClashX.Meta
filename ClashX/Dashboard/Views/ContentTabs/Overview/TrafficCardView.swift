@@ -8,10 +8,7 @@ import SwiftUI
 
 // Traffic chart card: title, legend, and Down/Up history charts
 struct TrafficCardView: View {
-	@Environment(\.overviewDataRefs) private var refs
-
-	@State private var downloadHistories = [CGFloat]()
-	@State private var uploadHistories = [CGFloat]()
+	@EnvironmentObject private var overview: ClashOverviewData
 
 	var body: some View {
 		OverviewCard {
@@ -20,24 +17,15 @@ struct TrafficCardView: View {
 					.font(DashboardTheme.titleFont)
 
 				legendItem(color: DashboardTheme.chartBlue, name: "Down")
-				TrafficGraphView(values: $downloadHistories,
+				TrafficGraphView(values: .constant(overview.downloadHistories),
 								 graphColor: DashboardTheme.chartBlue)
 
 				legendItem(color: DashboardTheme.chartGreen, name: "Up")
 					.padding(.top, 16)
-				TrafficGraphView(values: $uploadHistories,
+				TrafficGraphView(values: .constant(overview.uploadHistories),
 								 graphColor: DashboardTheme.chartGreen)
 			}
 			.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-		}
-		.task(refreshLoop)
-	}
-
-	private func refreshLoop() async {
-		while !Task.isCancelled {
-			downloadHistories = refs.overview.downloadHistories
-			uploadHistories = refs.overview.uploadHistories
-			try? await Task.sleep(seconds: OverviewRefresh.chartInterval)
 		}
 	}
 

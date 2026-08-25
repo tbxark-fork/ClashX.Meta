@@ -9,13 +9,7 @@ import SwiftUI
 
 // System proxy, TUN, and HTTP proxy status; copies terminal proxy commands
 struct NetworkStatusCardView: View {
-	@State private var tunActive = false
-	@State private var tunDevice = ""
-	@State private var httpPort = 0
-	@State private var socksPort = 0
-	@State private var systemProxyActive = false
-	@State private var systemProxySetByOther = false
-	@State private var apiAddress = "—"
+	@EnvironmentObject private var poller: NetworkStatusPoller
 	@State private var copied = false
 	@State private var apiCopied = false
 
@@ -27,18 +21,17 @@ struct NetworkStatusCardView: View {
 			VStack(alignment: .leading, spacing: DashboardTheme.spacingRowInner) {
 				Text("Network")
 					.font(DashboardTheme.titleFont)
-				infoRow(label: "Sys Proxy") {
-					systemProxyValue
-				}
-				infoRow(label: "TUN",
-						value: tunActive ? tunDevice : "Off",
-						valueColor: tunActive ? nil : .secondary)
+			infoRow(label: "Sys Proxy") {
+				systemProxyValue
+			}
+			infoRow(label: "TUN",
+					value: poller.tunActive ? poller.tunDevice : "Off",
+					valueColor: poller.tunActive ? nil : .secondary)
 				httpRow
 				apiRow
 			}
 			.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 		}
-		.task(refreshLoop)
 	}
 
 	private func infoRow(label: LocalizedStringKey, value: String, valueColor: Color? = nil) -> some View {
@@ -70,8 +63,8 @@ struct NetworkStatusCardView: View {
 	}
 
 	private var systemProxyCheckboxState: NSControl.StateValue {
-		if systemProxySetByOther { return .mixed }
-		return systemProxyActive ? .on : .off
+		if poller.systemProxySetByOther { return .mixed }
+		return poller.systemProxyActive ? .on : .off
 	}
 
 	private var httpRow: some View {
@@ -80,7 +73,7 @@ struct NetworkStatusCardView: View {
 				.font(DashboardTheme.overviewLabelFont)
 				.foregroundColor(.secondary)
 				.frame(width: 90, alignment: .leading)
-			Text(verbatim: httpPort > 0 ? "\(httpPort)" : "—")
+			Text(verbatim: poller.httpPort > 0 ? "\(poller.httpPort)" : "—")
 				.font(valueFont)
 				.monospacedDigit()
 				.lineLimit(1)
@@ -99,7 +92,7 @@ struct NetworkStatusCardView: View {
 				.font(DashboardTheme.overviewLabelFont)
 				.foregroundColor(.secondary)
 				.frame(width: 90, alignment: .leading)
-			Text(verbatim: apiAddress)
+			Text(verbatim: poller.apiAddress)
 				.font(valueFont)
 				.lineLimit(1)
 				.minimumScaleFactor(0.6)
@@ -125,9 +118,9 @@ struct NetworkStatusCardView: View {
 	}
 
 	private func copyAPILink() {
-		guard apiAddress != "—" else { return }
+		guard poller.apiAddress != "—" else { return }
 		NSPasteboard.general.clearContents()
-		NSPasteboard.general.setString(apiAddress, forType: .string)
+		NSPasteboard.general.setString(poller.apiAddress, forType: .string)
 		apiCopied = true
 		Task {
 			try? await Task.sleep(seconds: 1.2)
@@ -136,11 +129,11 @@ struct NetworkStatusCardView: View {
 	}
 
 	private func copyProxyCommand() {
-		guard httpPort > 0 else { return }
-		let base = "http://127.0.0.1:\(httpPort)"
+		guard poller.httpPort > 0 else { return }
+		let base = "http://127.0.0.1:\(poller.httpPort)"
 		var parts = ["export https_proxy=\(base)", "http_proxy=\(base)"]
-		if socksPort > 0 {
-			parts.append("all_proxy=socks5://127.0.0.1:\(socksPort)")
+		if poller.socksPort > 0 {
+			parts.append("all_proxy=socks5://127.0.0.1:\(poller.socksPort)")
 		}
 		NSPasteboard.general.clearContents()
 		NSPasteboard.general.setString(parts.joined(separator: " "), forType: .string)
@@ -149,25 +142,6 @@ struct NetworkStatusCardView: View {
 			try? await Task.sleep(seconds: 1.2)
 			copied = false
 		}
-	}
-
-	private func refreshLoop() async {
-		while !Task.isCancelled {
-			await refresh()
-			try? await Task.sleep(seconds: OverviewRefresh.polledInterval)
-		}
-	}
-
-	private func refresh() async {
-		let config = await ApiRequest.requestConfig()
-		tunDevice = config?.tun.device ?? ""
-		httpPort = config?.usedHttpPort ?? 0
-		socksPort = config?.usedSocksPort ?? 0
-		tunActive = ProxyManager.shared.runtimeTunActive
-		let runtime = ProxyManager.shared.state.runtime
-		systemProxySetByOther = runtime.systemProxySetByOther
-		systemProxyActive = runtime.systemProxyActive
-		apiAddress = ConfigManager.apiUrl
 	}
 }
 

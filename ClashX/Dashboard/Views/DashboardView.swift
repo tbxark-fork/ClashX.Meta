@@ -17,6 +17,10 @@ struct DashboardView: View {
 	@StateObject private var proxiesSearchString = ProxiesSearchString()
 	@StateObject private var hideProxyNames = HideProxyNames()
 	@StateObject private var providerStorage = DBProviderStorage()
+	@StateObject private var subscriptionPoller = SubscriptionPoller()
+	@StateObject private var networkStatusPoller = NetworkStatusPoller()
+	@StateObject private var topAppsPoller = TopAppsPoller()
+	@StateObject private var connectionsStatsPoller = ConnectionsStatsPoller()
 	@State private var proxyContentSegment = ProxyContentSegment.proxyList
 	@State private var ruleContentSegment = RuleContentSegment.ruleList
 	@State private var isUpdatingRuleProviders = false
@@ -38,9 +42,10 @@ struct DashboardView: View {
 		.environmentObject(toolbarState)
 		.environmentObject(proxiesSearchString)
 		.environmentObject(hideProxyNames)
-		.environment(\.overviewDataRefs, OverviewDataRefs(
-			overview: clashApiDatasStorage.overviewData,
-			conns: clashApiDatasStorage.connsStorage))
+		.environmentObject(subscriptionPoller)
+		.environmentObject(networkStatusPoller)
+		.environmentObject(topAppsPoller)
+		.environmentObject(connectionsStatsPoller)
 		.environmentObject(providerStorage)
 		.frame(
 			minWidth: Self.minimumSize.width,
@@ -50,6 +55,12 @@ struct DashboardView: View {
 		)
 		.onReceive(kernelStateChanged) { _ in
 			kernelState = ConfigManager.shared.kernelState
+		}
+		.onAppear {
+			subscriptionPoller.start()
+			networkStatusPoller.start()
+			topAppsPoller.start(connsStorage: clashApiDatasStorage.connsStorage)
+			connectionsStatsPoller.start(connsStorage: clashApiDatasStorage.connsStorage)
 		}
 		.onChange(of: selection) { newValue in
 			guard let newValue else { return }

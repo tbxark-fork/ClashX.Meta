@@ -17,23 +17,6 @@ enum OverviewRefresh {
 	static let polledInterval: TimeInterval = 5
 }
 
-// Unobserved references for polled cards, so stream pushes don't invalidate them.
-struct OverviewDataRefs {
-	let overview: ClashOverviewData
-	let conns: ClashConnsStorage
-}
-
-private struct OverviewDataRefsKey: EnvironmentKey {
-	static let defaultValue = OverviewDataRefs(overview: ClashOverviewData(), conns: ClashConnsStorage())
-}
-
-extension EnvironmentValues {
-	var overviewDataRefs: OverviewDataRefs {
-		get { self[OverviewDataRefsKey.self] }
-		set { self[OverviewDataRefsKey.self] = newValue }
-	}
-}
-
 struct OverviewView: View {
 	
 	@EnvironmentObject var data: ClashOverviewData
