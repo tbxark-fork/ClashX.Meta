@@ -29,7 +29,7 @@ struct ProxyNodeView: View {
 		VStack {
 			HStack(alignment: .center) {
 				Text(hideProxyNames.hide
-					 ? String(proxy.id.hiddenID)
+					 ? HiddenNameToken.token(for: proxy.name)
 					 : proxy.name)
 					.truncationMode(.tail)
 					.lineLimit(1)

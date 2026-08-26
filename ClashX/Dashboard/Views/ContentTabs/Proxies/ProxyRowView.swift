@@ -34,7 +34,7 @@ struct ProxyRowView: View {
 	var body: some View {
 		VStack(alignment: .leading, spacing: DashboardTheme.spacingRowInner) {
 			HStack(spacing: 8) {
-				Text(hideProxyNames.hide ? String(proxy.id.hiddenID) : proxy.name)
+				Text(hideProxyNames.hide ? HiddenNameToken.token(for: proxy.name) : proxy.name)
 					.font(DashboardTheme.primaryTextFont)
 					.lineLimit(1)
 					.truncationMode(.tail)
@@ -45,6 +45,8 @@ struct ProxyRowView: View {
 					.show(isVisible: !isBuiltIn && !proxy.udpString.isEmpty)
 			}
 
+			// Built-in rows intentionally omit the second line; the fixed outer
+			// frame height keeps grid rows uniform across all node types.
 			if !isBuiltIn {
 				HStack(spacing: 6) {
 					Text(verbatim: proxy.type.displayString)

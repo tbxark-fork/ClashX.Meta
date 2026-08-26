@@ -5,6 +5,7 @@
 //
 
 import Cocoa
+import CryptoKit
 import SwiftUI
 
 class DBProxyStorage: ObservableObject {
@@ -159,18 +160,25 @@ extension ClashProxyType {
 }
 
 
-extension String {
-    var hiddenID: String {
-        guard UUID(uuidString: self) != nil else { return "" }
-        let components = split(separator: "-").map(String.init)
-        guard components.count == 5 else { return "" }
-        
-        let re = components[0].prefix(2)
-        + components[1].prefix(1)
-        + components[2].prefix(1)
-        + components[3].prefix(1)
-        + components[4].suffix(3)
-        
-        return String(re)
-    }
+/// Privacy alias for proxy/provider names shown in the UI: the name is
+/// hashed to a stable 64-char digest, and a per-launch seed picks the
+/// window offset — tokens stay fixed for the whole session (immune to
+/// data refreshes) but change on every app restart.
+@MainActor
+enum HiddenNameToken {
+	private static let length = 8
+	// Per-launch slicing seed; not persisted so aliases reshuffle each run.
+	private static let seed = UInt64.random(in: 0..<UInt64.max)
+	// Session cache: displayName walks all groups per frame when hiding.
+	private static var cache: [String: String] = [:]
+
+	static func token(for name: String) -> String {
+		if let hit = cache[name] { return hit }
+		let digest = SHA256.hash(data: Data(name.utf8))
+			.map { String(format: "%02x", $0) }.joined()
+		let offset = Int(seed % UInt64(digest.count - length))
+		let token = String(digest.dropFirst(offset).prefix(length))
+		cache[name] = token
+		return token
+	}
 }

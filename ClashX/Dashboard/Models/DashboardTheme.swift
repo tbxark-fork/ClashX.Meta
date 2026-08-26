@@ -2,7 +2,7 @@
 //  DashboardTheme.swift
 //  ClashX Dashboard
 //
-// General design values (see DESIGN_NOTES.md); page-specific details stay in each page
+//  General design values; page-specific details stay in each page
 //
 
 import SwiftUI

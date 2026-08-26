@@ -99,7 +99,7 @@ struct ProviderRowView: View {
 
 			VStack(alignment: .leading, spacing: 3) {
 				HStack(spacing: ProxyProviderColumnWidths.columnSpacing) {
-					Text(hideProxyNames.hide ? String(proxyProvider.id.hiddenID) : proxyProvider.name)
+					Text(hideProxyNames.hide ? HiddenNameToken.token(for: proxyProvider.name) : proxyProvider.name)
 						.font(DashboardTheme.primaryTextFont)
 						.lineLimit(1)
 						.truncationMode(.tail)

@@ -98,7 +98,7 @@ struct ProxyGroupCard: View {
 
 	var headerView: some View {
 		HStack(alignment: .center, spacing: 8) {
-			Text(hideProxyNames.hide ? String(proxyGroup.id.hiddenID) : proxyGroup.name)
+			Text(hideProxyNames.hide ? HiddenNameToken.token(for: proxyGroup.name) : proxyGroup.name)
 				.font(DashboardTheme.titleFont)
 				.lineLimit(1)
 				.truncationMode(.tail)
@@ -222,11 +222,11 @@ struct ProxyGroupCard: View {
 	func displayName(_ name: String) -> String {
 		guard hideProxyNames.hide else { return name }
 		if let group = proxyStorage.groups.first(where: { $0.name == name }) {
-			return String(group.id.hiddenID)
+			return HiddenNameToken.token(for: group.name)
 		}
 		for group in proxyStorage.groups {
 			if let proxy = group.proxies.first(where: { $0.name == name }) {
-				return String(proxy.id.hiddenID)
+				return HiddenNameToken.token(for: proxy.name)
 			}
 		}
 		return name
