@@ -13,7 +13,6 @@ struct ProvidersView: View {
 	}
 
 	@EnvironmentObject var providerStorage: DBProviderStorage
-	@EnvironmentObject var toolbarState: DashboardToolbarState
 	@EnvironmentObject var hideProxyNames: HideProxyNames
 	@State private var columnWidths = RuleProviderColumnWidths(providers: [])
 	@State private var proxyColumnWidths = ProxyProviderColumnWidths(providers: [])
@@ -37,12 +36,6 @@ struct ProvidersView: View {
 			} else {
 				proxyProvidersView
 			}
-		}
-		.onAppear {
-			hideProxyNames.hide = toolbarState.hideProxyNames
-		}
-		.onChange(of: toolbarState.hideProxyNames) { newValue in
-			hideProxyNames.hide = newValue
 		}
 		.onReceive(NotificationCenter.default.publisher(for: .ruleProvidersUpdated)) { _ in
 			Task { await loadRuleProviders() }

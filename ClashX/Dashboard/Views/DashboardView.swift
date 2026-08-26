@@ -46,6 +46,10 @@ struct DashboardView: View {
 			idealHeight: Self.minimumSize.height
 		)
 		.onAppear {
+			// Re-bridge mirrored state: this view's @StateObject stores reset
+			// on window recreation while toolbarState (VC-owned) keeps values.
+			proxiesSearchString.string = toolbarState.searchText
+			hideProxyNames.hide = toolbarState.hideProxyNames
 			subscriptionPoller.start()
 			networkStatusPoller.start()
 			topAppsPoller.start(connsStorage: apiDatasStorage.connsStorage)

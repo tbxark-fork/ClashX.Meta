@@ -20,7 +20,6 @@ final class DashboardRefreshTicker {
     private var subscriptions: [UUID: Subscription] = [:]
     private var tickCount = 0
     private var heartbeatTask: Task<Void, Never>?
-    private var isSuspended = false
 
     /// Returns an `AsyncStream` that yields immediately on subscribe,
     /// then every `seconds` seconds aligned to the global 1-second tick.
@@ -39,12 +38,6 @@ final class DashboardRefreshTicker {
             }
             self.startIfNeeded()
         }
-    }
-
-    func suspend() { isSuspended = true }
-    func resume() {
-        isSuspended = false
-        fire()
     }
 
     // MARK: - Private
@@ -68,7 +61,6 @@ final class DashboardRefreshTicker {
     }
 
     private func fire() {
-        guard !isSuspended else { return }
         tickCount += 1
         // Dispatch 1s subscribers first, then 3s, then 5s — ensures data
         // producers (flush, connections poll) run before UI readers.

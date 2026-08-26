@@ -60,7 +60,6 @@
 		01BCDAF92C9ECD010028FA94 /* ConnectionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BCDACA2C9ECD010028FA94 /* ConnectionsView.swift */; };
 		01BCDAFA2C9ECD010028FA94 /* TrafficGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BCDAD12C9ECD010028FA94 /* TrafficGraphView.swift */; };
 		01BCDAFB2C9ECD010028FA94 /* LogsTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BCDACC2C9ECD010028FA94 /* LogsTableView.swift */; };
-		01BCDAFD2C9ECD010028FA94 /* ToolbarStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BCDABF2C9ECD010028FA94 /* ToolbarStore.swift */; };
 		01BCDAFE2C9ECD010028FA94 /* RuleItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BCDAE02C9ECD010028FA94 /* RuleItemView.swift */; };
 		01BCDAFF2C9ECD010028FA94 /* ConnectionsTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BCDAC92C9ECD010028FA94 /* ConnectionsTableView.swift */; };
 		01BCDB002C9ECD010028FA94 /* DBConnectionSnapShot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BCDABA2C9ECD010028FA94 /* DBConnectionSnapShot.swift */; };
@@ -292,7 +291,6 @@
 		01BCDABB2C9ECD010028FA94 /* DBProviderStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DBProviderStorage.swift; sourceTree = "<group>"; };
 		01BCDABC2C9ECD010028FA94 /* DBProxyStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DBProxyStorage.swift; sourceTree = "<group>"; };
 		01BCDABE2C9ECD010028FA94 /* NotificationNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationNames.swift; sourceTree = "<group>"; };
-		01BCDABF2C9ECD010028FA94 /* ToolbarStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarStore.swift; sourceTree = "<group>"; };
 		01BCDAC52C9ECD010028FA94 /* ConfigItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigItemView.swift; sourceTree = "<group>"; };
 		01BCDAC62C9ECD010028FA94 /* ConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigView.swift; sourceTree = "<group>"; };
 		01BCDAC82C9ECD010028FA94 /* Connections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connections.swift; sourceTree = "<group>"; };
@@ -477,7 +475,6 @@
 				01BCDAEF2C9ECD010028FA94 /* Views */,
 				01BCDAB92C9ECD010028FA94 /* DashboardViewContoller.swift */,
 				011C613F3039B4A200374954 /* Dashboard.storyboard */,
-				01BCDABF2C9ECD010028FA94 /* ToolbarStore.swift */,
 				010C40CE303DEC5600FCB252 /* DashboardToolbarController.swift */,
 			);
 			path = Dashboard;
@@ -1179,7 +1176,6 @@
 				01BCDAF92C9ECD010028FA94 /* ConnectionsView.swift in Sources */,
 				01BCDAFA2C9ECD010028FA94 /* TrafficGraphView.swift in Sources */,
 				01BCDAFB2C9ECD010028FA94 /* LogsTableView.swift in Sources */,
-				01BCDAFD2C9ECD010028FA94 /* ToolbarStore.swift in Sources */,
 				01BCDAFE2C9ECD010028FA94 /* RuleItemView.swift in Sources */,
 				01BCDAFF2C9ECD010028FA94 /* ConnectionsTableView.swift in Sources */,
 				01BCDB002C9ECD010028FA94 /* DBConnectionSnapShot.swift in Sources */,

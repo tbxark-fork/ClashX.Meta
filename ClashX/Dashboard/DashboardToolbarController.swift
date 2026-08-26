@@ -38,6 +38,8 @@ final class DashboardToolbarController: NSObject {
 	private var trampolines = [ActionTrampoline]()
 	private var itemCache = [NSToolbarItem.Identifier: NSToolbarItem]()
 	private var lastSourceIPs: [String] = []
+	// Guards per-tick setLabel calls; conns streams publish far more often than counts change.
+	private var lastSegmentCounts = (active: -1, closed: -1)
 	private let logLevels: [ClashLogLevel] = [.silent, .error, .warning, .info, .debug]
 
 	// MARK: - Init / Attach
@@ -97,9 +99,6 @@ final class DashboardToolbarController: NSObject {
 		}
 	}
 
-	/// Incrementally reconcile visible items against the desired layout.
-	/// Never tears down the whole bar: removes undesired items, inserts missing
-	/// ones at their exact target index, keeping every untouched control alive.
 	/// Incrementally reconcile visible items against the desired layout.
 	/// Never tears down the whole bar: removes undesired items, inserts missing
 	/// ones at their exact target index, keeping every untouched control alive.
@@ -262,9 +261,12 @@ final class DashboardToolbarController: NSObject {
 	}
 
 	private func updateConnsSegmentLabels() {
-		guard let seg = cachedControl(.dashSegmentedConns) as? NSSegmentedControl else { return }
-		seg.setLabel("\(NSLocalizedString("Active", comment: "")) \(connsStorage.conns.count)", forSegment: 0)
-		seg.setLabel("\(NSLocalizedString("Closed", comment: "")) \(connsStorage.closedConns.count)", forSegment: 1)
+		let counts = (active: connsStorage.conns.count, closed: connsStorage.closedConns.count)
+		guard counts != lastSegmentCounts,
+		      let seg = cachedControl(.dashSegmentedConns) as? NSSegmentedControl else { return }
+		lastSegmentCounts = counts
+		seg.setLabel("\(NSLocalizedString("Active", comment: "")) \(counts.active)", forSegment: 0)
+		seg.setLabel("\(NSLocalizedString("Closed", comment: "")) \(counts.closed)", forSegment: 1)
 	}
 
 	private func repopulateSourceIPMenu() {
@@ -304,13 +306,13 @@ final class DashboardToolbarController: NSObject {
 		switch identifier {
 		case .dashSegmentedProxies:
 			item = makeSegmentedItem(id: .dashSegmentedProxies,
-			                         titles: ProxyContentSegment.allCases.map(\.rawValue),
+			                         titles: ProxyContentSegment.allCases.map(\.title),
 			                         selectedIndex: chromeState.proxyContentSegment == .proxyList ? 0 : 1) { [weak self] index in
 				self?.chromeState.proxyContentSegment = index == 0 ? .proxyList : .proxyProviders
 			}
 		case .dashSegmentedRules:
 			item = makeSegmentedItem(id: .dashSegmentedRules,
-			                         titles: RuleContentSegment.allCases.map(\.rawValue),
+			                         titles: RuleContentSegment.allCases.map(\.title),
 			                         selectedIndex: chromeState.ruleContentSegment == .ruleList ? 0 : 1) { [weak self] index in
 				self?.chromeState.ruleContentSegment = index == 0 ? .ruleList : .ruleProviders
 			}

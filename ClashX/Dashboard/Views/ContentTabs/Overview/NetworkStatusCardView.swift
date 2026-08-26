@@ -12,6 +12,9 @@ struct NetworkStatusCardView: View {
 	@EnvironmentObject private var poller: NetworkStatusPoller
 	@State private var copied = false
 	@State private var apiCopied = false
+	// Reset handles so a re-click cancels the pending reset of the previous one.
+	@State private var copiedResetTask: Task<Void, Never>?
+	@State private var apiCopiedResetTask: Task<Void, Never>?
 
 	private let rowHeight: CGFloat = 24
 	private let valueFont = Font.system(size: 16)
@@ -121,9 +124,11 @@ struct NetworkStatusCardView: View {
 		guard poller.apiAddress != "—" else { return }
 		NSPasteboard.general.clearContents()
 		NSPasteboard.general.setString(poller.apiAddress, forType: .string)
+		apiCopiedResetTask?.cancel()
 		apiCopied = true
-		Task {
+		apiCopiedResetTask = Task {
 			try? await Task.sleep(seconds: 1.2)
+			guard !Task.isCancelled else { return }
 			apiCopied = false
 		}
 	}
@@ -137,9 +142,11 @@ struct NetworkStatusCardView: View {
 		}
 		NSPasteboard.general.clearContents()
 		NSPasteboard.general.setString(parts.joined(separator: " "), forType: .string)
+		copiedResetTask?.cancel()
 		copied = true
-		Task {
+		copiedResetTask = Task {
 			try? await Task.sleep(seconds: 1.2)
+			guard !Task.isCancelled else { return }
 			copied = false
 		}
 	}

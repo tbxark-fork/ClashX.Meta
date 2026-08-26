@@ -42,7 +42,7 @@ struct RuleItemView: View {
 
 	var body: some View {
 		HStack(alignment: .center, spacing: 12) {
-			Text("\(index)")
+			Text(verbatim: "\(index)")
 				.font(DashboardTheme.secondaryTextFont.monospacedDigit())
 				.foregroundColor(.secondary)
 				.frame(width: 30, alignment: .center)

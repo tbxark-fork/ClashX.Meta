@@ -9,8 +9,7 @@ import SwiftUI
 struct ProxiesView: View {
 	
 	@StateObject private var proxyStorage = DBProxyStorage()
-	
-	@EnvironmentObject var toolbarState: DashboardToolbarState
+
 	@EnvironmentObject var hideProxyNames: HideProxyNames
 	@EnvironmentObject var searchString: ProxiesSearchString
 	
@@ -44,12 +43,6 @@ struct ProxiesView: View {
 				.padding(DashboardTheme.spacingPage)
 			}
 			.background(DashboardTheme.pageBackground)
-			.onAppear {
-				hideProxyNames.hide = toolbarState.hideProxyNames
-			}
-			.onChange(of: toolbarState.hideProxyNames) { newValue in
-				hideProxyNames.hide = newValue
-			}
 			.task {
 				await loadProxies()
 			}

@@ -8,12 +8,10 @@ import SwiftUI
 
 // Overview card refresh tiers:
 // - stream: heroes/totals follow the core push streams
-// - chart: history graphs sample the streams at a lower rate
 // - polled: connections/top processes/subscription/network status poll local APIs
 // - none: core version never refreshes
 enum OverviewRefresh {
 	static let streamInterval: TimeInterval = 1
-	static let chartInterval: TimeInterval = 3
 	static let polledInterval: TimeInterval = 5
 }
 
