@@ -1845,7 +1845,7 @@
       }
     },
     "Providers": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
@@ -3012,7 +3012,7 @@
       }
     },
     "Updated %@": {
-      "extractionState": "stale",
+      "extractionState": "manual",
       "localizations": {
         "zh-Hans": {
           "stringUnit": {

@@ -9,17 +9,21 @@ import Cocoa
 import SwiftUI
 
 enum ProxyContentSegment: String, CaseIterable, Identifiable {
-	case proxyList = "代理"
-	case proxyProviders = "提供商"
+	case proxyList = "Proxies"
+	case proxyProviders = "Providers"
 
 	var id: String { rawValue }
+
+	var title: String { NSLocalizedString(rawValue, comment: "") }
 }
 
 enum RuleContentSegment: String, CaseIterable, Identifiable {
-	case ruleList = "规则"
-	case ruleProviders = "提供商"
+	case ruleList = "Rules"
+	case ruleProviders = "Providers"
 
 	var id: String { rawValue }
+
+	var title: String { NSLocalizedString(rawValue, comment: "") }
 }
 
 @MainActor
