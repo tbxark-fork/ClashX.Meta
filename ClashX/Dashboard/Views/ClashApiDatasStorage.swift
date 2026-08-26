@@ -130,13 +130,13 @@ class ClashOverviewData: ObservableObject, Identifiable {
 	@Published var downloadHistories = [CGFloat](repeating: 0, count: TrafficHistoryLimit)
 	@Published var uploadHistories = [CGFloat](repeating: 0, count: TrafficHistoryLimit)
 	@Published var memoryHistories = [CGFloat](repeating: 0, count: MemoryHistoryLimit)
-	
+
 	var down: Int = 0 {
 		didSet {
 			downloadString = getSpeedString(for: down)
 		}
 	}
-	
+
 	var up: Int = 0 {
 		didSet {
 			uploadString = getSpeedString(for: up)
@@ -231,12 +231,80 @@ class ClashLogStorage: ObservableObject {
 	}
 }
 
+@MainActor
 class ClashConnsStorage: ObservableObject {
+	static let maxClosedConnections = 200
+
 	@Published var conns = [DBConnection]()
+	/// Closed connections, newest first, capped at `maxClosedConnections`.
+	@Published private(set) var closedConns = [DBConnection]()
+	/// While paused all processing is skipped (aligned with upstream yacd); the next resume diffs across the whole gap.
+	@Published var isPaused = false
+
+	/// Last applied snapshot; the closed-detection diff runs against this.
+	private var trackedConns = [DBConnection]()
 
 	private let appNameResolver = AppNameResolver()
 
+	/// Nonisolated so an empty instance can be built from nonisolated contexts (e.g. EnvironmentKey.defaultValue).
+	nonisolated init() {}
+
 	func appName(processPath: String, process: String) async -> String {
 		await appNameResolver.appName(processPath: processPath, process: process)
+	}
+
+	func apply(_ snapshot: DBConnectionSnapShot) {
+		guard !isPaused else { return }
+		defer { trackedConns = snapshot.connections }
+
+		let activeIDs = Set(snapshot.connections.map(\.id))
+		let newlyClosed = trackedConns.filter { !activeIDs.contains($0.id) }
+		if !newlyClosed.isEmpty {
+			var seen = Set(newlyClosed.map(\.id))
+			var merged = newlyClosed
+			for old in closedConns where seen.insert(old.id).inserted {
+				merged.append(old)
+			}
+			closedConns = Array(merged.prefix(Self.maxClosedConnections))
+		}
+
+		conns = snapshot.connections
+	}
+
+	func reset() {
+		conns.removeAll()
+		closedConns.removeAll()
+		trackedConns.removeAll()
+	}
+}
+
+extension ClashConnsStorage {
+	/// Unique sorted source IPs across active + closed connections.
+	var allSourceIPs: [String] {
+		var set = Set(conns.map(\.metadata.sourceIP))
+		set.formUnion(closedConns.map(\.metadata.sourceIP))
+		return set.filter { !$0.isEmpty }.sorted()
+	}
+}
+
+extension DBConnection {
+	/// Keyword + source IP filter matching the table's filter keys.
+	func matches(keyword: String, sourceIP: String) -> Bool {
+		if !sourceIP.isEmpty, metadata.sourceIP != sourceIP { return false }
+		let trimmed = keyword.trimmingCharacters(in: .whitespaces)
+		guard !trimmed.isEmpty else { return true }
+		let key = trimmed.lowercased()
+		let candidates: [String] = [
+			metadata.host,
+			metadata.sniffHost,
+			metadata.process,
+			chains.reversed().joined(separator: "/"),
+			rulePayload.isEmpty ? rule : "\(rule) :: \(rulePayload)",
+			"\(metadata.sourceIP):\(metadata.sourcePort)",
+			metadata.remoteDestination,
+			metadata.destinationIP,
+			"\(metadata.type)(\(metadata.network))",
+		]
+		return candidates.contains { $0.lowercased().contains(key) }
 	}
 }

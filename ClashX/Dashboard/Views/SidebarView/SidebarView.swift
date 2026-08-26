@@ -50,7 +50,7 @@ struct SidebarView: View {
 			
 			clashApiDatasStorage.resetStreamApi()
 			clashApiDatasStorage.seedHistoryFromStore()
-			clashApiDatasStorage.connsStorage.conns.removeAll()
+			clashApiDatasStorage.connsStorage.reset()
 			
 			updateConnections()
 			startPollingConnections()
@@ -89,9 +89,11 @@ struct SidebarView: View {
 	}
 
 	func applyConnectionsSnapshot(_ snap: DBConnectionSnapShot) {
+		// While paused, skip everything (aligned with upstream yacd).
+		guard !clashApiDatasStorage.connsStorage.isPaused else { return }
 		clashApiDatasStorage.overviewData.upTotal = snap.uploadTotal
 		clashApiDatasStorage.overviewData.downTotal = snap.downloadTotal
 		clashApiDatasStorage.overviewData.activeConns = "\(snap.connections.count)"
-		clashApiDatasStorage.connsStorage.conns = snap.connections
+		clashApiDatasStorage.connsStorage.apply(snap)
 	}
 }

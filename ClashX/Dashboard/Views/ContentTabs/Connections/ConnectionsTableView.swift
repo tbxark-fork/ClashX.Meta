@@ -26,8 +26,7 @@ struct ConnectionsTableView<Item: Hashable>: NSViewRepresentable {
 	
 	
 	var data: [Item]
-	var filterString: String
-	
+
 	class NonRespondingScrollView: NSScrollView {
 		override var acceptsFirstResponder: Bool { false }
 	}
@@ -148,28 +147,16 @@ struct ConnectionsTableView<Item: Hashable>: NSViewRepresentable {
 	func updateSorts(_ objects: [DBConnectionObject],
 					 tableView: NSTableView) -> [DBConnectionObject] {
 		var re = objects
-		
+
 		var sortDescriptors = [NSSortDescriptor]()
-		
+
 		if let sort = tableView.sortDescriptors.first {
 			sortDescriptors.append(sort)
 		}
-		
+
 		sortDescriptors.append(.init(keyPath: \DBConnectionObject.id, ascending: true))
 		re = re.sorted(descriptors: sortDescriptors)
-		
-		let filterKeys = [
-			"host",
-			"process",
-			"chainString",
-			"ruleString",
-			"source",
-			"destinationIP",
-			"type",
-		]
-		
-		re = re.filtered(filterString, for: filterKeys)
-		
+
 		return re
 	}
 	

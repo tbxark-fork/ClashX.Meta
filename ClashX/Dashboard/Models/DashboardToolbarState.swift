@@ -19,6 +19,8 @@ final class DashboardToolbarState: ObservableObject {
     @Published var hideProxyNames = false
     @Published var logLevel = ConfigOverride.shared.logLevel
     @Published var logFilter = LogFilter.all
+    @Published var connShowClosed = false
+    @Published var connSourceIPFilter = ""
 
     func stopConns() {
         NotificationCenter.default.post(name: .stopConns, object: nil)
