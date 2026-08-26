@@ -41,7 +41,8 @@ final class SubscriptionPoller: ObservableObject {
     private func refresh() async {
         let proxies = await ApiRequest.requestProxyGroupList()
         let providers = await ApiRequest.requestProxyProviderList()
-        display = Self.resolve(proxies: proxies, providers: providers)
+        let newDisplay = Self.resolve(proxies: proxies, providers: providers)
+        if newDisplay != display { display = newDisplay }
     }
 
     private static func resolve(proxies: ClashProxyResp, providers: ClashProviderResp) -> Display? {
@@ -64,9 +65,8 @@ final class SubscriptionPoller: ObservableObject {
 
         let ratio = min(CGFloat(used) / CGFloat(info.total), 1)
         let percent = Int((Double(used) / Double(info.total) * 100).rounded())
-        let formatter = DashboardFormatters.byteCount
-        let totalText = formatter.string(fromByteCount: info.total)
-        let usedText = formatter.string(fromByteCount: used)
+        let totalText = ByteFormat.quota(info.total)
+        let usedText = ByteFormat.quota(used)
 
         var helpParts: [String] = ["\(usedText) / \(totalText)"]
         if info.expire > 0 {

@@ -97,13 +97,18 @@ extension ClashApiDatasStorage: ApiRequestStreamDelegate {
 			}
 		}
 
-		// Sync history straight from the store; all sampling happens there
+		// Sync history straight from the store; all sampling happens there.
+		// Skip identical values so idle sessions don't invalidate cards every tick.
 		let store = ApiRequestStream.shared.trafficHistoryStore
-		overviewData.downloadHistories = store.down
-		overviewData.uploadHistories = store.up
-		overviewData.memoryHistories = store.memory.map(CGFloat.init)
+		let down = store.down
+		if overviewData.downloadHistories != down { overviewData.downloadHistories = down }
+		let up = store.up
+		if overviewData.uploadHistories != up { overviewData.uploadHistories = up }
+		let memoryHistory = store.memory.map(CGFloat.init)
+		if overviewData.memoryHistories != memoryHistory { overviewData.memoryHistories = memoryHistory }
 		if let memory = store.latestMemory {
-			overviewData.memory = Self.memoryFormatter.string(fromByteCount: memory)
+			let text = Self.memoryFormatter.string(fromByteCount: memory)
+			if overviewData.memory != text { overviewData.memory = text }
 		}
 	}
 	
@@ -133,65 +138,27 @@ class ClashOverviewData: ObservableObject, Identifiable {
 
 	var down: Int = 0 {
 		didSet {
-			downloadString = getSpeedString(for: down)
+			downloadString = ByteFormat.rate(down)
 		}
 	}
 
 	var up: Int = 0 {
 		didSet {
-			uploadString = getSpeedString(for: up)
+			uploadString = ByteFormat.rate(up)
 		}
 	}
-	
+
 	var downTotal: Int = 0 {
 		didSet {
-			downloadTotal = getSpeedString(for: downTotal).replacingOccurrences(of: "/s", with: "")
+			downloadTotal = ByteFormat.total(Int64(downTotal))
 		}
 	}
-	
+
 	var upTotal: Int = 0 {
 		didSet {
-			uploadTotal = getSpeedString(for: upTotal).replacingOccurrences(of: "/s", with: "")
+			uploadTotal = ByteFormat.total(Int64(upTotal))
 		}
 	}
-	
-	func getSpeedString(for byte: Int) -> String {
-		speedString(for: byte)
-	}
-}
-
-func speedString(for byte: Int, suffix: String = "/s") -> String {
-	if byte < 1_000 {
-		return "\(byte)B" + suffix
-	}
-	let kb = Double(byte) / 1_000
-	if kb < 999.5 {
-		return threeSigFigures(kb) + "KB" + suffix
-	}
-	let mb = kb / 1_000
-	if mb < 999.5 {
-		return threeSigFigures(mb) + "MB" + suffix
-	}
-	return threeSigFigures(mb / 1_000) + "GB" + suffix
-}
-
-// At most 3 significant figures with trailing zeros trimmed: 123, 1.23, 12.3
-func threeSigFigures(_ value: Double) -> String {
-	if value == 0 { return "0" }
-	let exponent = floor(log10(value))
-	let scale = pow(10, exponent - 2)
-	let rounded = (value / scale).rounded() * scale
-	let decimals = max(0, 2 - Int(exponent))
-	var text = String(format: "%.\(decimals)f", rounded)
-	if text.contains(".") {
-		while text.hasSuffix("0") {
-			text.removeLast()
-		}
-		if text.hasSuffix(".") {
-			text.removeLast()
-		}
-	}
-	return text
 }
 
 class ClashLogStorage: ObservableObject {

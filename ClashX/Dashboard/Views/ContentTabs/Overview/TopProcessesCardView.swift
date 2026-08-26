@@ -36,7 +36,7 @@ struct TopProcessesCardView: View {
 					.frame(maxWidth: .infinity, alignment: .leading)
 			}
 			.frame(width: 90, height: 4)
-			Text(verbatim: DashboardFormatters.byteCount.string(fromByteCount: app.bytes))
+			Text(verbatim: ByteFormat.total(app.bytes, precision: .integer))
 				.font(DashboardTheme.overviewLabelFont)
 				.foregroundColor(.secondary)
 				.monospacedDigit()

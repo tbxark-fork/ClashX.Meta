@@ -61,7 +61,10 @@ struct TrafficGraphView: View {
 						spacing: 6,
 						overflowResolution: .init(x: .fit(to: .chart), y: .fit)
 					) {
-						Text(speedString(for: Int(selectedValue), suffix: graphType == .rate ? "/s" : ""))
+						let text = graphType == .rate
+							? ByteFormat.rate(Int(selectedValue))
+							: ByteFormat.string(Int64(selectedValue), base: .binary)
+						Text(verbatim: text)
 							.font(.system(size: 10).monospacedDigit())
 							.foregroundStyle(.primary)
 							.padding(.horizontal, 8)
@@ -96,7 +99,12 @@ struct TrafficGraphView: View {
 
 		Group {
 			if #available(macOS 14.0, *) {
+				// The window is a sliding buffer: once data advances the pinned
+				// index would point at a different sample, so drop the selection.
 				chartWithAxis.chartXSelection(value: $selectedIndex)
+					.onChange(of: values) { _ in
+						selectedIndex = nil
+					}
 			} else {
 				chartWithAxis
 			}
@@ -104,18 +112,24 @@ struct TrafficGraphView: View {
     }
 
 	private func chartScale(for values: [CGFloat]) -> TrafficScale {
-		let peakValue = values.max() ?? CGFloat(segmentCount) * 1000
+		let peakValue = values.max() ?? CGFloat(segmentCount) * 1024
 		let unit = chartUnit(for: Double(peakValue))
 		let maxValueInUnit = Double(peakValue) / unit.divisor
 		let minimumScaleValue = unit == .kilobytesPerSecond ? Double(segmentCount) : 0
 		let baselineMaxValue = Swift.max(maxValueInUnit, minimumScaleValue)
-		let step = niceStep(for: baselineMaxValue / Double(segmentCount))
+		let step = niceAxisStep(for: baselineMaxValue / Double(segmentCount))
 		let upperValue = step * Double(segmentCount)
 
-		// Switch the whole scale to the next unit once the top reaches a full 1000
-		if upperValue >= 1000, let nextUnit = unit.next {
-			let maxInNextUnit = maxValueInUnit / 1000
-			let nextStep = niceStep(for: maxInNextUnit / Double(segmentCount))
+		// Switch the whole scale to the next unit once the top reaches a full 1024
+		if upperValue >= 1024, let nextUnit = unit.next {
+			let maxInNextUnit = maxValueInUnit / 1024
+			guard maxInNextUnit >= 1 else {
+				return TrafficScale(
+					upperBound: CGFloat(upperValue * unit.divisor),
+					unit: unit
+				)
+			}
+			let nextStep = niceAxisStep(for: maxInNextUnit / Double(segmentCount))
 			let nextUpperValue = nextStep * Double(segmentCount)
 			return TrafficScale(
 				upperBound: CGFloat(nextUpperValue * nextUnit.divisor),
@@ -131,35 +145,21 @@ struct TrafficGraphView: View {
 
 	private func chartUnit(for value: Double) -> TrafficUnit {
 		switch value {
-		case ..<1_000_000:
+		case ..<1_048_576:
 			return .kilobytesPerSecond
-		case ..<1_000_000_000:
+		case ..<1_073_741_824:
 			return .megabytesPerSecond
 		default:
 			return .gigabytesPerSecond
 		}
 	}
 
-	private func niceStep(for rawStep: Double) -> Double {
+	/// Binary-friendly nice steps: powers of two, so the axis never
+	/// produces decimal artifacts like "1000KB" that can't carry over at 1024.
+	private func niceAxisStep(for rawStep: Double) -> Double {
 		guard rawStep > 0 else { return 1 }
-
-		let exponent = floor(log10(rawStep))
-		let base = pow(10, exponent)
-		let fraction = rawStep / base
-
-		let niceFraction: Double
-		switch fraction {
-		case ...1:
-			niceFraction = 1
-		case ...2:
-			niceFraction = 2
-		case ...5:
-			niceFraction = 5
-		default:
-			niceFraction = 10
-		}
-
-		return niceFraction * base
+		let exp = ceil(log2(rawStep))
+		return pow(2, exp)
 	}
 
 	private func axisLabel(for value: Double, unit: TrafficUnit) -> String {
@@ -167,12 +167,13 @@ struct TrafficGraphView: View {
 
 		var scaledValue = value / unit.divisor
 		var unit = unit
-		// Carry over to the next unit once a full 1000 is reached
-		if scaledValue >= 1000, let nextUnit = unit.next {
-			scaledValue /= 1000
+		// Carry over to the next unit once a full 1024 is reached
+		if scaledValue >= 1024, let nextUnit = unit.next {
+			scaledValue /= 1024
 			unit = nextUnit
 		}
-		return threeSigFigures(scaledValue) + unit.rawValue
+		// Legacy truncating style: integer ticks, no rounding.
+		return String(Int(scaledValue)) + unit.rawValue
 	}
 
 }
@@ -190,11 +191,11 @@ private enum TrafficUnit: String {
 		var divisor: Double {
 			switch self {
 			case .kilobytesPerSecond:
-				return 1_000
+				return 1_024
 			case .megabytesPerSecond:
-				return 1_000_000
+				return 1_048_576
 			case .gigabytesPerSecond:
-				return 1_000_000_000
+				return 1_073_741_824
 			}
 		}
 

@@ -39,15 +39,19 @@ class DBProxyProvider: ObservableObject, Identifiable {
 		if let info = provider.subscriptionInfo {
 			let used = info.download + info.upload
 			let total = info.total
-			
-			let trafficRate = "\(String(format: "%.2f", Double(used)/Double(total/100)))%"
-			
-			let formatter = DashboardFormatters.byteCount
-			
-			trafficInfo = formatter.string(fromByteCount: used)
-			+ " / "
-			+ formatter.string(fromByteCount: total)
-			+ " ( \(trafficRate) )"
+
+			// Unlimited plans report total == 0; guard the percentage math.
+			if total > 0 {
+				let trafficRate = String(format: "%.2f", Double(used) / Double(total) * 100)
+				trafficInfo = ByteFormat.quota(used)
+				+ " / "
+				+ ByteFormat.quota(total)
+				+ " ( \(trafficRate)% )"
+				self.trafficPercentage = trafficRate + "%"
+			} else {
+				trafficInfo = ByteFormat.quota(used)
+				self.trafficPercentage = "0.0%"
+			}
 			
 			let expire = info.expire
 			if expire == 0 {
@@ -63,8 +67,7 @@ class DBProxyProvider: ObservableObject, Identifiable {
 					expireDate = String(format: NSLocalizedString("Expire: %@", comment: ""), dateFormatter.string(from: eDate))
 				}
 			}
-			
-			self.trafficPercentage = trafficRate
+
 		} else {
 			trafficInfo = ""
 			expireDate = ""
@@ -100,9 +103,8 @@ struct SubscriptionUsage: Equatable {
 		let used = info.upload + info.download
 		guard used >= 0 else { return nil }
 
-		let formatter = DashboardFormatters.byteCount
-		usedText = formatter.string(fromByteCount: used)
-		totalText = formatter.string(fromByteCount: info.total)
+		usedText = ByteFormat.quota(used)
+		totalText = ByteFormat.quota(info.total)
 		ratio = min(CGFloat(used) / CGFloat(info.total), 1)
 		let percent = Int((Double(used) / Double(info.total) * 100).rounded())
 		percentText = String(format: "%d%%", percent)
