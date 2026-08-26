@@ -8,12 +8,11 @@ import SwiftUI
 
 struct DashboardView: View {
 	static let minimumSize = CGSize(width: 920, height: 580)
-	
-	private let kernelStateChanged = NotificationCenter.default.publisher(for: .init("ClashKernelStateChanged"))
-	@State private var kernelState = ConfigManager.shared.kernelState
-	@State private var selection: SidebarItem? = .overview
-	@StateObject private var clashApiDatasStorage = ClashApiDatasStorage()
-	@StateObject private var toolbarState = DashboardToolbarState()
+
+	@ObservedObject var chromeState: DashboardChromeState
+	@ObservedObject var toolbarState: DashboardToolbarState
+	@ObservedObject var apiDatasStorage: ClashApiDatasStorage
+
 	@StateObject private var proxiesSearchString = ProxiesSearchString()
 	@StateObject private var hideProxyNames = HideProxyNames()
 	@StateObject private var providerStorage = DBProviderStorage()
@@ -21,24 +20,17 @@ struct DashboardView: View {
 	@StateObject private var networkStatusPoller = NetworkStatusPoller()
 	@StateObject private var topAppsPoller = TopAppsPoller()
 	@StateObject private var connectionsStatsPoller = ConnectionsStatsPoller()
-	@State private var proxyContentSegment = ProxyContentSegment.proxyList
-	@State private var ruleContentSegment = RuleContentSegment.ruleList
-	@State private var isUpdatingRuleProviders = false
-	@State private var isUpdatingProxyProviders = false
-	
+
 	var body: some View {
-		NavigationSplitView {
-			SidebarView(selection: $selection, clashApiDatasStorage: clashApiDatasStorage)
+		NavigationSplitView(columnVisibility: $chromeState.columnVisibility) {
+			SidebarView(selection: $chromeState.selection, clashApiDatasStorage: apiDatasStorage)
 				.navigationSplitViewColumnWidth(min: 160, ideal: 200, max: 240)
 		} detail: {
 			detailView
 		}
-		.toolbar {
-			toolbarItems
-		}
-		.environmentObject(clashApiDatasStorage.overviewData)
-		.environmentObject(clashApiDatasStorage.logStorage)
-		.environmentObject(clashApiDatasStorage.connsStorage)
+		.environmentObject(apiDatasStorage.overviewData)
+		.environmentObject(apiDatasStorage.logStorage)
+		.environmentObject(apiDatasStorage.connsStorage)
 		.environmentObject(toolbarState)
 		.environmentObject(proxiesSearchString)
 		.environmentObject(hideProxyNames)
@@ -53,24 +45,21 @@ struct DashboardView: View {
 			minHeight: Self.minimumSize.height,
 			idealHeight: Self.minimumSize.height
 		)
-		.onReceive(kernelStateChanged) { _ in
-			kernelState = ConfigManager.shared.kernelState
-		}
 		.onAppear {
 			subscriptionPoller.start()
 			networkStatusPoller.start()
-			topAppsPoller.start(connsStorage: clashApiDatasStorage.connsStorage)
-			connectionsStatsPoller.start(connsStorage: clashApiDatasStorage.connsStorage)
+			topAppsPoller.start(connsStorage: apiDatasStorage.connsStorage)
+			connectionsStatsPoller.start(connsStorage: apiDatasStorage.connsStorage)
 		}
-		.onChange(of: selection) { newValue in
+		.onChange(of: chromeState.selection) { newValue in
 			guard let newValue else { return }
 			if newValue != .logs {
 				toolbarState.logFilter = .all
 			}
-			if newValue == .proxies {
-				proxyContentSegment = .proxyList
-			} else if newValue == .rules {
-				ruleContentSegment = .ruleList
+			if newValue == .proxies, chromeState.proxyContentSegment != .proxyList {
+				chromeState.proxyContentSegment = .proxyList
+			} else if newValue == .rules, chromeState.ruleContentSegment != .ruleList {
+				chromeState.ruleContentSegment = .ruleList
 			}
 		}
 		.onChange(of: toolbarState.searchText) { newValue in
@@ -80,187 +69,22 @@ struct DashboardView: View {
 			hideProxyNames.hide = newValue
 		}
 	}
-	
-	@ToolbarContentBuilder
-	private var toolbarItems: some ToolbarContent {
-		if selection == .proxies {
-			ToolbarItem(placement: .navigation) {
-				Picker("", selection: $proxyContentSegment) {
-					ForEach(ProxyContentSegment.allCases) { segment in
-						Text(segment.rawValue).tag(segment)
-					}
-				}
-				.pickerStyle(.segmented)
-			}
-		}
-		if selection == .rules {
-			ToolbarItem(placement: .navigation) {
-				Picker("", selection: $ruleContentSegment) {
-					ForEach(RuleContentSegment.allCases) { segment in
-						Text(segment.rawValue).tag(segment)
-					}
-				}
-				.pickerStyle(.segmented)
-			}
-		}
-		if let selection {
-			toolbarButtons(for: selection)
-		}
-	}
-	
-	@ViewBuilder
-	private func toolbarButtons(for selection: SidebarItem) -> some ToolbarContent {
-		switch selection {
-		case .overview, .config:
-			ToolbarItem(placement: .automatic) { EmptyView() }
-		case .proxies:
-			if proxyContentSegment == .proxyProviders {
-				ToolbarItem(placement: .automatic) {
-					Button {
-						Task { await updateAllProxyProviders() }
-					} label: {
-						if isUpdatingProxyProviders {
-							ProgressView()
-								.controlSize(.small)
-						} else {
-							Label("Update All", systemImage: "arrow.clockwise")
-						}
-					}
-					.disabled(isUpdatingProxyProviders)
-				}
-			}
-			ToolbarItem(placement: .automatic) {
-				Toggle(isOn: Binding(
-					get: { toolbarState.hideProxyNames },
-					set: { newValue in
-						toolbarState.hideProxyNames = newValue
-					}
-				)) {
-					Label("Hide Names", systemImage: toolbarState.hideProxyNames ? "eyeglasses" : "wand.and.stars")
-				}
-				.toggleStyle(.button)
-			}
-			ToolbarItem(placement: .automatic) {
-				TextField("Search", text: Binding(
-					get: { toolbarState.searchText },
-					set: { newValue in
-						toolbarState.searchText = newValue
-					}
-				))
-				.textFieldStyle(.roundedBorder)
-				.frame(width: 220)
-			}
-		case .rules:
-			if ruleContentSegment == .ruleProviders {
-				ToolbarItem(placement: .automatic) {
-					Button {
-						Task { await updateAllRuleProviders() }
-					} label: {
-						if isUpdatingRuleProviders {
-							ProgressView()
-								.controlSize(.small)
-						} else {
-							Label("Update All", systemImage: "arrow.clockwise")
-						}
-					}
-					.disabled(isUpdatingRuleProviders)
-				}
-			}
-			ToolbarItem(placement: .automatic) {
-				TextField("Search", text: Binding(
-					get: { toolbarState.searchText },
-					set: { newValue in
-						toolbarState.searchText = newValue
-					}
-				))
-				.textFieldStyle(.roundedBorder)
-				.frame(width: 220)
-			}
-		case .conns:
-			ToolbarItem(placement: .automatic) {
-				Button {
-					toolbarState.stopConns()
-				} label: {
-					Label("Stop All", systemImage: "stop.circle.fill")
-				}
-			}
-			ToolbarItem(placement: .automatic) {
-				TextField("Search", text: Binding(
-					get: { toolbarState.searchText },
-					set: { newValue in
-						toolbarState.searchText = newValue
-					}
-				))
-				.textFieldStyle(.roundedBorder)
-				.frame(width: 220)
-			}
-		case .logs:
-			ToolbarItem(placement: .automatic) {
-				Picker("Log Filter", selection: Binding(
-					get: { toolbarState.logFilter },
-					set: { toolbarState.updateLogFilter($0) }
-				)) {
-					ForEach(DashboardToolbarState.LogFilter.allCases, id: \.self) { filter in
-						Text(filter.rawValue).tag(filter)
-					}
-				}
-				.pickerStyle(.menu)
-			}
-			ToolbarItem(placement: .automatic) {
-				Picker("Log Level", selection: Binding(
-					get: { toolbarState.logLevel },
-					set: { toolbarState.updateLogLevel($0) }
-				)) {
-					ForEach([ClashLogLevel.silent, .error, .warning, .info, .debug], id: \.self) { level in
-						Text(level.rawValue.capitalized).tag(level)
-					}
-				}
-				.pickerStyle(.menu)
-			}
-			ToolbarItem(placement: .automatic) {
-				TextField("Search", text: Binding(
-					get: { toolbarState.searchText },
-					set: { newValue in
-						toolbarState.searchText = newValue
-					}
-				))
-				.textFieldStyle(.roundedBorder)
-				.frame(width: 220)
-			}
-		}
-	}
-	
-	private func updateAllRuleProviders() async {
-		guard !isUpdatingRuleProviders else { return }
-		isUpdatingRuleProviders = true
-		defer { isUpdatingRuleProviders = false }
-		_ = await ApiRequest.updateAllProviders(for: .rule)
-		NotificationCenter.default.post(name: .ruleProvidersUpdated, object: nil)
-	}
-
-	private func updateAllProxyProviders() async {
-		guard !isUpdatingProxyProviders else { return }
-		isUpdatingProxyProviders = true
-		defer { isUpdatingProxyProviders = false }
-		_ = await ApiRequest.updateAllProviders(for: .proxy)
-		NotificationCenter.default.post(name: .proxyProvidersUpdated, object: nil)
-	}
 
 	@ViewBuilder
 	private var detailView: some View {
 		NavigationStack {
-			switch selection {
+			switch chromeState.selection {
 			case .overview:
 				OverviewView()
 			case .proxies:
-				switch proxyContentSegment {
+				switch chromeState.proxyContentSegment {
 				case .proxyList:
 					ProxiesView()
 				case .proxyProviders:
 					ProvidersView(mode: .proxy)
 				}
 			case .rules:
-				switch ruleContentSegment {
+				switch chromeState.ruleContentSegment {
 				case .ruleList:
 					RulesView()
 				case .ruleProviders:
@@ -277,18 +101,4 @@ struct DashboardView: View {
 			}
 		}
 	}
-}
-
-private enum ProxyContentSegment: String, CaseIterable, Identifiable {
-	case proxyList = "代理"
-	case proxyProviders = "提供商"
-
-	var id: String { rawValue }
-}
-
-private enum RuleContentSegment: String, CaseIterable, Identifiable {
-	case ruleList = "规则"
-	case ruleProviders = "提供商"
-
-	var id: String { rawValue }
 }

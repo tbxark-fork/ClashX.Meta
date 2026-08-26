@@ -55,8 +55,19 @@ extension DashboardWindowController: NSWindowDelegate {
 }
 
 final class DashboardViewContoller: NSViewController {
+	let chromeState = DashboardChromeState()
+	let toolbarState = DashboardToolbarState()
+	let apiDatasStorage = ClashApiDatasStorage()
+
+	private var toolbarController: DashboardToolbarController?
+	private var didAttachToolbar = false
+
 	override func loadView() {
-		view = NSHostingView(rootView: DashboardView())
+		view = NSHostingView(rootView: DashboardView(
+			chromeState: chromeState,
+			toolbarState: toolbarState,
+			apiDatasStorage: apiDatasStorage
+		))
     }
 
 	override func viewWillAppear() {
@@ -64,6 +75,19 @@ final class DashboardViewContoller: NSViewController {
 		if NSApp.activationPolicy() == .accessory {
 			NSApp.setActivationPolicy(.regular)
 		}
+		attachToolbarIfNeeded()
+	}
+
+	private func attachToolbarIfNeeded() {
+		guard !didAttachToolbar, let window = view.window else { return }
+		didAttachToolbar = true
+		let controller = DashboardToolbarController(
+			chromeState: chromeState,
+			toolbarState: toolbarState,
+			connsStorage: apiDatasStorage.connsStorage
+		)
+		controller.attach(to: window)
+		toolbarController = controller
 	}
 
     deinit {
