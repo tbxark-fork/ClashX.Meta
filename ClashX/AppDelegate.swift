@@ -164,6 +164,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
+        NetworkChangeNotifier.stop()
             Task {
             await ExitManager.shared.handleWillTerminate()
         }
@@ -336,7 +337,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func setupNetworkNotifier() {
         Task { @MainActor in
             try? await Task.sleep(seconds: 5)
-            await NetworkChangeNotifier.start()
+            NetworkChangeNotifier.start()
         }
 
         NotificationCenter
