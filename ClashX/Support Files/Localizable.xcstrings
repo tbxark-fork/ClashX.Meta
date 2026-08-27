@@ -2745,16 +2745,22 @@
     },
     "Top Processes": {
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent Network Activity"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "网络活动"
+            "value": "近期网络活动"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "網路活動"
+            "value": "近期網路活動"
           }
         }
       }
@@ -3017,13 +3023,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "已更新 %@"
+            "value": "更新于 %@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "已更新 %@"
+            "value": "更新於 %@"
           }
         }
       }

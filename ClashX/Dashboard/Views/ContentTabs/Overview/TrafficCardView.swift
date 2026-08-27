@@ -6,7 +6,7 @@
 
 import SwiftUI
 
-// Traffic chart card: title, legend, and Down/Up history charts
+// Traffic chart card: title, legend, and Up/Down history charts
 struct TrafficCardView: View {
 	@EnvironmentObject private var overview: ClashOverviewData
 
@@ -16,14 +16,14 @@ struct TrafficCardView: View {
 				Text("Traffic")
 					.font(DashboardTheme.titleFont)
 
-				legendItem(color: DashboardTheme.chartBlue, name: "Down")
-				TrafficGraphView(values: .constant(overview.downloadHistories),
-								 graphColor: DashboardTheme.chartBlue)
-
 				legendItem(color: DashboardTheme.chartGreen, name: "Up")
-					.padding(.top, 16)
 				TrafficGraphView(values: .constant(overview.uploadHistories),
 								 graphColor: DashboardTheme.chartGreen)
+
+				legendItem(color: DashboardTheme.chartBlue, name: "Down")
+					.padding(.top, 16)
+				TrafficGraphView(values: .constant(overview.downloadHistories),
+								 graphColor: DashboardTheme.chartBlue)
 			}
 			.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 		}

@@ -125,7 +125,6 @@ final class NetworkStatusPoller: ObservableObject {
 }
 
 // MARK: - Top Processes (1s, local computation from connsStorage)
-
 @MainActor
 final class TopAppsPoller: ObservableObject {
     @Published var topApps: [TopApp] = []
@@ -158,7 +157,7 @@ final class TopAppsPoller: ObservableObject {
 
     private func refresh() async {
         guard let connsStorage else { return }
-        let conns = connsStorage.conns
+        let conns = connsStorage.conns + connsStorage.closedConns
         var totals: [String: Int64] = [:]
         for conn in conns {
             guard conn.metadata.type != "Inner", !conn.chains.contains("DIRECT") else { continue }
