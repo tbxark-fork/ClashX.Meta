@@ -9,6 +9,7 @@
 
 import Cocoa
 import Combine
+import UniformTypeIdentifiers
 
 extension NSToolbarItem.Identifier {
 	static let dashSegmentedProxies = NSToolbarItem.Identifier("DashSegmentedProxies")
@@ -26,7 +27,7 @@ extension NSToolbarItem.Identifier {
 }
 
 @MainActor
-final class DashboardToolbarController: NSObject {
+final class DashboardToolbarController: NSObject, NSMenuDelegate {
 	private let chromeState: DashboardChromeState
 	private let toolbarState: DashboardToolbarState
 	private let connsStorage: ClashConnsStorage
@@ -38,9 +39,16 @@ final class DashboardToolbarController: NSObject {
 	private var trampolines = [ActionTrampoline]()
 	private var itemCache = [NSToolbarItem.Identifier: NSToolbarItem]()
 	private var lastSourceIPs: [String] = []
+	private var lastAppNames: [String] = []
+	private var lastHasInternal = false
 	// Guards per-tick setLabel calls; conns streams publish far more often than counts change.
 	private var lastSegmentCounts = (active: -1, closed: -1)
 	private let logLevels: [ClashLogLevel] = [.silent, .error, .warning, .info, .debug]
+
+	// Precomputed app name / path maps — rebuilt when conns change.
+	private var cachedAppNames: [String: String] = [:]   // processPath → appName
+	private var cachedAppToPath: [String: (String, String)] = [:]  // appName → (processPath, process)
+	private var cachedIcons: [String: NSImage] = [:]     // appName → icon
 
 	// MARK: - Init / Attach
 
@@ -64,6 +72,11 @@ final class DashboardToolbarController: NSObject {
 		attachedWindow = window
 		window.toolbar = toolbar
 		syncItems()
+		if cachedControl(.dashSourceIP) != nil {
+			repopulateGroupedFilterMenu()
+		}
+		updatePopupSelection()
+		Task { await updateFilteredSegmentLabels() }
 	}
 
 	// MARK: - Desired layout
@@ -80,7 +93,7 @@ final class DashboardToolbarController: NSObject {
 			if chromeState.ruleContentSegment == .ruleProviders { ids.append(.dashUpdateAllRules) }
 		case .conns:
 			ids.append(contentsOf: [.dashSegmentedConns, .flexibleSpace, .dashPauseRefresh, .dashStopAll])
-			if !connsStorage.allSourceIPs.isEmpty { ids.append(.dashSourceIP) }
+			if !connsStorage.allSourceIPs.isEmpty || !connsStorage.conns.isEmpty || !connsStorage.closedConns.isEmpty { ids.append(.dashSourceIP) }
 		case .logs:
 			ids.append(contentsOf: [.dashLogFilter, .dashLogLevel])
 		default:
@@ -137,7 +150,14 @@ final class DashboardToolbarController: NSObject {
 	private func subscribe() {
 		chromeState.$selection
 			.receive(on: DispatchQueue.main)
-			.sink { [weak self] _ in self?.syncItems() }
+			.sink { [weak self] _ in
+				self?.syncItems()
+				if self?.chromeState.selection == .conns, self?.cachedControl(.dashSourceIP) != nil {
+					self?.repopulateGroupedFilterMenu()
+					self?.updatePopupSelection()
+					Task { await self?.updateFilteredSegmentLabels() }
+				}
+			}
 			.store(in: &cancellables)
 
 		chromeState.$proxyContentSegment
@@ -216,17 +236,17 @@ final class DashboardToolbarController: NSObject {
 			}
 			.store(in: &cancellables)
 
-		toolbarState.$connSourceIPFilter
+		Publishers.CombineLatest3(toolbarState.$connAppFilter, toolbarState.$connSourceIPFilter, toolbarState.$connInternalFilter)
 			.receive(on: DispatchQueue.main)
-			.sink { [weak self] ip in
-				guard let self,
-				      let popup = self.cachedControl(.dashSourceIP) as? NSPopUpButton else { return }
-				if ip.isEmpty {
-					popup.selectItem(at: 0)
-				} else {
-					popup.selectItem(withTitle: ip)
-				}
+			.sink { [weak self] _, _, _ in
+				self?.updatePopupSelection()
+				Task { await self?.updateFilteredSegmentLabels() }
 			}
+			.store(in: &cancellables)
+
+		toolbarState.$searchText
+			.receive(on: DispatchQueue.main)
+			.sink { [weak self] _ in Task { await self?.updateFilteredSegmentLabels() } }
 			.store(in: &cancellables)
 
 		connsStorage.$isPaused
@@ -243,13 +263,33 @@ final class DashboardToolbarController: NSObject {
 			.receive(on: DispatchQueue.main)
 			.sink { [weak self] _ in
 				guard let self else { return }
-				self.updateConnsSegmentLabels()
-				let ips = self.connsStorage.allSourceIPs
-				guard ips != self.lastSourceIPs else { return }
-				let menuPresenceChanged = self.lastSourceIPs.isEmpty != ips.isEmpty
-				self.lastSourceIPs = ips
-				self.repopulateSourceIPMenu()
-				if menuPresenceChanged { self.syncItems() }
+				let allConns = self.connsStorage.conns + self.connsStorage.closedConns
+				let resolver = DashboardManager.shared.appNameResolver
+				Task {
+					self.cachedAppNames = await resolver.buildNameMap(for: allConns)
+					var map: [String: (String, String)] = [:]
+					for conn in allConns {
+						let path = conn.metadata.processPath
+						if map[self.cachedAppNames[path] ?? conn.metadata.process] == nil {
+							map[self.cachedAppNames[path] ?? conn.metadata.process] = (path, conn.metadata.process)
+						}
+					}
+					self.cachedAppToPath = map
+					await self.updateFilteredSegmentLabels()
+					// Rebuild cachedIcons from actor (which caches by appName internally)
+					var icons: [String: NSImage] = [:]
+					for (app, (path, process)) in self.cachedAppToPath {
+						if let icon = await resolver.appIcon(processPath: path, process: process) {
+							icons[app] = icon
+						}
+					}
+					self.cachedIcons = icons
+				}
+				let shouldShow = !self.connsStorage.allSourceIPs.isEmpty || !self.connsStorage.conns.isEmpty || !self.connsStorage.closedConns.isEmpty
+				let isShowing = self.toolbar.items.contains { $0.itemIdentifier == .dashSourceIP }
+				if shouldShow != isShowing {
+					self.syncItems()
+				}
 			}
 			.store(in: &cancellables)
 	}
@@ -261,7 +301,17 @@ final class DashboardToolbarController: NSObject {
 	}
 
 	private func updateConnsSegmentLabels() {
-		let counts = (active: connsStorage.conns.count, closed: connsStorage.closedConns.count)
+		Task { await updateFilteredSegmentLabels() }
+	}
+
+	private func updateFilteredSegmentLabels() async {
+		let keyword = toolbarState.searchText
+		let appFilter = toolbarState.connAppFilter
+		let ipFilter = toolbarState.connSourceIPFilter
+		let internalFilter = toolbarState.connInternalFilter
+		let active = filteredCount(conns: connsStorage.conns, keyword: keyword, sourceIP: ipFilter, appFilter: appFilter, internalFilter: internalFilter)
+		let closed = filteredCount(conns: connsStorage.closedConns, keyword: keyword, sourceIP: ipFilter, appFilter: appFilter, internalFilter: internalFilter)
+		let counts = (active: active, closed: closed)
 		guard counts != lastSegmentCounts,
 		      let seg = cachedControl(.dashSegmentedConns) as? NSSegmentedControl else { return }
 		lastSegmentCounts = counts
@@ -269,18 +319,142 @@ final class DashboardToolbarController: NSObject {
 		seg.setLabel("\(NSLocalizedString("Closed", comment: "")) \(counts.closed)", forSegment: 1)
 	}
 
-	private func repopulateSourceIPMenu() {
-		guard let popup = cachedControl(.dashSourceIP) as? NSPopUpButton else { return }
-		popup.removeAllItems()
-		popup.addItem(withTitle: NSLocalizedString("All", comment: ""))
-		for ip in connsStorage.allSourceIPs {
-			popup.addItem(withTitle: ip)
-		}
-		if toolbarState.connSourceIPFilter.isEmpty {
-			popup.selectItem(at: 0)
+	private func filteredCount(conns: [DBConnection], keyword: String, sourceIP: String, appFilter: String, internalFilter: Bool) -> Int {
+		conns.filter { conn in
+			if internalFilter {
+				let isInner = conn.metadata.type == "Inner" || "\(conn.metadata.sourceIP):\(conn.metadata.sourcePort)" == ":0"
+				guard isInner else { return false }
+			}
+			guard conn.matches(keyword: keyword, sourceIP: sourceIP) else { return false }
+			if !appFilter.isEmpty {
+				let name = cachedAppNames[conn.metadata.processPath] ?? conn.metadata.process
+				guard name == appFilter else { return false }
+			}
+			return true
+		}.count
+	}
+
+	private func updatePopupSelection() {
+		guard let popup = cachedControl(.dashSourceIP) as? NSPopUpButton, let menu = popup.menu else { return }
+		if toolbarState.connInternalFilter {
+			if popup.itemTitles.contains("Inner") {
+				popup.selectItem(withTitle: "Inner")
+			} else {
+				menu.addItem(withTitle: "Inner", action: nil, keyEquivalent: "")
+				popup.selectItem(withTitle: "Inner")
+			}
+		} else if !toolbarState.connAppFilter.isEmpty {
+			let title = toolbarState.connAppFilter
+			if popup.itemTitles.contains(title) {
+				popup.selectItem(withTitle: title)
+			} else {
+				let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+				if title == "Unknown" {
+					let icon = NSWorkspace.shared.icon(for: .unixExecutable)
+					icon.size = AppNameResolver.iconSize
+					item.image = icon
+			} else if let icon = cachedIcons[title] {
+					item.image = icon
+				} else {
+					let icon = NSWorkspace.shared.icon(for: .unixExecutable)
+					icon.size = AppNameResolver.iconSize
+					item.image = icon
+				}
+				menu.addItem(item)
+				popup.selectItem(withTitle: title)
+			}
+		} else if !toolbarState.connSourceIPFilter.isEmpty {
+			let title = toolbarState.connSourceIPFilter
+			if popup.itemTitles.contains(title) {
+				popup.selectItem(withTitle: title)
+			} else {
+				menu.addItem(withTitle: title, action: nil, keyEquivalent: "")
+				popup.selectItem(withTitle: title)
+			}
 		} else {
-			popup.selectItem(withTitle: toolbarState.connSourceIPFilter)
+			popup.selectItem(at: 0)
 		}
+		popup.toolTip = popup.titleOfSelectedItem
+	}
+
+	private func appToPathForCurrentFilter() -> (String, String)? {
+		let target = toolbarState.connAppFilter
+		guard !target.isEmpty else { return nil }
+		return cachedAppToPath[target]
+	}
+
+	private func repopulateGroupedFilterMenu() {
+		guard let popup = cachedControl(.dashSourceIP) as? NSPopUpButton, let menu = popup.menu else { return }
+		var sourceIPs = connsStorage.allSourceIPs
+		var appNames = Array(Set(cachedAppNames.values)).sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+		var hasInternal = (connsStorage.conns + connsStorage.closedConns).contains { $0.metadata.type == "Inner" || "\($0.metadata.sourceIP):\($0.metadata.sourcePort)" == ":0" }
+		if !toolbarState.connSourceIPFilter.isEmpty && !sourceIPs.contains(toolbarState.connSourceIPFilter) {
+			sourceIPs.append(toolbarState.connSourceIPFilter)
+			sourceIPs.sort()
+		}
+		if !toolbarState.connAppFilter.isEmpty && !appNames.contains(toolbarState.connAppFilter) {
+			appNames.append(toolbarState.connAppFilter)
+			appNames.sort { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+			if let idx = appNames.firstIndex(of: "Unknown"), idx != appNames.count - 1 {
+				let unknown = appNames.remove(at: idx)
+				appNames.append(unknown)
+			}
+		}
+		if toolbarState.connInternalFilter { hasInternal = true }
+		lastSourceIPs = sourceIPs
+		lastAppNames = appNames
+		lastHasInternal = hasInternal
+		menu.removeAllItems()
+		menu.addItem(withTitle: NSLocalizedString("All", comment: ""), action: nil, keyEquivalent: "")
+		if hasInternal {
+			menu.addItem(withTitle: "Inner", action: nil, keyEquivalent: "")
+		}
+		if !sourceIPs.isEmpty {
+			if #available(macOS 14.0, *) {
+				menu.addItem(.sectionHeader(title: "Source IP"))
+			} else {
+				let header = NSMenuItem(title: "Source IP", action: nil, keyEquivalent: "")
+				header.isEnabled = false
+				menu.addItem(header)
+			}
+			for ip in sourceIPs {
+				menu.addItem(withTitle: ip, action: nil, keyEquivalent: "")
+			}
+		}
+		if !appNames.isEmpty {
+			if #available(macOS 14.0, *) {
+				menu.addItem(.sectionHeader(title: "Applications"))
+			} else {
+				let header = NSMenuItem(title: "Applications", action: nil, keyEquivalent: "")
+				header.isEnabled = false
+				menu.addItem(header)
+			}
+			for app in appNames {
+				let item = NSMenuItem(title: app, action: nil, keyEquivalent: "")
+				if app == "Unknown" {
+					let icon = NSWorkspace.shared.icon(for: .unixExecutable)
+					icon.size = AppNameResolver.iconSize
+					item.image = icon
+			} else if let icon = cachedIcons[app] {
+					item.image = icon
+				} else {
+					let icon = NSWorkspace.shared.icon(for: .unixExecutable)
+					icon.size = AppNameResolver.iconSize
+					item.image = icon
+				}
+				menu.addItem(item)
+			}
+		}
+		updatePopupSelection()
+	}
+
+	private func repopulateSourceIPMenu() {
+		repopulateGroupedFilterMenu()
+	}
+
+	func menuNeedsUpdate(_ menu: NSMenu) {
+		guard let popup = cachedControl(.dashSourceIP) as? NSPopUpButton, popup.menu == menu else { return }
+		repopulateGroupedFilterMenu()
 	}
 
 	// MARK: - Item builders
@@ -411,21 +585,39 @@ final class DashboardToolbarController: NSObject {
 			                   label: NSLocalizedString("Stop All", comment: ""),
 			                   view: button)
 		case .dashSourceIP:
-			let popup = NSPopUpButton(frame: .zero, pullsDown: false)
+			let popup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 160, height: 26), pullsDown: false)
 			popup.addItem(withTitle: NSLocalizedString("All", comment: ""))
-			for ip in connsStorage.allSourceIPs {
-				popup.addItem(withTitle: ip)
-			}
+			popup.menu?.delegate = self
+			popup.translatesAutoresizingMaskIntoConstraints = false
+			popup.widthAnchor.constraint(equalToConstant: 160).isActive = true
 			popup.target = makeTrampoline { [weak self] in
 				guard let self,
 				      let popup = self.cachedControl(.dashSourceIP) as? NSPopUpButton,
-				      popup.indexOfSelectedItem >= 0 else { return }
-				self.toolbarState.connSourceIPFilter = popup.indexOfSelectedItem == 0
-					? ""
-					: popup.itemTitles[popup.indexOfSelectedItem]
+				      let title = popup.selectedItem?.title else { return }
+				if title == NSLocalizedString("All", comment: "") {
+					self.toolbarState.connSourceIPFilter = ""
+					self.toolbarState.connAppFilter = ""
+					self.toolbarState.connInternalFilter = false
+				} else if title == "Inner" {
+					self.toolbarState.connInternalFilter = true
+					self.toolbarState.connSourceIPFilter = ""
+					self.toolbarState.connAppFilter = ""
+				} else if self.lastSourceIPs.contains(title) {
+					self.toolbarState.connSourceIPFilter = title
+					self.toolbarState.connAppFilter = ""
+					self.toolbarState.connInternalFilter = false
+				} else if self.lastAppNames.contains(title) {
+					self.toolbarState.connAppFilter = title
+					self.toolbarState.connSourceIPFilter = ""
+					self.toolbarState.connInternalFilter = false
+				}
 			}
 			popup.action = #selector(ActionTrampoline.fire)
-			if !toolbarState.connSourceIPFilter.isEmpty {
+			if toolbarState.connInternalFilter {
+				popup.selectItem(withTitle: "Inner")
+			} else if !toolbarState.connAppFilter.isEmpty {
+				popup.selectItem(withTitle: toolbarState.connAppFilter)
+			} else if !toolbarState.connSourceIPFilter.isEmpty {
 				popup.selectItem(withTitle: toolbarState.connSourceIPFilter)
 			}
 			item = wrappedItem(id: identifier,

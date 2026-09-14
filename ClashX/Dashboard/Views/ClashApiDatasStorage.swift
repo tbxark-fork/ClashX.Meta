@@ -211,14 +211,8 @@ class ClashConnsStorage: ObservableObject {
 	/// Last applied snapshot; the closed-detection diff runs against this.
 	private var trackedConns = [DBConnection]()
 
-	private let appNameResolver = AppNameResolver()
-
-	/// Nonisolated so an empty instance can be built from nonisolated contexts (e.g. EnvironmentKey.defaultValue).
-	nonisolated init() {}
-
-	func appName(processPath: String, process: String) async -> String {
-		await appNameResolver.appName(processPath: processPath, process: process)
-	}
+    /// Nonisolated so an empty instance can be built from nonisolated contexts (e.g. EnvironmentKey.defaultValue).
+    nonisolated init() {}
 
 	func apply(_ snapshot: DBConnectionSnapShot) {
 		guard !isPaused else { return }

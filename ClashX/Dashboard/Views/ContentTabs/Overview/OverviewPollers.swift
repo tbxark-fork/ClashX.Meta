@@ -159,9 +159,10 @@ final class TopAppsPoller: ObservableObject {
         guard let connsStorage else { return }
         let conns = connsStorage.conns + connsStorage.closedConns
         var totals: [String: Int64] = [:]
+        let resolver = DashboardManager.shared.appNameResolver
         for conn in conns {
             guard conn.metadata.type != "Inner", !conn.chains.contains("DIRECT") else { continue }
-            let name = await connsStorage.appName(processPath: conn.metadata.processPath, process: conn.metadata.process)
+            let name = await resolver.appName(processPath: conn.metadata.processPath, process: conn.metadata.process)
             totals[name, default: 0] += conn.upload + conn.download
         }
         let sorted = totals.sorted { $0.value > $1.value }.prefix(5)
