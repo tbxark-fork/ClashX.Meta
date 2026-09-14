@@ -16,11 +16,12 @@ struct SidebarView: View {
 	@State private var reloadID = UUID().uuidString
 	@State private var updateConnectionsTask: Task<Void, Never>?
 	@State private var pollingTask: Task<Void, Never>?
+	@State private var localSelection: SidebarItem?
 	// Chained in-flight tasks outlive onDisappear cancellation; this gates apply.
 	@State private var isActive = false
 	
     var body: some View {
-		List(selection: $selection) {
+		List(selection: $localSelection) {
 			SidebarLabel(item: .overview)
 				.tag(SidebarItem.overview)
 			
@@ -45,6 +46,19 @@ struct SidebarView: View {
 		}
 		.listStyle(.sidebar)
 		.id(reloadID)
+		.onAppear { localSelection = selection }
+		.onChange(of: selection) { newValue in
+			if newValue != localSelection {
+				localSelection = newValue
+			}
+		}
+		.onChange(of: localSelection) { newValue in
+			Task { @MainActor in
+				if newValue != selection {
+					selection = newValue
+				}
+			}
+		}
 		.onAppear {
 			isActive = true
 			if ConfigOverride.shared.logLevel == .unknow {
@@ -72,9 +86,10 @@ struct SidebarView: View {
 
 	func startPollingConnections() {
 		pollingTask?.cancel()
-		pollingTask = Task {
+		pollingTask = Task { @MainActor in
+			let clock = ContinuousClock()
 			while !Task.isCancelled {
-				try? await Task.sleep(seconds: 1)
+				try? await clock.sleep(for: .seconds(1))
 				guard !Task.isCancelled else { return }
 				updateConnections()
 			}
@@ -83,7 +98,7 @@ struct SidebarView: View {
 	
 	func updateConnections() {
 		let previousTask = updateConnectionsTask
-		updateConnectionsTask = Task {
+		updateConnectionsTask = Task { @MainActor in
 			await previousTask?.value
 			guard !Task.isCancelled, isActive,
 				  let snap = await ApiRequest.getConnectionsSnapshot(),
