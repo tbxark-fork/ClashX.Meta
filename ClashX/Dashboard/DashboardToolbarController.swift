@@ -81,6 +81,11 @@ final class DashboardToolbarController: NSObject, NSMenuDelegate {
 
 	// MARK: - Desired layout
 
+	/// True when there is connection data to filter by (drives `.dashSourceIP`).
+	private var hasConnsData: Bool {
+		!connsStorage.allSourceIPs.isEmpty || !connsStorage.conns.isEmpty || !connsStorage.closedConns.isEmpty
+	}
+
 	private func desiredIdentifiers() -> [NSToolbarItem.Identifier] {
 		var ids: [NSToolbarItem.Identifier] = [.toggleSidebar, .sidebarTrackingSeparator]
 		switch chromeState.selection {
@@ -93,7 +98,7 @@ final class DashboardToolbarController: NSObject, NSMenuDelegate {
 			if chromeState.ruleContentSegment == .ruleProviders { ids.append(.dashUpdateAllRules) }
 		case .conns:
 			ids.append(contentsOf: [.dashSegmentedConns, .flexibleSpace, .dashPauseRefresh, .dashStopAll])
-			if !connsStorage.allSourceIPs.isEmpty || !connsStorage.conns.isEmpty || !connsStorage.closedConns.isEmpty { ids.append(.dashSourceIP) }
+			if hasConnsData { ids.append(.dashSourceIP) }
 		case .logs:
 			ids.append(contentsOf: [.dashLogFilter, .dashLogLevel])
 		default:
@@ -112,31 +117,11 @@ final class DashboardToolbarController: NSObject, NSMenuDelegate {
 		}
 	}
 
-	/// Incrementally reconcile visible items against the desired layout.
-	/// Never tears down the whole bar: removes undesired items, inserts missing
-	/// ones at their exact target index, keeping every untouched control alive.
 	private func syncItems() {
 		let desired = desiredIdentifiers()
 
-		for (index, item) in toolbar.items.enumerated().reversed()
-		where !desired.contains(item.itemIdentifier) {
-			toolbar.removeItem(at: index)
-		}
-
-		for (targetIndex, id) in desired.enumerated() {
-			let present = toolbar.items.contains { $0.itemIdentifier == id }
-			guard !present else { continue }
-			toolbar.insertItem(withItemIdentifier: id, at: min(targetIndex, toolbar.items.count))
-		}
-
 		if toolbar.items.map(\.itemIdentifier) != desired {
-			// Defensive fallback (ordering drifted): rebuild once.
-			while !toolbar.items.isEmpty {
-				toolbar.removeItem(at: toolbar.items.count - 1)
-			}
-			for (index, id) in desired.enumerated() {
-				toolbar.insertItem(withItemIdentifier: id, at: index)
-			}
+			mutateItemsOffline(desired)
 		}
 
 		let targetTitleVisibility: NSWindow.TitleVisibility = chromeState.showsSegmentedToolbar ? .hidden : .visible
@@ -145,17 +130,39 @@ final class DashboardToolbarController: NSObject, NSMenuDelegate {
 		}
 	}
 
+	/// Detach the toolbar from the window, edit the items, then re-attach it.
+	/// On macOS 27.2 editing a displayed toolbar detaches all item views from
+	/// the window; re-assigning `window.toolbar` runs AppKit's working initial
+	/// layout. Custom items are reused via `itemCache`, so their control state
+	/// survives the swap.
+	private func mutateItemsOffline(_ desired: [NSToolbarItem.Identifier]) {
+		let window = attachedWindow
+		window?.toolbar = nil
+
+		for (index, item) in toolbar.items.enumerated().reversed()
+		where !desired.contains(item.itemIdentifier) {
+			toolbar.removeItem(at: index)
+		}
+		for (targetIndex, id) in desired.enumerated() where
+			!toolbar.items.contains(where: { $0.itemIdentifier == id }) {
+			toolbar.insertItem(withItemIdentifier: id, at: min(targetIndex, toolbar.items.count))
+		}
+
+		window?.toolbar = toolbar
+	}
+
 	// MARK: - Model -> Control subscriptions
 
 	private func subscribe() {
 		chromeState.$selection
 			.receive(on: DispatchQueue.main)
 			.sink { [weak self] _ in
-				self?.syncItems()
-				if self?.chromeState.selection == .conns, self?.cachedControl(.dashSourceIP) != nil {
-					self?.repopulateGroupedFilterMenu()
-					self?.updatePopupSelection()
-					Task { await self?.updateFilteredSegmentLabels() }
+				guard let self else { return }
+				self.syncItems()
+				if self.chromeState.selection == .conns, self.cachedControl(.dashSourceIP) != nil {
+					self.repopulateGroupedFilterMenu()
+					self.updatePopupSelection()
+					Task { await self.updateFilteredSegmentLabels() }
 				}
 			}
 			.store(in: &cancellables)
@@ -285,9 +292,8 @@ final class DashboardToolbarController: NSObject, NSMenuDelegate {
 					}
 					self.cachedIcons = icons
 				}
-				let shouldShow = !self.connsStorage.allSourceIPs.isEmpty || !self.connsStorage.conns.isEmpty || !self.connsStorage.closedConns.isEmpty
-				let isShowing = self.toolbar.items.contains { $0.itemIdentifier == .dashSourceIP }
-				if shouldShow != isShowing {
+				if self.chromeState.selection == .conns,
+				   self.hasConnsData != self.toolbar.items.contains(where: { $0.itemIdentifier == .dashSourceIP }) {
 					self.syncItems()
 				}
 			}
@@ -663,6 +669,7 @@ final class DashboardToolbarController: NSObject, NSMenuDelegate {
 			group.label = NSLocalizedString("Log Level", comment: "")
 			item = group
 		default:
+			// System identifiers are vended by AppKit itself; nil is required.
 			item = nil
 		}
 		if let item {

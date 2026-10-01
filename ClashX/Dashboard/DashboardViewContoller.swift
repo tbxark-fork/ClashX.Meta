@@ -78,8 +78,18 @@ final class DashboardViewContoller: NSViewController {
 		attachToolbarIfNeeded()
 	}
 
+	override func viewDidAppear() {
+		super.viewDidAppear()
+		// Retry if viewWillAppear ran before the view had a window.
+		attachToolbarIfNeeded()
+	}
+
 	private func attachToolbarIfNeeded() {
-		guard !didAttachToolbar, let window = view.window else { return }
+		guard !didAttachToolbar else { return }
+		guard let window = view.window else {
+			Logger.log("[Dashboard] attachToolbar skipped: view.window is NIL", level: .warning)
+			return
+		}
 		didAttachToolbar = true
 		let controller = DashboardToolbarController(
 			chromeState: chromeState,
